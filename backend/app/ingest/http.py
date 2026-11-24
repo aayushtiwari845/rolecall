@@ -24,6 +24,15 @@ log = logging.getLogger(__name__)
 RETRY_STATUS = {429, 500, 502, 503, 504}
 
 
+FAST_API_HOSTS = {
+    "boards-api.greenhouse.io",
+    "api.lever.co",
+    "api.ashbyhq.com",
+    "api.smartrecruiters.com",
+    "hn.algolia.com",
+}
+
+
 class FetchError(Exception):
     def __init__(self, message: str, status: int | None = None):
         super().__init__(message)
@@ -62,11 +71,15 @@ class PoliteClient:
     async def aclose(self) -> None:
         await self._client.aclose()
 
+    def _delay_for(self, host: str) -> float:
+        # Documented public job APIs on big CDNs tolerate a faster pace than career pages.
+        return min(self._delay, 0.25) if host in FAST_API_HOSTS else self._delay
+
     async def _wait_for_host(self, host: str) -> None:
         lock = self._host_locks.setdefault(host, asyncio.Lock())
         async with lock:
             last = self._host_last.get(host, 0.0)
-            wait = self._delay - (time.monotonic() - last)
+            wait = self._delay_for(host) - (time.monotonic() - last)
             if wait > 0:
                 await asyncio.sleep(wait)
             self._host_last[host] = time.monotonic()
