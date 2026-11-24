@@ -87,8 +87,10 @@ def _company_for(session: Session, name: str, cache: dict[str, int]) -> int:
     return cid
 
 
-def dedupe_key(raw: RawJob, cities: list[str]) -> str:
-    return sha(norm_company(raw.company_name), norm_title(raw.title), (cities or [""])[0])[:64]
+def dedupe_key(raw: RawJob, cities: list[str], countries: list[str]) -> str:
+    """Same company + same title + same place = same role (e.g. one req per office)."""
+    place = cities[0] if cities else ",".join(sorted(countries))
+    return sha(norm_company(raw.company_name), norm_title(raw.title), place)[:64]
 
 
 def upsert_jobs(session: Session, source: CompanySource, result: FetchResult) -> RunStats:
@@ -130,11 +132,12 @@ def upsert_jobs(session: Session, source: CompanySource, result: FetchResult) ->
                 select(Job).where(Job.source_kind == raw.source_kind, Job.source_job_id == raw.source_job_id)
             )
         is_new = job is None
+        # Resolve the company before touching the Job so autoflush never sees a half-built row.
+        company_id = source.company_id or _company_for(session, raw.company_name, company_cache)
         if is_new:
             job = Job(source_kind=raw.source_kind, source_job_id=raw.source_job_id, first_seen_at=now)
-            session.add(job)
         job.source_id = source.id
-        job.company_id = source.company_id or _company_for(session, raw.company_name, company_cache)
+        job.company_id = company_id
         job.company_name = (source.company.name if source.company else raw.company_name)[:200]
         job.title = raw.title[:400]
         job.url = raw.url
@@ -146,7 +149,7 @@ def upsert_jobs(session: Session, source: CompanySource, result: FetchResult) ->
         job.last_seen_at = now
         job.status, job.closed_at, job.missed_runs = "open", None, 0
         job.content_hash = content_hash
-        job.dedupe_key = dedupe_key(raw, e.cities)
+        job.dedupe_key = dedupe_key(raw, e.cities, e.countries)
         job.is_tech = e.is_tech
         job.seniority = e.seniority
         job.role_family = e.role_family
@@ -161,6 +164,7 @@ def upsert_jobs(session: Session, source: CompanySource, result: FetchResult) ->
         job.enrichment_version = RULES_VERSION
         job.enriched_by = "rules"
         if is_new:
+            session.add(job)
             stats.created += 1
         else:
             stats.updated += 1

@@ -57,7 +57,8 @@ _COMPANY_SUFFIX = re.compile(
     r"\b(inc|llc|ltd|limited|pvt|private|corp|corporation|co|gmbh|technologies|labs?)\b\.?",
     re.I,
 )
-_TITLE_NOISE = re.compile(r"[\(\[].*?[\)\]]|[-–|,/].*$")
+# Parenthesised bits and trailing location/work-mode suffixes ("- Remote", "| Bengaluru").
+_TITLE_NOISE = re.compile(r"[\(\[].*?[\)\]]|\s[-–|]\s*(remote|hybrid|onsite|on-site|india|[a-z]+,\s*[a-z]+)\s*$", re.I)
 
 
 def norm_company(name: str) -> str:
