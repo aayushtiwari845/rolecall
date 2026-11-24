@@ -39,7 +39,12 @@ def parse_header(first_line: str) -> tuple[str, str, str | None, str | None]:
         remote = "hybrid" if "hybrid" in joined else "remote"
     elif "onsite" in joined or "on-site" in joined:
         remote = "onsite"
-    return company[:200], (title or "Software Engineer")[:400], "; ".join(locs)[:500] or None, remote
+    return (
+        company[:200],
+        (title or "Software Engineer")[:400],
+        "; ".join(locs)[:500] or None,
+        remote,
+    )
 
 
 async def latest_thread_id(client: PoliteClient) -> str | None:
@@ -79,7 +84,9 @@ def parse_thread(item: dict) -> list[RawJob]:
     return jobs
 
 
-async def fetch(client: PoliteClient, key: str = "latest", company_name: str | None = None) -> FetchResult:
+async def fetch(
+    client: PoliteClient, key: str = "latest", company_name: str | None = None
+) -> FetchResult:
     thread_id = key if key.isdigit() else await latest_thread_id(client)
     if not thread_id:
         return FetchResult([], complete=False)

@@ -23,7 +23,25 @@ CITIES: dict[str, tuple[str, list[str]]] = {
     "Chandigarh": ("IN", ["chandigarh", "mohali"]),
     "Indore": ("IN", ["indore"]),
     "Coimbatore": ("IN", ["coimbatore"]),
-    "San Francisco": ("US", ["san francisco", "sf bay area", "bay area", "palo alto", "mountain view", "menlo park", "sunnyvale", "san jose", "south san francisco", "redwood city", "san mateo", "oakland", "cupertino", "santa clara"]),
+    "San Francisco": (
+        "US",
+        [
+            "san francisco",
+            "sf bay area",
+            "bay area",
+            "palo alto",
+            "mountain view",
+            "menlo park",
+            "sunnyvale",
+            "san jose",
+            "south san francisco",
+            "redwood city",
+            "san mateo",
+            "oakland",
+            "cupertino",
+            "santa clara",
+        ],
+    ),
     "New York": ("US", ["new york", "nyc", "brooklyn", "manhattan"]),
     "Seattle": ("US", ["seattle", "bellevue", "redmond", "kirkland"]),
     "Los Angeles": ("US", ["los angeles", "santa monica"]),
@@ -93,16 +111,81 @@ REGIONS: dict[str, list[str]] = {
     "APAC": ["apac", "asia", "asia pacific"],
 }
 
-WORLDWIDE = re.compile(r"\b(worldwide|anywhere|global(?:ly)?|work from anywhere|any location|international)\b", re.I)
+WORLDWIDE = re.compile(
+    r"\b(worldwide|anywhere|global(?:ly)?|work from anywhere|any location|international)\b", re.I
+)
 REMOTE = re.compile(r"\b(remote|work from home|wfh|distributed|telecommute)\b", re.I)
 HYBRID = re.compile(r"\bhybrid\b", re.I)
 
-_CITY_RE = [(city, cc, re.compile(r"\b(" + "|".join(re.escape(a) for a in aliases) + r")\b", re.I)) for city, (cc, aliases) in CITIES.items()]
-_COUNTRY_RE = [(cc, re.compile(r"(?<![\w.])(" + "|".join(re.escape(a) for a in names) + r")(?![\w])", re.I)) for cc, names in COUNTRIES.items()]
-_REGION_RE = [(r, re.compile(r"\b(" + "|".join(re.escape(a) for a in names) + r")\b", re.I)) for r, names in REGIONS.items()]
+_CITY_RE = [
+    (city, cc, re.compile(r"\b(" + "|".join(re.escape(a) for a in aliases) + r")\b", re.I))
+    for city, (cc, aliases) in CITIES.items()
+]
+_COUNTRY_RE = [
+    (cc, re.compile(r"(?<![\w.])(" + "|".join(re.escape(a) for a in names) + r")(?![\w])", re.I))
+    for cc, names in COUNTRIES.items()
+]
+_REGION_RE = [
+    (r, re.compile(r"\b(" + "|".join(re.escape(a) for a in names) + r")\b", re.I))
+    for r, names in REGIONS.items()
+]
 # Bare ISO codes / US state codes at the end of "City, XX"
 _TRAILING_CODE = re.compile(r",\s*([A-Z]{2})\b")
-_US_STATES = set("AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC".split())
+_US_STATES = set(
+    [
+        "AL",
+        "AK",
+        "AZ",
+        "AR",
+        "CA",
+        "CO",
+        "CT",
+        "DE",
+        "FL",
+        "GA",
+        "HI",
+        "ID",
+        "IL",
+        "IN",
+        "IA",
+        "KS",
+        "KY",
+        "LA",
+        "ME",
+        "MD",
+        "MA",
+        "MI",
+        "MN",
+        "MS",
+        "MO",
+        "MT",
+        "NE",
+        "NV",
+        "NH",
+        "NJ",
+        "NM",
+        "NY",
+        "NC",
+        "ND",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "RI",
+        "SC",
+        "SD",
+        "TN",
+        "TX",
+        "UT",
+        "VT",
+        "VA",
+        "WA",
+        "WV",
+        "WI",
+        "WY",
+        "DC",
+    ]
+)
 
 
 @dataclass
@@ -142,7 +225,12 @@ def parse_location(raw: str | None, country_hints: list[str] | None = None) -> P
             out.countries.append(cc)
     out.remote = bool(REMOTE.search(text))
     out.hybrid = bool(HYBRID.search(text))
-    out.worldwide = bool(WORLDWIDE.search(text)) or (out.remote and not out.countries and not out.regions and text.strip().lower() in {"remote", "remote job", "100% remote", "fully remote"})
+    out.worldwide = bool(WORLDWIDE.search(text)) or (
+        out.remote
+        and not out.countries
+        and not out.regions
+        and text.strip().lower() in {"remote", "remote job", "100% remote", "fully remote"}
+    )
     return out
 
 

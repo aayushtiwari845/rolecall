@@ -24,8 +24,11 @@ def parse(payload: dict, key: str, company_name: str | None) -> list[RawJob]:
         locs = j.get("locations") or [
             {"city": j.get("city"), "region": j.get("state"), "country": j.get("country")}
         ]
-        loc_strs = [", ".join(x for x in (l.get("city"), l.get("region"), l.get("country")) if x) for l in locs]
-        countries = [l.get("country") for l in locs if l.get("country")]
+        loc_strs = [
+            ", ".join(x for x in (loc.get("city"), loc.get("region"), loc.get("country")) if x)
+            for loc in locs
+        ]
+        countries = [loc.get("country") for loc in locs if loc.get("country")]
         code = j.get("shortcode") or j.get("code") or j.get("id")
         jobs.append(
             RawJob(
@@ -33,7 +36,9 @@ def parse(payload: dict, key: str, company_name: str | None) -> list[RawJob]:
                 source_job_id=f"{key}:{code}",
                 company_name=name,
                 title=(j.get("title") or "").strip(),
-                url=j.get("url") or j.get("shortlink") or f"https://apply.workable.com/{key}/j/{code}/",
+                url=j.get("url")
+                or j.get("shortlink")
+                or f"https://apply.workable.com/{key}/j/{code}/",
                 apply_url=j.get("application_url"),
                 description_text=html_to_text(j.get("description")),
                 location_raw="; ".join(s for s in loc_strs if s) or None,

@@ -13,6 +13,7 @@ OpenAI chat-completions protocol, so one client type covers all of them. The rou
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import re
@@ -92,9 +93,19 @@ class LLMRouter:
             if name == "ollama":
                 if not s.ollama_base_url:
                     continue
-                client = openai.OpenAI(base_url=s.ollama_base_url, api_key="ollama", timeout=s.llm_timeout_s * 3, max_retries=0)
+                client = openai.OpenAI(
+                    base_url=s.ollama_base_url,
+                    api_key="ollama",
+                    timeout=s.llm_timeout_s * 3,
+                    max_retries=0,
+                )
             elif keys.get(name):
-                client = openai.OpenAI(base_url=BASE_URLS[name], api_key=keys[name], timeout=s.llm_timeout_s, max_retries=0)
+                client = openai.OpenAI(
+                    base_url=BASE_URLS[name],
+                    api_key=keys[name],
+                    timeout=s.llm_timeout_s,
+                    max_retries=0,
+                )
             else:
                 continue
             out.append(Provider(name, client, models))
@@ -118,12 +129,33 @@ class LLMRouter:
         cache: bool = False,
     ) -> LLMResult:
         if not self.providers:
-            raise LLMError("no LLM provider configured (set GROQ_API_KEY, GEMINI_API_KEY, ... in .env)")
-        key = sha(tier, json.dumps(messages, sort_keys=True), json.dumps(tools or [], sort_keys=True), str(json_mode)) if cache else None
+            raise LLMError(
+                "no LLM provider configured (set GROQ_API_KEY, GEMINI_API_KEY, ... in .env)"
+            )
+        key = (
+            sha(
+                tier,
+                json.dumps(messages, sort_keys=True),
+                json.dumps(tools or [], sort_keys=True),
+                str(json_mode),
+            )
+            if cache
+            else None
+        )
         if key:
             hit = self._cache_get(key)
             if hit is not None:
-                self._log(hit.get("provider", ""), hit.get("model", ""), purpose, 0, 0, 0, True, None, cache_hit=True)
+                self._log(
+                    hit.get("provider", ""),
+                    hit.get("model", ""),
+                    purpose,
+                    0,
+                    0,
+                    0,
+                    True,
+                    None,
+                    cache_hit=True,
+                )
                 return LLMResult(**{**hit, "cached": True})
 
         errors = []
@@ -131,7 +163,12 @@ class LLMRouter:
             if self._cooldown.get(p.name, 0) > time.monotonic():
                 continue
             model = p.models.get(tier) or p.models.get("fast")
-            kwargs: dict[str, Any] = {"model": model, "messages": messages, "temperature": temperature, "max_tokens": max_tokens}
+            kwargs: dict[str, Any] = {
+                "model": model,
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+            }
             if tools:
                 kwargs["tools"] = tools
                 kwargs["tool_choice"] = "auto"
@@ -145,20 +182,40 @@ class LLMRouter:
                 errors.append(f"{p.name}: rate limited")
                 self._log(p.name, model, purpose, 0, 0, started, False, "rate_limited")
                 continue
-            except (openai.APIConnectionError, openai.APITimeoutError, openai.InternalServerError) as e:
+            except (
+                openai.APIConnectionError,
+                openai.APITimeoutError,
+                openai.InternalServerError,
+            ) as e:
                 self._cooldown[p.name] = time.monotonic() + 20
                 errors.append(f"{p.name}: {type(e).__name__}")
                 self._log(p.name, model, purpose, 0, 0, started, False, type(e).__name__)
                 continue
             except openai.APIStatusError as e:  # bad request, auth, unsupported feature...
                 errors.append(f"{p.name}: HTTP {e.status_code}")
-                self._log(p.name, model, purpose, 0, 0, started, False, f"HTTP {e.status_code}: {str(e)[:200]}")
+                self._log(
+                    p.name,
+                    model,
+                    purpose,
+                    0,
+                    0,
+                    started,
+                    False,
+                    f"HTTP {e.status_code}: {str(e)[:200]}",
+                )
                 if e.status_code in (401, 403):
                     self._cooldown[p.name] = time.monotonic() + 3600
                 continue
             choice = resp.choices[0].message
             calls = [
-                {"id": tc.id, "type": "function", "function": {"name": tc.function.name, "arguments": tc.function.arguments or "{}"}}
+                {
+                    "id": tc.id,
+                    "type": "function",
+                    "function": {
+                        "name": tc.function.name,
+                        "arguments": tc.function.arguments or "{}",
+                    },
+                }
                 for tc in (choice.tool_calls or [])
             ]
             usage = resp.usage
@@ -170,7 +227,16 @@ class LLMRouter:
                 prompt_tokens=getattr(usage, "prompt_tokens", 0) or 0,
                 completion_tokens=getattr(usage, "completion_tokens", 0) or 0,
             )
-            self._log(p.name, model, purpose, result.prompt_tokens, result.completion_tokens, started, True, None)
+            self._log(
+                p.name,
+                model,
+                purpose,
+                result.prompt_tokens,
+                result.completion_tokens,
+                started,
+                True,
+                None,
+            )
             if key and not calls:
                 self._cache_put(key, result)
             return result
@@ -192,15 +258,33 @@ class LLMRouter:
             + json.dumps(schema.model_json_schema())
         )
         msgs = [{"role": "system", "content": system}, *messages]
-        res = self.chat(msgs, tier=tier, json_mode=True, purpose=purpose, cache=cache, temperature=0, max_tokens=max_tokens)
+        res = self.chat(
+            msgs,
+            tier=tier,
+            json_mode=True,
+            purpose=purpose,
+            cache=cache,
+            temperature=0,
+            max_tokens=max_tokens,
+        )
         try:
             return schema.model_validate(parse_json(res.content))
         except (ValidationError, ValueError) as e:
             repair = msgs + [
                 {"role": "assistant", "content": res.content},
-                {"role": "user", "content": f"That was invalid: {str(e)[:800]}. Return corrected JSON only."},
+                {
+                    "role": "user",
+                    "content": f"That was invalid: {str(e)[:800]}. Return corrected JSON only.",
+                },
             ]
-            res = self.chat(repair, tier=tier, json_mode=True, purpose=purpose, temperature=0, max_tokens=max_tokens)
+            res = self.chat(
+                repair,
+                tier=tier,
+                json_mode=True,
+                purpose=purpose,
+                temperature=0,
+                max_tokens=max_tokens,
+            )
             return schema.model_validate(parse_json(res.content))
 
     # ------------------------------------------------------------ internals
@@ -209,10 +293,8 @@ class LLMRouter:
         resp = getattr(err, "response", None)
         if resp is not None:
             ra = resp.headers.get("retry-after")
-            try:
+            with contextlib.suppress(ValueError):
                 wait = max(5.0, min(float(ra), 3600.0)) if ra else wait
-            except ValueError:
-                pass
         self._cooldown[name] = time.monotonic() + wait
         log.info("provider %s rate limited, cooling down %.0fs", name, wait)
 
@@ -224,11 +306,19 @@ class LLMRouter:
             from app.models import LLMCall
 
             with session_scope() as s:
-                s.add(LLMCall(
-                    provider=provider, model=model or "", purpose=purpose, prompt_tokens=pt,
-                    completion_tokens=ct, latency_ms=int((time.monotonic() - started) * 1000) if started else 0,
-                    ok=ok, error=error, cache_hit=cache_hit,
-                ))
+                s.add(
+                    LLMCall(
+                        provider=provider,
+                        model=model or "",
+                        purpose=purpose,
+                        prompt_tokens=pt,
+                        completion_tokens=ct,
+                        latency_ms=int((time.monotonic() - started) * 1000) if started else 0,
+                        ok=ok,
+                        error=error,
+                        cache_hit=cache_hit,
+                    )
+                )
         except Exception:  # noqa: BLE001 - logging must never break a request
             log.debug("could not record llm call", exc_info=True)
 
@@ -256,7 +346,9 @@ class LLMRouter:
 
             payload = {"content": res.content, "provider": res.provider, "model": res.model}
             with session_scope() as s:
-                s.execute(insert(LLMCache).values(key=key, response=payload).on_conflict_do_nothing())
+                s.execute(
+                    insert(LLMCache).values(key=key, response=payload).on_conflict_do_nothing()
+                )
         except Exception:  # noqa: BLE001
             log.debug("could not write llm cache", exc_info=True)
 
@@ -272,7 +364,7 @@ def parse_json(text: str) -> Any:
     except ValueError:
         start, end = t.find("{"), t.rfind("}")
         if start >= 0 and end > start:
-            return json.loads(t[start: end + 1])
+            return json.loads(t[start : end + 1])
         raise
 
 

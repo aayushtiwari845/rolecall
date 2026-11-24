@@ -138,7 +138,9 @@ class Job(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
     source_kind: Mapped[str] = mapped_column(String(40))
-    source_id: Mapped[int | None] = mapped_column(ForeignKey("company_sources.id", ondelete="SET NULL"))
+    source_id: Mapped[int | None] = mapped_column(
+        ForeignKey("company_sources.id", ondelete="SET NULL")
+    )
     source_job_id: Mapped[str] = mapped_column(String(300))
     company_id: Mapped[int | None] = mapped_column(ForeignKey("companies.id", ondelete="SET NULL"))
     company_name: Mapped[str] = mapped_column(String(200))
@@ -150,8 +152,12 @@ class Job(Base):
     department: Mapped[str | None] = mapped_column(String(300))
     description_text: Mapped[str] = mapped_column(Text, default="")
     posted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    first_seen_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    last_seen_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     status: Mapped[str] = mapped_column(String(20), default="open")
     missed_runs: Mapped[int] = mapped_column(Integer, default=0)
@@ -198,7 +204,9 @@ class IngestRun(Base):
     __tablename__ = "ingest_runs"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    source_id: Mapped[int | None] = mapped_column(ForeignKey("company_sources.id", ondelete="CASCADE"))
+    source_id: Mapped[int | None] = mapped_column(
+        ForeignKey("company_sources.id", ondelete="CASCADE")
+    )
     kind: Mapped[str] = mapped_column(String(40))
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -227,7 +235,9 @@ class User(Base):
     preferences: Mapped[Preferences | None] = relationship(
         back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
-    resumes: Mapped[list[Resume]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    resumes: Mapped[list[Resume]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class Preferences(Base):
@@ -258,7 +268,9 @@ class Resume(Base):
     __tablename__ = "resumes"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     label: Mapped[str] = mapped_column(String(120))
     is_default: Mapped[bool] = mapped_column(Boolean, default=False)
     text: Mapped[str] = mapped_column(Text)
@@ -295,7 +307,9 @@ class Application(Base):
     __tablename__ = "applications"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     job_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("jobs.id", ondelete="SET NULL"))
     company: Mapped[str] = mapped_column(String(200))
     title: Mapped[str] = mapped_column(String(400))
@@ -317,7 +331,9 @@ class Alert(Base):
     __tablename__ = "alerts"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     name: Mapped[str] = mapped_column(String(200))
     query: Mapped[str] = mapped_column(Text, default="")
     filters: Mapped[dict] = mapped_column(JSONB, default=dict)
@@ -330,7 +346,9 @@ class ChatThread(Base):
     __tablename__ = "chat_threads"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     title: Mapped[str] = mapped_column(String(200), default="New chat")
     summary: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -361,7 +379,9 @@ class Memory(Base):
     __tablename__ = "memories"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     content: Mapped[str] = mapped_column(Text)
     kind: Mapped[str] = mapped_column(String(20), default="preference")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

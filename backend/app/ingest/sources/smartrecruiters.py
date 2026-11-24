@@ -17,7 +17,12 @@ LIST = "https://api.smartrecruiters.com/v1/companies/{key}/postings"
 DETAIL = "https://api.smartrecruiters.com/v1/companies/{key}/postings/{id}"
 MAX_PAGES = 20
 
-_EMPLOYMENT = {"full-time": "full_time", "part-time": "part_time", "contract": "contract", "intern": "intern"}
+_EMPLOYMENT = {
+    "full-time": "full_time",
+    "part-time": "part_time",
+    "contract": "contract",
+    "intern": "intern",
+}
 
 
 def _employment(label: str | None) -> str | None:

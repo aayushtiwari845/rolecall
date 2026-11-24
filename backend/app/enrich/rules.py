@@ -46,18 +46,65 @@ def looks_tech_title(title: str) -> bool:
 # ---------------------------------------------------------------- role family
 _FAMILY_RULES: list[tuple[str, re.Pattern[str]]] = [
     ("security", re.compile(r"security|appsec|infosec|penetration|cyber|devsecops", re.I)),
-    ("ai_llm", re.compile(r"\bllm|gen(?:erative)?\s?ai|\bai engineer|applied ai|\bai (?:agent|platform|product)|prompt|\bagents?\b|ai/ml engineer|ai developer|ai research", re.I)),
-    ("ml", re.compile(r"machine learning|\bml\b|mlops|deep learning|computer vision|\bnlp\b|research scientist|applied scientist|research engineer|\bai\b|recommend|ranking|perception", re.I)),
-    ("data_eng", re.compile(r"data engineer|data platform|\betl\b|analytics engineer|big data|data infrastructure|data pipeline", re.I)),
-    ("data_science", re.compile(r"data scien|data analyst|analytics|statistician|business intelligence|\bbi\b|quant|decision scien|insights", re.I)),
-    ("infra", re.compile(r"devops|\bsre\b|site reliability|infrastructure|platform engineer|cloud|systems engineer|reliability|network engineer|kubernetes|production engineer|build engineer|release engineer|developer productivity", re.I)),
+    (
+        "ai_llm",
+        re.compile(
+            r"\bllm|gen(?:erative)?\s?ai|\bai engineer|applied ai|\bai (?:agent|platform|product)|prompt|\bagents?\b|ai/ml engineer|ai developer|ai research",
+            re.I,
+        ),
+    ),
+    (
+        "ml",
+        re.compile(
+            r"machine learning|\bml\b|mlops|deep learning|computer vision|\bnlp\b|research scientist|applied scientist|research engineer|\bai\b|recommend|ranking|perception",
+            re.I,
+        ),
+    ),
+    (
+        "data_eng",
+        re.compile(
+            r"data engineer|data platform|\betl\b|analytics engineer|big data|data infrastructure|data pipeline",
+            re.I,
+        ),
+    ),
+    (
+        "data_science",
+        re.compile(
+            r"data scien|data analyst|analytics|statistician|business intelligence|\bbi\b|quant|decision scien|insights",
+            re.I,
+        ),
+    ),
+    (
+        "infra",
+        re.compile(
+            r"devops|\bsre\b|site reliability|infrastructure|platform engineer|cloud|systems engineer|reliability|network engineer|kubernetes|production engineer|build engineer|release engineer|developer productivity",
+            re.I,
+        ),
+    ),
     ("mobile", re.compile(r"android|\bios\b|mobile|flutter|react native", re.I)),
     ("embedded", re.compile(r"embedded|firmware|fpga|hardware|robotics|asic|silicon", re.I)),
     ("qa", re.compile(r"\bqa\b|quality|\btest|\bsdet\b|automation engineer", re.I)),
     ("fullstack", re.compile(r"full[- ]?stack", re.I)),
-    ("frontend", re.compile(r"front[- ]?end|\bui engineer|web developer|react developer|javascript|\bweb engineer", re.I)),
-    ("backend", re.compile(r"back[- ]?end|server|\bapi\b|distributed systems|java developer|python developer|golang|go engineer|payments|core banking", re.I)),
-    ("swe", re.compile(r"software|\bsde\b|\bswe\b|developer|programmer|engineer|technologist|architect", re.I)),
+    (
+        "frontend",
+        re.compile(
+            r"front[- ]?end|\bui engineer|web developer|react developer|javascript|\bweb engineer",
+            re.I,
+        ),
+    ),
+    (
+        "backend",
+        re.compile(
+            r"back[- ]?end|server|\bapi\b|distributed systems|java developer|python developer|golang|go engineer|payments|core banking",
+            re.I,
+        ),
+    ),
+    (
+        "swe",
+        re.compile(
+            r"software|\bsde\b|\bswe\b|developer|programmer|engineer|technologist|architect", re.I
+        ),
+    ),
 ]
 
 
@@ -73,18 +120,35 @@ def role_family(title: str, department: str | None = None) -> str:
 
 
 # ---------------------------------------------------------------- seniority
-_INTERN = re.compile(r"\bintern(?:ship)?s?\b|\btrainee\b|apprentice|\bco-?op\b|working student|werkstudent|summer (?:analyst|associate|engineer)|industrial placement", re.I)
-_NEW_GRAD = re.compile(r"new grad|graduate|entry[- ]level|fresher|university|campus|early career|associate (?:software|engineer|developer|data)|\bsde[- ]?(?:i|1)\b|\b(?:engineer|developer) (?:i|1)\b|\blevel (?:i|1)\b|\bl1\b|\bjunior\b|\bjr\.?\b|20(?:2[5-9]) start", re.I)
-_STAFF = re.compile(r"\bstaff\b|principal|distinguished|\bfellow\b|director|head of|\bvp\b|vice president|chief|\bcto\b|engineering manager|manager,|\bmanager\b", re.I)
-_SENIOR = re.compile(r"\bsenior\b|\bsr\.?\b|\blead\b|\bsde[- ]?(?:iii|3)\b|\b(?:engineer|developer) (?:iii|iv|3|4)\b|\bl[4-6]\b", re.I)
-_MID = re.compile(r"\bsde[- ]?(?:ii|2)\b|\b(?:engineer|developer) (?:ii|2)\b|\bmid[- ]level\b|\bintermediate\b", re.I)
+_INTERN = re.compile(
+    r"\bintern(?:ship)?s?\b|\btrainee\b|apprentice|\bco-?op\b|working student|werkstudent|summer (?:analyst|associate|engineer)|industrial placement",
+    re.I,
+)
+_NEW_GRAD = re.compile(
+    r"new grad|graduate|entry[- ]level|fresher|university|campus|early career|associate (?:software|engineer|developer|data)|\bsde[- ]?(?:i|1)\b|\b(?:engineer|developer) (?:i|1)\b|\blevel (?:i|1)\b|\bl1\b|\bjunior\b|\bjr\.?\b|20(?:2[5-9]) start",
+    re.I,
+)
+_STAFF = re.compile(
+    r"\bstaff\b|principal|distinguished|\bfellow\b|director|head of|\bvp\b|vice president|chief|\bcto\b|engineering manager|manager,|\bmanager\b",
+    re.I,
+)
+_SENIOR = re.compile(
+    r"\bsenior\b|\bsr\.?\b|\blead\b|\bsde[- ]?(?:iii|3)\b|\b(?:engineer|developer) (?:iii|iv|3|4)\b|\bl[4-6]\b",
+    re.I,
+)
+_MID = re.compile(
+    r"\bsde[- ]?(?:ii|2)\b|\b(?:engineer|developer) (?:ii|2)\b|\bmid[- ]level\b|\bintermediate\b",
+    re.I,
+)
 
 _YOE = re.compile(
     r"(?:(?:minimum|min\.?|at least|over)\s+(?:of\s+)?)?(\d{1,2})(?:\.\d)?\s*(?:\+|plus)?\s*(?:(?:-|–|to)\s*(\d{1,2})\s*\+?\s*)?"
     r"(?:years?|yrs?)(?:'s)?(?:\s+of)?(?:\s+[\w/+#.-]+){0,5}?\s+(?:experience|exp\b|industry|professional|work)",
     re.I,
 )
-_YOE_ALT = re.compile(r"experience\s*(?:of|:)?\s*(\d{1,2})\s*(?:-|–|to)\s*(\d{1,2})\s*(?:years|yrs)", re.I)
+_YOE_ALT = re.compile(
+    r"experience\s*(?:of|:)?\s*(\d{1,2})\s*(?:-|–|to)\s*(\d{1,2})\s*(?:years|yrs)", re.I
+)
 
 
 def years_of_experience(text: str) -> tuple[float | None, float | None]:
@@ -101,7 +165,9 @@ def years_of_experience(text: str) -> tuple[float | None, float | None]:
     return lo, hi
 
 
-def seniority(title: str, min_yoe: float | None, employment_hint: str | None, text: str = "") -> str | None:
+def seniority(
+    title: str, min_yoe: float | None, employment_hint: str | None, text: str = ""
+) -> str | None:
     if employment_hint == "intern" or _INTERN.search(title):
         return "intern"
     if _STAFF.search(title):
@@ -120,7 +186,11 @@ def seniority(title: str, min_yoe: float | None, employment_hint: str | None, te
         if min_yoe <= 5:
             return "mid"
         return "senior"
-    if re.search(r"new grad|recent graduates?|freshers? (?:welcome|can apply)|0-1 years?|no experience required", text[:4000], re.I):
+    if re.search(
+        r"new grad|recent graduates?|freshers? (?:welcome|can apply)|0-1 years?|no experience required",
+        text[:4000],
+        re.I,
+    ):
         return "new_grad"
     return None  # no signal: unknown, the LLM pass or ranking handles it
 
@@ -147,7 +217,11 @@ def remote_type(hint: str | None, location: str, title: str, text: str) -> str:
     if re.search(r"\bremote\b|work from home|\bwfh\b|anywhere", loc, re.I):
         return "remote"
     head = text[:3000]
-    if re.search(r"fully remote|100% remote|remote[- ]first|work from anywhere|this (?:role|position) is remote", head, re.I):
+    if re.search(
+        r"fully remote|100% remote|remote[- ]first|work from anywhere|this (?:role|position) is remote",
+        head,
+        re.I,
+    ):
         return "remote"
     if re.search(r"\bhybrid\b", head, re.I):
         return "hybrid"
@@ -155,14 +229,30 @@ def remote_type(hint: str | None, location: str, title: str, text: str) -> str:
 
 
 # ---------------------------------------------------------------- salary
-_MULT = {"k": 1e3, "l": 1e5, "lpa": 1e5, "lakh": 1e5, "lakhs": 1e5, "lac": 1e5, "cr": 1e7, "crore": 1e7, "m": 1e6}
+_MULT = {
+    "k": 1e3,
+    "l": 1e5,
+    "lpa": 1e5,
+    "lakh": 1e5,
+    "lakhs": 1e5,
+    "lac": 1e5,
+    "cr": 1e7,
+    "crore": 1e7,
+    "m": 1e6,
+}
 _INR = re.compile(
     r"(?:₹|inr|rs\.?)\s*([\d,.]+)\s*(k|l|lpa|lakhs?|lac|cr|crore)?\s*(?:-|–|to)\s*(?:₹|inr|rs\.?)?\s*([\d,.]+)\s*(k|l|lpa|lakhs?|lac|cr|crore)?"
     r"|([\d.]+)\s*(?:-|–|to)\s*([\d.]+)\s*(lpa|lakhs?)",
     re.I,
 )
-_USD = re.compile(r"(\$|usd\s?|€|eur\s?|£|gbp\s?)([\d,.]+)\s*(k)?\s*(?:-|–|to)\s*(?:\$|usd\s?|€|eur\s?|£|gbp\s?)?([\d,.]+)\s*(k)?", re.I)
-_PERIOD = [(re.compile(r"per month|/\s?month|/mo\b|monthly|a month|stipend", re.I), "month"), (re.compile(r"per hour|/\s?h(?:ou)?r\b|hourly", re.I), "hour")]
+_USD = re.compile(
+    r"(\$|usd\s?|€|eur\s?|£|gbp\s?)([\d,.]+)\s*(k)?\s*(?:-|–|to)\s*(?:\$|usd\s?|€|eur\s?|£|gbp\s?)?([\d,.]+)\s*(k)?",
+    re.I,
+)
+_PERIOD = [
+    (re.compile(r"per month|/\s?month|/mo\b|monthly|a month|stipend", re.I), "month"),
+    (re.compile(r"per hour|/\s?h(?:ou)?r\b|hourly", re.I), "hour"),
+]
 _CUR = {"$": "USD", "usd": "USD", "€": "EUR", "eur": "EUR", "£": "GBP", "gbp": "GBP"}
 
 
@@ -191,8 +281,12 @@ def salary(text: str) -> tuple[float | None, float | None, str | None, str | Non
         if lo and hi:
             mul_lo = _MULT.get((unit_lo or "").lower(), 1)
             mul_hi = _MULT.get((unit_hi or unit_lo or "").lower(), 1)
-            window = text[m.start(): m.end() + 40]
-            period = "year" if (unit_lo or "").lower() in {"lpa", "l", "lakh", "lakhs", "lac", "cr", "crore"} else _period(window)
+            window = text[m.start() : m.end() + 40]
+            period = (
+                "year"
+                if (unit_lo or "").lower() in {"lpa", "l", "lakh", "lakhs", "lac", "cr", "crore"}
+                else _period(window)
+            )
             return lo * mul_lo, hi * mul_hi, "INR", period
     m = _USD.search(text)
     if m:
@@ -201,13 +295,22 @@ def salary(text: str) -> tuple[float | None, float | None, str | None, str | Non
             k = 1e3 if (m.group(3) or m.group(5)) else 1
             lo, hi = lo * k, hi * k
             if hi >= 1000:  # ignore tiny numbers like "$5-10" (not salaries)
-                window = text[m.start(): m.end() + 40]
+                window = text[m.start() : m.end() + 40]
                 return lo, hi, _CUR.get(m.group(1).strip().lower(), "USD"), _period(window)
     return None, None, None, None
 
 
 # Rough fixed rates, only for "minimum pay" filtering and display normalisation.
-FX_TO_INR = {"INR": 1.0, "USD": 85.0, "EUR": 92.0, "GBP": 108.0, "CAD": 62.0, "AUD": 56.0, "SGD": 64.0, "AED": 23.0}
+FX_TO_INR = {
+    "INR": 1.0,
+    "USD": 85.0,
+    "EUR": 92.0,
+    "GBP": 108.0,
+    "CAD": 62.0,
+    "AUD": 56.0,
+    "SGD": 64.0,
+    "AED": 23.0,
+}
 _PER_YEAR = {"year": 1, "month": 12, "hour": 2000}
 
 
@@ -253,7 +356,12 @@ def enrich(job: RawJob) -> Enrichment:
     if remote == "remote" and loc.worldwide and "WW" not in countries:
         countries.append("WW")
     countries += [f"R:{r}" for r in loc.regions if f"R:{r}" not in countries]
-    smin, smax, cur, period = (job.salary_min, job.salary_max, job.salary_currency, job.salary_period)
+    smin, smax, cur, period = (
+        job.salary_min,
+        job.salary_max,
+        job.salary_currency,
+        job.salary_period,
+    )
     if smin is None and smax is None:
         smin, smax, cur, period = salary(text)
     return Enrichment(

@@ -26,7 +26,9 @@ def _unit(v: np.ndarray) -> np.ndarray:
     return v / (np.linalg.norm(v) + 1e-9)
 
 
-def active_resume(session: Session, user: User, resume_id: uuid.UUID | None = None) -> Resume | None:
+def active_resume(
+    session: Session, user: User, resume_id: uuid.UUID | None = None
+) -> Resume | None:
     q = select(Resume).where(Resume.user_id == user.id)
     if resume_id:
         r = session.scalar(q.where(Resume.id == resume_id))
@@ -46,7 +48,11 @@ def build_context(session: Session, user: User, resume_id: uuid.UUID | None = No
         families=list(prefs.role_families or profile.get("suggested_role_families") or []),
         cities=list(prefs.cities or []),
     )
-    base = np.asarray(resume.embedding, dtype=np.float32) if resume is not None and resume.embedding is not None else None
+    base = (
+        np.asarray(resume.embedding, dtype=np.float32)
+        if resume is not None and resume.embedding is not None
+        else None
+    )
     titles = profile.get("target_titles") or []
     ctx.lex_terms = [*titles[:5], *[s for s in (resume.skills if resume else [])[:12]]]
 
@@ -72,9 +78,22 @@ def build_context(session: Session, user: User, resume_id: uuid.UUID | None = No
             if emb is not None:
                 pos.append(np.asarray(emb, dtype=np.float32))
                 pos_w.append(POSITIVE[kind])
-    saved = set(session.scalars(select(Application.job_id).where(Application.user_id == user.id, Application.job_id.is_not(None))))
-    applied = set(session.scalars(select(Application.job_id).where(
-        Application.user_id == user.id, Application.job_id.is_not(None), Application.status != "saved")))
+    saved = set(
+        session.scalars(
+            select(Application.job_id).where(
+                Application.user_id == user.id, Application.job_id.is_not(None)
+            )
+        )
+    )
+    applied = set(
+        session.scalars(
+            select(Application.job_id).where(
+                Application.user_id == user.id,
+                Application.job_id.is_not(None),
+                Application.status != "saved",
+            )
+        )
+    )
     ctx.saved_job_ids = saved
     ctx.hidden_job_ids = list(hidden | applied)
     if pos:

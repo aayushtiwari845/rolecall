@@ -8,7 +8,12 @@ from app.ingest.types import FetchResult, RawJob
 
 API = "https://api.ashbyhq.com/posting-api/job-board/{key}"
 
-_EMPLOYMENT = {"FullTime": "full_time", "Intern": "intern", "Contract": "contract", "PartTime": "part_time"}
+_EMPLOYMENT = {
+    "FullTime": "full_time",
+    "Intern": "intern",
+    "Contract": "contract",
+    "PartTime": "part_time",
+}
 _WORKPLACE = {"Remote": "remote", "Hybrid": "hybrid", "OnSite": "onsite"}
 _INTERVAL = {"1 YEAR": "year", "1 MONTH": "month", "1 HOUR": "hour"}
 
@@ -46,7 +51,8 @@ def parse(payload: dict, key: str, company_name: str | None) -> list[RawJob]:
                 title=(j.get("title") or "").strip(),
                 url=j.get("jobUrl") or f"https://jobs.ashbyhq.com/{key}/{j['id']}",
                 apply_url=j.get("applyUrl"),
-                description_text=j.get("descriptionPlain") or html_to_text(j.get("descriptionHtml")),
+                description_text=j.get("descriptionPlain")
+                or html_to_text(j.get("descriptionHtml")),
                 location_raw="; ".join(loc for loc in locations if loc) or None,
                 department=j.get("department") or j.get("team"),
                 posted_at=parse_dt(j.get("publishedAt")),

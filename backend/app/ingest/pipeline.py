@@ -29,8 +29,20 @@ log = logging.getLogger(__name__)
 # Sources that are not tied to a single company.
 GLOBAL_SOURCES = [("hn", "latest"), ("remotive", ""), ("arbeitnow", ""), ("remoteok", "")]
 # Prefer company-owned boards over aggregators when the same role appears twice.
-SOURCE_PRIORITY = {"greenhouse": 0, "lever": 0, "ashby": 0, "workable": 0, "smartrecruiters": 0,
-                   "recruitee": 0, "workday": 0, "jsonld": 1, "hn": 2, "remotive": 3, "arbeitnow": 3, "remoteok": 3}
+SOURCE_PRIORITY = {
+    "greenhouse": 0,
+    "lever": 0,
+    "ashby": 0,
+    "workable": 0,
+    "smartrecruiters": 0,
+    "recruitee": 0,
+    "workday": 0,
+    "jsonld": 1,
+    "hn": 2,
+    "remotive": 3,
+    "arbeitnow": 3,
+    "remoteok": 3,
+}
 PARTIAL_STALE_DAYS = 7
 AUTO_DISABLE_AFTER = 5
 
@@ -58,7 +70,9 @@ def seed_sources(session: Session) -> int:
             company.tags = entry.get("tags") or company.tags
         for src in entry.get("sources") or []:
             exists = session.scalar(
-                select(CompanySource).where(CompanySource.kind == src["kind"], CompanySource.key == src["key"])
+                select(CompanySource).where(
+                    CompanySource.kind == src["kind"], CompanySource.key == src["key"]
+                )
             )
             if exists is None:
                 session.add(CompanySource(company_id=company.id, kind=src["kind"], key=src["key"]))
@@ -66,7 +80,9 @@ def seed_sources(session: Session) -> int:
             if src["kind"] == "jsonld":
                 company.careers_url = src["key"]
     for kind, key in GLOBAL_SOURCES:
-        if not session.scalar(select(CompanySource).where(CompanySource.kind == kind, CompanySource.key == key)):
+        if not session.scalar(
+            select(CompanySource).where(CompanySource.kind == kind, CompanySource.key == key)
+        ):
             session.add(CompanySource(company_id=None, kind=kind, key=key))
             n += 1
     session.commit()
@@ -129,13 +145,17 @@ def upsert_jobs(session: Session, source: CompanySource, result: FetchResult) ->
         if job is None:
             # Same posting id may exist from an older source row; fall back to global key.
             job = session.scalar(
-                select(Job).where(Job.source_kind == raw.source_kind, Job.source_job_id == raw.source_job_id)
+                select(Job).where(
+                    Job.source_kind == raw.source_kind, Job.source_job_id == raw.source_job_id
+                )
             )
         is_new = job is None
         # Resolve the company before touching the Job so autoflush never sees a half-built row.
         company_id = source.company_id or _company_for(session, raw.company_name, company_cache)
         if is_new:
-            job = Job(source_kind=raw.source_kind, source_job_id=raw.source_job_id, first_seen_at=now)
+            job = Job(
+                source_kind=raw.source_kind, source_job_id=raw.source_job_id, first_seen_at=now
+            )
         job.source_id = source.id
         job.company_id = company_id
         job.company_name = (source.company.name if source.company else raw.company_name)[:200]
@@ -179,9 +199,7 @@ def _close_missing(session: Session, source: CompanySource, seen: set[str], now:
     """Complete boards: a job missing from N consecutive runs has been filled/removed."""
     limit = get_settings().close_after_missed_runs
     closed = 0
-    for job in session.scalars(
-        select(Job).where(Job.source_id == source.id, Job.status == "open")
-    ):
+    for job in session.scalars(select(Job).where(Job.source_id == source.id, Job.status == "open")):
         if job.source_job_id in seen:
             continue
         job.missed_runs += 1
@@ -198,14 +216,20 @@ def close_stale(session: Session) -> int:
     partial = list(AGGREGATOR_KINDS | {"jsonld", "workday"})
     q1 = (
         update(Job)
-        .where(Job.status == "open", Job.source_kind.in_(partial),
-               Job.last_seen_at < now - timedelta(days=PARTIAL_STALE_DAYS))
+        .where(
+            Job.status == "open",
+            Job.source_kind.in_(partial),
+            Job.last_seen_at < now - timedelta(days=PARTIAL_STALE_DAYS),
+        )
         .values(status="closed", closed_at=now)
     )
     q2 = (
         update(Job)
-        .where(Job.status == "open", Job.source_kind.in_(list(AGGREGATOR_KINDS)),
-               Job.posted_at < now - timedelta(days=ttl))
+        .where(
+            Job.status == "open",
+            Job.source_kind.in_(list(AGGREGATOR_KINDS)),
+            Job.posted_at < now - timedelta(days=ttl),
+        )
         .values(status="closed", closed_at=now)
     )
     n = session.execute(q1).rowcount + session.execute(q2).rowcount
@@ -266,7 +290,9 @@ async def run_ingest(
             q = q.where(CompanySource.id.in_(source_ids))
         if stale_hours:
             cutoff = datetime.now(UTC) - timedelta(hours=stale_hours)
-            q = q.where((CompanySource.last_run_at.is_(None)) | (CompanySource.last_run_at < cutoff))
+            q = q.where(
+                (CompanySource.last_run_at.is_(None)) | (CompanySource.last_run_at < cutoff)
+            )
         q = q.order_by(CompanySource.last_run_at.asc().nulls_first())
         if limit:
             q = q.limit(limit)
@@ -280,7 +306,7 @@ async def run_ingest(
         with session_scope() as s:
             src = s.get(CompanySource, sid)
             assert src is not None
-            src.company  # load before session closes
+            _ = src.company  # load the relationship before the session closes
             s.expunge(src)
         try:
             return sid, await _fetch(client, src)
@@ -304,7 +330,11 @@ async def run_ingest(
                     src.last_status, src.last_error = "error", msg
                     src.consecutive_failures += 1
                     # Boards that 404 repeatedly have moved; stop hammering them.
-                    if isinstance(result, FetchError) and result.status == 404 and src.consecutive_failures >= AUTO_DISABLE_AFTER:
+                    if (
+                        isinstance(result, FetchError)
+                        and result.status == 404
+                        and src.consecutive_failures >= AUTO_DISABLE_AFTER
+                    ):
                         src.enabled = False
                     log.warning("source %s:%s failed: %s", src.kind, src.key, msg)
                 else:
@@ -318,9 +348,14 @@ async def run_ingest(
                 session.flush()
                 from sqlalchemy import func
 
-                src.jobs_open = session.scalar(
-                    select(func.count()).select_from(Job).where(Job.source_id == sid, Job.status == "open", Job.is_tech)
-                ) or 0
+                src.jobs_open = (
+                    session.scalar(
+                        select(func.count())
+                        .select_from(Job)
+                        .where(Job.source_id == sid, Job.status == "open", Job.is_tech)
+                    )
+                    or 0
+                )
     finally:
         await client.aclose()
 

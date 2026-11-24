@@ -8,7 +8,12 @@ from app.ingest.types import FetchResult, RawJob
 
 API = "https://{key}.recruitee.com/api/offers/"
 
-_EMPLOYMENT = {"fulltime": "full_time", "parttime": "part_time", "internship": "intern", "contract": "contract"}
+_EMPLOYMENT = {
+    "fulltime": "full_time",
+    "parttime": "part_time",
+    "internship": "intern",
+    "contract": "contract",
+}
 
 
 def parse(payload: dict, key: str, company_name: str | None) -> list[RawJob]:

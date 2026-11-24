@@ -88,7 +88,9 @@ class PoliteClient:
         rp = self._robots[base]
         return True if rp is None else rp.can_fetch(self.user_agent, url)
 
-    async def get(self, url: str, *, params=None, check_robots: bool = False, **kw) -> httpx.Response:
+    async def get(
+        self, url: str, *, params=None, check_robots: bool = False, **kw
+    ) -> httpx.Response:
         return await self.request("GET", url, params=params, check_robots=check_robots, **kw)
 
     async def post_json(self, url: str, payload: dict, **kw):
@@ -118,7 +120,9 @@ class PoliteClient:
                     continue
             if resp.status_code in RETRY_STATUS and attempt <= self._max_retries:
                 retry_after = resp.headers.get("Retry-After", "")
-                wait = max(float(retry_after) if retry_after.isdigit() else 0.0, self._backoff(attempt))
+                wait = max(
+                    float(retry_after) if retry_after.isdigit() else 0.0, self._backoff(attempt)
+                )
                 log.info("retrying %s after %.1fs (status %s)", url, wait, resp.status_code)
                 await asyncio.sleep(min(wait, 60))
                 continue

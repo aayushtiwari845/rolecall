@@ -17,13 +17,24 @@ _TAXONOMY: list[tuple[str, str, list[str]]] = [
     ("Java", "language", [r"java(?!\s*script)"]),
     ("JavaScript", "language", [r"javascript", r"\bjs\b(?!\s*on)", r"ecmascript", r"es6"]),
     ("TypeScript", "language", [r"typescript", r"\bts\b(?=\s*[,/)])"]),
-    ("Go", "language", [r"golang", r"(?-i:\bGo\b)(?=\s*(?:[,/)]|and\b|or\b|developer|programming|language|lang\b|services|backend|microservices))"]),
+    (
+        "Go",
+        "language",
+        [
+            r"golang",
+            r"(?-i:\bGo\b)(?=\s*(?:[,/)]|and\b|or\b|developer|programming|language|lang\b|services|backend|microservices))",
+        ],
+    ),
     ("Rust", "language", [r"rust(?!\s*belt)"]),
     ("C++", "language", [r"c\+\+", r"\bcpp\b"]),
     ("C#", "language", [r"c#", r"\.net\b", r"dotnet", r"asp\.net"]),
     ("C", "language", [r"(?-i:\bC\b)(?=\s*(?:/C\+\+|,\s*C\+\+|and C\+\+|programming))"]),
     ("Kotlin", "language", [r"kotlin"]),
-    ("Swift", "language", [r"(?-i:\bSwift\b)(?=\s*[,/).;]|\s+(?:and|or|programming|language|developer|code)\b|\s*$)"]),
+    (
+        "Swift",
+        "language",
+        [r"(?-i:\bSwift\b)(?=\s*[,/).;]|\s+(?:and|or|programming|language|developer|code)\b|\s*$)"],
+    ),
     ("Scala", "language", [r"scala\b"]),
     ("Ruby", "language", [r"ruby"]),
     ("PHP", "language", [r"\bphp\b"]),
@@ -75,7 +86,19 @@ _TAXONOMY: list[tuple[str, str, list[str]]] = [
     ("Snowflake", "database", [r"snowflake"]),
     ("BigQuery", "database", [r"big\s?query"]),
     ("Redshift", "database", [r"redshift"]),
-    ("Vector Databases", "database", [r"vector (?:database|db|store)s?", r"pgvector", r"pinecone", r"weaviate", r"qdrant", r"milvus", r"chroma\s?db"]),
+    (
+        "Vector Databases",
+        "database",
+        [
+            r"vector (?:database|db|store)s?",
+            r"pgvector",
+            r"pinecone",
+            r"weaviate",
+            r"qdrant",
+            r"milvus",
+            r"chroma\s?db",
+        ],
+    ),
     # Data engineering
     ("Apache Spark", "data", [r"spark", r"pyspark"]),
     ("Kafka", "data", [r"kafka"]),
@@ -100,19 +123,66 @@ _TAXONOMY: list[tuple[str, str, list[str]]] = [
     ("scikit-learn", "ml", [r"scikit[- ]learn", r"sklearn"]),
     ("XGBoost", "ml", [r"xgboost", r"lightgbm", r"catboost"]),
     ("NLP", "ml", [r"\bnlp\b", r"natural language processing"]),
-    ("Computer Vision", "ml", [r"computer vision", r"\bopencv\b", r"image (?:recognition|segmentation)"]),
-    ("Recommender Systems", "ml", [r"recommend(?:er|ation) (?:systems?|engines?)", r"personali[sz]ation", r"ranking systems?"]),
-    ("Search / Information Retrieval", "ml", [r"information retrieval", r"semantic search", r"search (?:ranking|relevance|infrastructure)", r"\bbm25\b"]),
-    ("LLMs", "ai", [r"\bllms?\b", r"large language models?", r"gpt-?\d?", r"generative ai", r"\bgenai\b", r"foundation models?"]),
+    (
+        "Computer Vision",
+        "ml",
+        [r"computer vision", r"\bopencv\b", r"image (?:recognition|segmentation)"],
+    ),
+    (
+        "Recommender Systems",
+        "ml",
+        [
+            r"recommend(?:er|ation) (?:systems?|engines?)",
+            r"personali[sz]ation",
+            r"ranking systems?",
+        ],
+    ),
+    (
+        "Search / Information Retrieval",
+        "ml",
+        [
+            r"information retrieval",
+            r"semantic search",
+            r"search (?:ranking|relevance|infrastructure)",
+            r"\bbm25\b",
+        ],
+    ),
+    (
+        "LLMs",
+        "ai",
+        [
+            r"\bllms?\b",
+            r"large language models?",
+            r"gpt-?\d?",
+            r"generative ai",
+            r"\bgenai\b",
+            r"foundation models?",
+        ],
+    ),
     ("RAG", "ai", [r"\brag\b", r"retrieval[- ]augmented"]),
     ("Embeddings", "ai", [r"embeddings?"]),
     ("Prompt Engineering", "ai", [r"prompt(?:ing| engineering)"]),
-    ("AI Agents", "ai", [r"\bai agents?\b", r"agentic", r"tool[- ]use", r"function calling", r"langgraph", r"multi-agent"]),
+    (
+        "AI Agents",
+        "ai",
+        [
+            r"\bai agents?\b",
+            r"agentic",
+            r"tool[- ]use",
+            r"function calling",
+            r"langgraph",
+            r"multi-agent",
+        ],
+    ),
     ("LangChain", "ai", [r"langchain", r"llama\s?index"]),
     ("Hugging Face", "ai", [r"hugging\s?face", r"transformers library"]),
     ("Fine-tuning", "ai", [r"fine[- ]tun\w+", r"\blora\b", r"\brlhf\b"]),
     ("LLM Evals", "ai", [r"\bevals?\b", r"llm evaluation", r"evaluation (?:harness|framework)s?"]),
-    ("MLOps", "ml", [r"mlops", r"mlflow", r"kubeflow", r"model serving", r"sagemaker", r"vertex ai"]),
+    (
+        "MLOps",
+        "ml",
+        [r"mlops", r"mlflow", r"kubeflow", r"model serving", r"sagemaker", r"vertex ai"],
+    ),
     # Infra / cloud
     ("AWS", "cloud", [r"\baws\b", r"amazon web services", r"\bec2\b", r"\bs3\b", r"\blambda\b"]),
     ("GCP", "cloud", [r"\bgcp\b", r"google cloud"]),
@@ -120,19 +190,59 @@ _TAXONOMY: list[tuple[str, str, list[str]]] = [
     ("Docker", "infra", [r"docker", r"containeri[sz]\w+"]),
     ("Kubernetes", "infra", [r"kubernetes", r"\bk8s\b", r"\beks\b", r"\bgke\b", r"\bhelm\b"]),
     ("Terraform", "infra", [r"terraform", r"infrastructure as code", r"\biac\b", r"pulumi"]),
-    ("CI/CD", "infra", [r"ci\s?/\s?cd", r"continuous (?:integration|delivery|deployment)", r"github actions", r"jenkins", r"gitlab ci"]),
+    (
+        "CI/CD",
+        "infra",
+        [
+            r"ci\s?/\s?cd",
+            r"continuous (?:integration|delivery|deployment)",
+            r"github actions",
+            r"jenkins",
+            r"gitlab ci",
+        ],
+    ),
     ("Linux", "infra", [r"linux", r"unix"]),
-    ("Observability", "infra", [r"prometheus", r"grafana", r"observability", r"opentelemetry", r"datadog", r"\belk\b"]),
+    (
+        "Observability",
+        "infra",
+        [r"prometheus", r"grafana", r"observability", r"opentelemetry", r"datadog", r"\belk\b"],
+    ),
     ("Networking", "infra", [r"tcp/ip", r"networking", r"\bdns\b", r"load balanc\w+"]),
     ("Git", "tools", [r"\bgit\b", r"github", r"gitlab"]),
     # Practices / CS
-    ("Testing", "practice", [r"unit test\w*", r"integration test\w*", r"\btdd\b", r"pytest", r"jest", r"junit", r"test automation"]),
+    (
+        "Testing",
+        "practice",
+        [
+            r"unit test\w*",
+            r"integration test\w*",
+            r"\btdd\b",
+            r"pytest",
+            r"jest",
+            r"junit",
+            r"test automation",
+        ],
+    ),
     ("Selenium", "practice", [r"selenium", r"playwright", r"cypress"]),
     ("Data Structures & Algorithms", "cs", [r"data structures", r"algorithms", r"\bdsa\b"]),
     ("OOP", "cs", [r"object[- ]oriented", r"\boop\b"]),
     ("Concurrency", "cs", [r"concurren\w+", r"multi-?thread\w*", r"asyncio"]),
-    ("Security", "security", [r"owasp", r"application security", r"penetration testing", r"threat model\w*", r"cryptograph\w*"]),
-    ("OAuth / Auth", "security", [r"oauth\s?2?", r"\bjwt\b", r"\bsso\b", r"\brbac\b", r"authentication"]),
+    (
+        "Security",
+        "security",
+        [
+            r"owasp",
+            r"application security",
+            r"penetration testing",
+            r"threat model\w*",
+            r"cryptograph\w*",
+        ],
+    ),
+    (
+        "OAuth / Auth",
+        "security",
+        [r"oauth\s?2?", r"\bjwt\b", r"\bsso\b", r"\brbac\b", r"authentication"],
+    ),
     ("Embedded C", "embedded", [r"embedded c", r"rtos", r"microcontrollers?", r"firmware"]),
     ("Blockchain", "web3", [r"blockchain", r"web3", r"smart contracts?", r"ethereum"]),
 ]
@@ -141,7 +251,16 @@ CATEGORIES: dict[str, str] = {name: cat for name, cat, _ in _TAXONOMY}
 ALL_SKILLS: list[str] = [name for name, _, _ in _TAXONOMY]
 
 # Skills too generic to count much as evidence of fit
-WEAK_SKILLS = {"Git", "Excel", "Linux", "REST APIs", "SQL", "Data Structures & Algorithms", "OOP", "HTML/CSS"}
+WEAK_SKILLS = {
+    "Git",
+    "Excel",
+    "Linux",
+    "REST APIs",
+    "SQL",
+    "Data Structures & Algorithms",
+    "OOP",
+    "HTML/CSS",
+}
 
 
 @lru_cache(maxsize=1)

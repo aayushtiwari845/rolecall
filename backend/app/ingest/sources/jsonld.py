@@ -27,7 +27,13 @@ MAX_JOB_PAGES = 60
 _JOB_LINK = re.compile(r"/(jobs?|careers?|positions?|openings?|vacanc(y|ies)|roles?)/[^/?#]+", re.I)
 
 ATS_PATTERNS = [
-    ("greenhouse", re.compile(r"(?:boards|job-boards)(?:\.eu)?\.greenhouse\.io/(?:embed/job_board\?for=)?([\w-]+)", re.I)),
+    (
+        "greenhouse",
+        re.compile(
+            r"(?:boards|job-boards)(?:\.eu)?\.greenhouse\.io/(?:embed/job_board\?for=)?([\w-]+)",
+            re.I,
+        ),
+    ),
     ("lever", re.compile(r"jobs\.lever\.co/([\w.-]+)", re.I)),
     ("ashby", re.compile(r"jobs\.ashbyhq\.com/([\w.%-]+)", re.I)),
     ("workable", re.compile(r"apply\.workable\.com/([\w-]+)", re.I)),
@@ -123,7 +129,11 @@ def parse_page(html: str, page_url: str, fallback_company: str | None) -> list[R
     jobs = []
     for jp in _iter_jsonld(tree):
         org = jp.get("hiringOrganization") or {}
-        company = (org.get("name") if isinstance(org, dict) else org) or fallback_company or urlsplit(page_url).netloc
+        company = (
+            (org.get("name") if isinstance(org, dict) else org)
+            or fallback_company
+            or urlsplit(page_url).netloc
+        )
         url = jp.get("url") or page_url
         loc, countries, remote = _location(jp)
         smin, smax, cur, period = _salary(jp)
@@ -156,7 +166,12 @@ def job_links(html: str, page_url: str) -> list[str]:
     seen: list[str] = []
     for a in HTMLParser(html).css("a[href]"):
         href = urljoin(page_url, a.attributes.get("href") or "").split("#")[0]
-        if urlsplit(href).netloc == host and _JOB_LINK.search(href) and href != page_url and href not in seen:
+        if (
+            urlsplit(href).netloc == host
+            and _JOB_LINK.search(href)
+            and href != page_url
+            and href not in seen
+        ):
             seen.append(href)
     return seen[:MAX_JOB_PAGES]
 

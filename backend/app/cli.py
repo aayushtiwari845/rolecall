@@ -8,7 +8,9 @@ import logging
 
 import typer
 
-app = typer.Typer(help="Rolecall: ingestion, enrichment, embeddings and evals.", no_args_is_help=True)
+app = typer.Typer(
+    help="Rolecall: ingestion, enrichment, embeddings and evals.", no_args_is_help=True
+)
 
 
 def _setup_logging(verbose: bool) -> None:
@@ -27,7 +29,8 @@ def main(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
 @app.command()
 def discover(limit: int = typer.Option(0, help="Only probe the first N candidates")) -> None:
     """Probe candidate companies for live ATS boards and write seeds/companies.yaml."""
-    from app.ingest.discovery import discover as run, load_candidates, write_seeds
+    from app.ingest.discovery import discover as run
+    from app.ingest.discovery import load_candidates, write_seeds
 
     candidates = load_candidates()
     if limit:
@@ -74,7 +77,9 @@ def embed(max_jobs: int = typer.Option(0, help="Stop after N jobs")) -> None:
 
 
 @app.command("enrich-llm")
-def enrich_llm(limit: int = typer.Option(50, help="Max jobs this run (also capped by the daily budget)")) -> None:
+def enrich_llm(
+    limit: int = typer.Option(50, help="Max jobs this run (also capped by the daily budget)"),
+) -> None:
     """Refine job fields with an LLM (needs at least one provider key)."""
     from app.db import session_scope
     from app.enrich.llm_extract import enrich_pending
@@ -98,10 +103,15 @@ def stats() -> None:
         typer.echo(f"embedded: {s.scalar(open_q.where(Job.embedding.is_not(None)))}")
         for col in (Job.source_kind, Job.seniority, Job.role_family, Job.remote_type):
             rows = s.execute(
-                select(col, func.count()).where(Job.status == "open", Job.is_tech).group_by(col).order_by(func.count().desc())
+                select(col, func.count())
+                .where(Job.status == "open", Job.is_tech)
+                .group_by(col)
+                .order_by(func.count().desc())
             ).all()
             typer.echo(f"{col.key}: " + ", ".join(f"{k}={v}" for k, v in rows))
-        rows = s.execute(select(CompanySource.last_status, func.count()).group_by(CompanySource.last_status)).all()
+        rows = s.execute(
+            select(CompanySource.last_status, func.count()).group_by(CompanySource.last_status)
+        ).all()
         typer.echo("sources: " + ", ".join(f"{k}={v}" for k, v in rows))
 
 

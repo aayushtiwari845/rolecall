@@ -9,7 +9,12 @@ from app.ingest.types import FetchResult, RawJob
 API = "https://api.lever.co/v0/postings/{key}"
 
 _WORKPLACE = {"remote": "remote", "hybrid": "hybrid", "on-site": "onsite", "onsite": "onsite"}
-_COMMITMENT = {"intern": "intern", "internship": "intern", "contract": "contract", "part": "part_time"}
+_COMMITMENT = {
+    "intern": "intern",
+    "internship": "intern",
+    "contract": "contract",
+    "part": "part_time",
+}
 _INTERVAL = {"per-year-salary": "year", "per-month-salary": "month", "per-hour-wage": "hour"}
 
 

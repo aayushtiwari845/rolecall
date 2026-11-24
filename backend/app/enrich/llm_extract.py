@@ -24,19 +24,39 @@ log = logging.getLogger(__name__)
 
 Level = Literal["intern", "new_grad", "junior", "mid", "senior", "staff_plus"]
 Family = Literal[
-    "swe", "backend", "frontend", "fullstack", "mobile", "ml", "ai_llm", "data_eng",
-    "data_science", "infra", "security", "qa", "embedded", "other",
+    "swe",
+    "backend",
+    "frontend",
+    "fullstack",
+    "mobile",
+    "ml",
+    "ai_llm",
+    "data_eng",
+    "data_science",
+    "infra",
+    "security",
+    "qa",
+    "embedded",
+    "other",
 ]
 
 
 class JobExtraction(BaseModel):
-    summary: str = Field(description="One or two plain sentences: what the person in this role will actually do.")
+    summary: str = Field(
+        description="One or two plain sentences: what the person in this role will actually do."
+    )
     seniority: Level | None = Field(None, description="Experience level the posting targets.")
     role_family: Family | None = None
-    min_years_experience: float | None = Field(None, description="Minimum years required, null if not stated.")
-    required_skills: list[str] = Field(default_factory=list, description="Concrete technical skills required (max 12).")
+    min_years_experience: float | None = Field(
+        None, description="Minimum years required, null if not stated."
+    )
+    required_skills: list[str] = Field(
+        default_factory=list, description="Concrete technical skills required (max 12)."
+    )
     nice_to_have_skills: list[str] = Field(default_factory=list, description="Max 8.")
-    open_to_freshers: bool | None = Field(None, description="True if students / fresh graduates can apply.")
+    open_to_freshers: bool | None = Field(
+        None, description="True if students / fresh graduates can apply."
+    )
 
 
 PROMPT = """Extract structured information from this job posting.
@@ -50,10 +70,14 @@ Posting:
 
 def extract(llm: LLMRouter, job: Job) -> JobExtraction:
     msg = PROMPT.format(
-        title=job.title, company=job.company_name, location=job.location_raw or "n/a",
+        title=job.title,
+        company=job.company_name,
+        location=job.location_raw or "n/a",
         text=(job.description_text or "")[:6000],
     )
-    return llm.structured([{"role": "user", "content": msg}], JobExtraction, tier="fast", purpose="enrich")
+    return llm.structured(
+        [{"role": "user", "content": msg}], JobExtraction, tier="fast", purpose="enrich"
+    )
 
 
 def apply_extraction(job: Job, ex: JobExtraction) -> None:
@@ -61,11 +85,19 @@ def apply_extraction(job: Job, ex: JobExtraction) -> None:
     # Rules are precise when they fire on the title; the LLM fills the gaps.
     if ex.seniority and job.seniority is None:
         job.seniority = ex.seniority
-    if ex.seniority in ("intern", "new_grad") and ex.open_to_freshers and job.seniority in (None, "mid", "junior"):
+    if (
+        ex.seniority in ("intern", "new_grad")
+        and ex.open_to_freshers
+        and job.seniority in (None, "mid", "junior")
+    ):
         job.seniority = ex.seniority
     if ex.role_family and job.role_family in (None, "swe", "other"):
         job.role_family = ex.role_family
-    if job.min_yoe is None and ex.min_years_experience is not None and 0 <= ex.min_years_experience <= 15:
+    if (
+        job.min_yoe is None
+        and ex.min_years_experience is not None
+        and 0 <= ex.min_years_experience <= 15
+    ):
         job.min_yoe = ex.min_years_experience
     extra = [canonicalize(s) for s in ex.required_skills + ex.nice_to_have_skills]
     merged = list(dict.fromkeys([*(job.skills or []), *(s for s in extra if s)]))
@@ -76,11 +108,18 @@ def apply_extraction(job: Job, ex: JobExtraction) -> None:
 
 def budget_left(session: Session) -> int:
     since = datetime.now(UTC) - timedelta(days=1)
-    used = session.scalar(
-        select(func.count()).select_from(LLMCall).where(
-            LLMCall.purpose == "enrich", LLMCall.created_at >= since, LLMCall.cache_hit.is_(False)
+    used = (
+        session.scalar(
+            select(func.count())
+            .select_from(LLMCall)
+            .where(
+                LLMCall.purpose == "enrich",
+                LLMCall.created_at >= since,
+                LLMCall.cache_hit.is_(False),
+            )
         )
-    ) or 0
+        or 0
+    )
     return max(0, get_settings().enrich_llm_daily_budget - used)
 
 
@@ -97,10 +136,19 @@ def enrich_pending(session: Session, limit: int | None = None, llm: LLMRouter | 
         or_(Job.countries.any("IN"), Job.remote_type == "remote").desc(),
         Job.first_seen_at.desc(),
     )
-    jobs = list(session.scalars(
-        select(Job).where(Job.status == "open", Job.is_tech.is_(True), Job.enriched_by == "rules",
-                          Job.duplicate_of.is_(None)).order_by(*priority).limit(n)
-    ))
+    jobs = list(
+        session.scalars(
+            select(Job)
+            .where(
+                Job.status == "open",
+                Job.is_tech.is_(True),
+                Job.enriched_by == "rules",
+                Job.duplicate_of.is_(None),
+            )
+            .order_by(*priority)
+            .limit(n)
+        )
+    )
     done = 0
     for job in jobs:
         try:

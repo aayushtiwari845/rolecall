@@ -11,6 +11,7 @@ postings per run and fetch details only for titles that look like tech roles.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import re
 from datetime import UTC, datetime, timedelta
 
@@ -68,10 +69,8 @@ async def fetch(client: PoliteClient, key: str, company_name: str | None = None)
         if not looks_tech_title(title):
             return None
         info: dict = {}
-        try:
+        with contextlib.suppress(FetchError):
             info = (await client.get_json(f"{api}{path}")).get("jobPostingInfo") or {}
-        except FetchError:
-            pass
         loc = info.get("location") or p.get("locationsText")
         extra = info.get("additionalLocations") or []
         time_type = (info.get("timeType") or "").lower()

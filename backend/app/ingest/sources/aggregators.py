@@ -44,7 +44,9 @@ def parse_remotive(payload: dict) -> list[RawJob]:
     ]
 
 
-async def fetch_remotive(client: PoliteClient, key: str = "", company_name: str | None = None) -> FetchResult:
+async def fetch_remotive(
+    client: PoliteClient, key: str = "", company_name: str | None = None
+) -> FetchResult:
     jobs: dict[str, RawJob] = {}
     for cat in [key] if key else REMOTIVE_CATEGORIES:
         payload = await client.get_json(REMOTIVE, params={"category": cat})
@@ -71,7 +73,9 @@ def parse_arbeitnow(payload: dict) -> list[RawJob]:
     ]
 
 
-async def fetch_arbeitnow(client: PoliteClient, key: str = "", company_name: str | None = None) -> FetchResult:
+async def fetch_arbeitnow(
+    client: PoliteClient, key: str = "", company_name: str | None = None
+) -> FetchResult:
     jobs: list[RawJob] = []
     for page in range(1, 6):
         payload = await client.get_json(ARBEITNOW, params={"page": page})
@@ -108,6 +112,8 @@ def parse_remoteok(payload: list) -> list[RawJob]:
     return jobs
 
 
-async def fetch_remoteok(client: PoliteClient, key: str = "", company_name: str | None = None) -> FetchResult:
+async def fetch_remoteok(
+    client: PoliteClient, key: str = "", company_name: str | None = None
+) -> FetchResult:
     payload = await client.get_json(REMOTEOK)
     return FetchResult(parse_remoteok(payload if isinstance(payload, list) else []), complete=False)

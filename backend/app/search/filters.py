@@ -32,13 +32,18 @@ class JobFilters(BaseModel):
     skills: list[str] = Field(default_factory=list)
 
     def is_location_free(self) -> bool:
-        return not (self.cities or self.remote_india or self.remote_global or self.countries) or self.onsite_anywhere
+        return (
+            not (self.cities or self.remote_india or self.remote_global or self.countries)
+            or self.onsite_anywhere
+        )
 
 
 def _remote_ok_global() -> ColumnElement[bool]:
     # Remote roles not restricted to some other country: worldwide, unspecified, India or APAC.
     return or_(
-        Job.countries.any("WW"), Job.countries.any("IN"), Job.countries.any("R:APAC"),
+        Job.countries.any("WW"),
+        Job.countries.any("IN"),
+        Job.countries.any("R:APAC"),
         Job.countries == [],  # type: ignore[comparison-overlap]
     )
 
@@ -64,11 +69,13 @@ def salary_clause(min_inr: float) -> ColumnElement[bool]:
     conds = []
     for cur, rate in FX_TO_INR.items():
         for period, mult in PERIOD_MULT.items():
-            conds.append(and_(
-                Job.salary_currency == cur,
-                Job.salary_period == period,
-                func_coalesce(Job.salary_max, Job.salary_min) * rate * mult >= min_inr,
-            ))
+            conds.append(
+                and_(
+                    Job.salary_currency == cur,
+                    Job.salary_period == period,
+                    func_coalesce(Job.salary_max, Job.salary_min) * rate * mult >= min_inr,
+                )
+            )
     return or_(Job.salary_min.is_(None) & Job.salary_max.is_(None), *conds)
 
 
@@ -97,7 +104,9 @@ def build_where(f: JobFilters, exclude_ids: list | None = None) -> list[ColumnEl
     if f.exclude_companies:
         where.append(Job.company_name.not_in(f.exclude_companies))
     if f.company_tags:
-        where.append(Job.company_id.in_(select(Company.id).where(Company.tags.overlap(f.company_tags))))
+        where.append(
+            Job.company_id.in_(select(Company.id).where(Company.tags.overlap(f.company_tags)))
+        )
     if f.posted_within_days:
         where.append(Job.posted_at >= datetime.now(UTC) - timedelta(days=f.posted_within_days))
     if f.min_salary_inr:

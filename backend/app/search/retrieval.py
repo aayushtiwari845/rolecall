@@ -41,7 +41,9 @@ def _tune(session: Session) -> None:
         session.rollback()
 
 
-def dense(session: Session, qvec: np.ndarray, filters: JobFilters, k: int, exclude=None) -> list[tuple[uuid.UUID, float]]:
+def dense(
+    session: Session, qvec: np.ndarray, filters: JobFilters, k: int, exclude=None
+) -> list[tuple[uuid.UUID, float]]:
     _tune(session)
     dist = Job.embedding.cosine_distance(qvec.tolist())
     q = (
@@ -66,7 +68,9 @@ def lexical_query(terms: list[str]) -> str:
     return " OR ".join(out)
 
 
-def lexical(session: Session, query: str, filters: JobFilters, k: int, exclude=None) -> list[tuple[uuid.UUID, float]]:
+def lexical(
+    session: Session, query: str, filters: JobFilters, k: int, exclude=None
+) -> list[tuple[uuid.UUID, float]]:
     if not query.strip():
         return []
     tsq = func.websearch_to_tsquery("english", query)
@@ -80,8 +84,12 @@ def lexical(session: Session, query: str, filters: JobFilters, k: int, exclude=N
     return [(r.id, float(r.score)) for r in session.execute(q)]
 
 
-def fuse(dense_hits: list[tuple[uuid.UUID, float]], lex_hits: list[tuple[uuid.UUID, float]],
-         w_dense: float = 1.0, w_lex: float = 1.0) -> list[Candidate]:
+def fuse(
+    dense_hits: list[tuple[uuid.UUID, float]],
+    lex_hits: list[tuple[uuid.UUID, float]],
+    w_dense: float = 1.0,
+    w_lex: float = 1.0,
+) -> list[Candidate]:
     cands: dict[uuid.UUID, Candidate] = {}
     for rank, (jid, sim) in enumerate(dense_hits, 1):
         c = cands.setdefault(jid, Candidate(jid))
@@ -94,8 +102,25 @@ def fuse(dense_hits: list[tuple[uuid.UUID, float]], lex_hits: list[tuple[uuid.UU
     return sorted(cands.values(), key=lambda c: c.rrf, reverse=True)
 
 
-def hybrid(session: Session, *, qvec: np.ndarray | None, lex_query: str, filters: JobFilters,
-           k_dense: int = 200, k_lex: int = 150, exclude=None, mode: str = "hybrid") -> list[Candidate]:
-    d = dense(session, qvec, filters, k_dense, exclude) if (qvec is not None and mode in ("hybrid", "dense")) else []
-    lx = lexical(session, lex_query, filters, k_lex, exclude) if mode in ("hybrid", "lexical") else []
+def hybrid(
+    session: Session,
+    *,
+    qvec: np.ndarray | None,
+    lex_query: str,
+    filters: JobFilters,
+    k_dense: int = 200,
+    k_lex: int = 150,
+    exclude=None,
+    mode: str = "hybrid",
+) -> list[Candidate]:
+    d = (
+        dense(session, qvec, filters, k_dense, exclude)
+        if (qvec is not None and mode in ("hybrid", "dense"))
+        else []
+    )
+    lx = (
+        lexical(session, lex_query, filters, k_lex, exclude)
+        if mode in ("hybrid", "lexical")
+        else []
+    )
     return fuse(d, lx)

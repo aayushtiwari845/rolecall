@@ -19,12 +19,30 @@ from app.models import Job
 from app.search.retrieval import Candidate
 
 LEVELS = ["intern", "new_grad", "junior", "mid", "senior", "staff_plus"]
-LEVEL_LABEL = {"intern": "Internship", "new_grad": "New grad", "junior": "Junior", "mid": "Mid-level",
-               "senior": "Senior", "staff_plus": "Staff+"}
-FAMILY_LABEL = {"swe": "Software", "backend": "Backend", "frontend": "Frontend", "fullstack": "Full-stack",
-                "mobile": "Mobile", "ml": "ML", "ai_llm": "AI / LLM", "data_eng": "Data engineering",
-                "data_science": "Data science", "infra": "Infra / DevOps", "security": "Security",
-                "qa": "QA", "embedded": "Embedded", "other": "Other"}
+LEVEL_LABEL = {
+    "intern": "Internship",
+    "new_grad": "New grad",
+    "junior": "Junior",
+    "mid": "Mid-level",
+    "senior": "Senior",
+    "staff_plus": "Staff+",
+}
+FAMILY_LABEL = {
+    "swe": "Software",
+    "backend": "Backend",
+    "frontend": "Frontend",
+    "fullstack": "Full-stack",
+    "mobile": "Mobile",
+    "ml": "ML",
+    "ai_llm": "AI / LLM",
+    "data_eng": "Data engineering",
+    "data_science": "Data science",
+    "infra": "Infra / DevOps",
+    "security": "Security",
+    "qa": "QA",
+    "embedded": "Embedded",
+    "other": "Other",
+}
 
 
 @dataclass
@@ -150,7 +168,10 @@ def _age_text(days: int) -> str:
 
 
 def score_candidates(
-    cands: list[Candidate], jobs: dict[uuid.UUID, Job], user: UserContext, w: Weights,
+    cands: list[Candidate],
+    jobs: dict[uuid.UUID, Job],
+    user: UserContext,
+    w: Weights,
     relevance: dict[uuid.UUID, float] | None = None,
 ) -> list[Ranked]:
     """Score candidates. ``relevance`` (search) replaces semantic+lexical when given."""
@@ -158,7 +179,9 @@ def score_candidates(
     cands = [c for c in cands if c.job_id in jobs]
     sem = _minmax([c.dense_sim for c in cands])
     lex = _minmax([c.lex_score for c in cands])
-    total_w = (w.semantic + w.lexical + w.skills + w.level + w.role + w.location + w.recency + w.affinity) or 1.0
+    total_w = (
+        w.semantic + w.lexical + w.skills + w.level + w.role + w.location + w.recency + w.affinity
+    ) or 1.0
     out = []
     for i, c in enumerate(cands):
         job = jobs[c.job_id]
@@ -179,9 +202,14 @@ def score_candidates(
         aff += user.company_affinity.get(job.company_name, 0.0)
         f["affinity"] = max(0.0, min(1.0, 0.5 + aff))
         raw = (
-            w.semantic * f["semantic"] + w.lexical * f["lexical"] + w.skills * f["skills"]
-            + w.level * f["level"] + w.role * f["role"] + w.location * f["location"]
-            + w.recency * f["recency"] + w.affinity * f["affinity"]
+            w.semantic * f["semantic"]
+            + w.lexical * f["lexical"]
+            + w.skills * f["skills"]
+            + w.level * f["level"]
+            + w.role * f["role"]
+            + w.location * f["location"]
+            + w.recency * f["recency"]
+            + w.affinity * f["affinity"]
         ) / total_w
         warnings: list[str] = []
         if w.yoe_penalty and job.min_yoe is not None and job.min_yoe > user.years + 1:
@@ -194,21 +222,35 @@ def score_candidates(
         reasons: list[str] = []
         if matched:
             shown = ", ".join(matched[:4])
-            reasons.append(f"Matches {len(matched)} of your skills: {shown}" if len(matched) > 1 else f"Uses {shown}")
+            reasons.append(
+                f"Matches {len(matched)} of your skills: {shown}"
+                if len(matched) > 1
+                else f"Uses {shown}"
+            )
         if f["level"] >= 1.0 and job.seniority:
             reasons.append(f"Right level: {LEVEL_LABEL[job.seniority].lower()}")
         if f["role"] >= 1.0 and job.role_family:
-            reasons.append(f"{FAMILY_LABEL.get(job.role_family, job.role_family)} role, as you wanted")
+            reasons.append(
+                f"{FAMILY_LABEL.get(job.role_family, job.role_family)} role, as you wanted"
+            )
         if loc_reason:
             reasons.append(loc_reason)
         if age <= 7:
             reasons.append(_age_text(age))
         if user.pos_centroid is not None and _cos(emb, user.pos_centroid) > 0.8:
             reasons.append("Similar to jobs you saved")
-        out.append(Ranked(
-            job=job, score=raw, match=int(round(100 * min(1.0, raw / 0.85))), features=f,
-            reasons=reasons, warnings=warnings, matched_skills=matched, missing_skills=missing[:5],
-        ))
+        out.append(
+            Ranked(
+                job=job,
+                score=raw,
+                match=int(round(100 * min(1.0, raw / 0.85))),
+                features=f,
+                reasons=reasons,
+                warnings=warnings,
+                matched_skills=matched,
+                missing_skills=missing[:5],
+            )
+        )
     out.sort(key=lambda r: r.score, reverse=True)
     return out
 
