@@ -63,6 +63,28 @@ def ingest(
 
 
 @app.command()
+def embed(max_jobs: int = typer.Option(0, help="Stop after N jobs")) -> None:
+    """Embed open jobs whose content changed."""
+    from app.db import session_scope
+    from app.enrich.embed import embed_pending
+
+    with session_scope() as s:
+        n = embed_pending(s, max_jobs=max_jobs or None)
+    typer.echo(f"embedded {n} jobs")
+
+
+@app.command("enrich-llm")
+def enrich_llm(limit: int = typer.Option(50, help="Max jobs this run (also capped by the daily budget)")) -> None:
+    """Refine job fields with an LLM (needs at least one provider key)."""
+    from app.db import session_scope
+    from app.enrich.llm_extract import enrich_pending
+
+    with session_scope() as s:
+        n = enrich_pending(s, limit=limit)
+    typer.echo(f"LLM-enriched {n} jobs")
+
+
+@app.command()
 def stats() -> None:
     """Print index statistics."""
     from sqlalchemy import func, select
