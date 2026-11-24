@@ -46,6 +46,19 @@ class Settings(BaseSettings):
     openrouter_api_key: str = ""
     ollama_base_url: str = ""
     llm_timeout_s: float = 45.0
+    # provider -> {"fast": model, "smart": model}. Override with LLM_MODELS='{"groq": {...}}'
+    llm_models: dict[str, dict[str, str]] = Field(
+        default_factory=lambda: {
+            "groq": {"fast": "llama-3.1-8b-instant", "smart": "llama-3.3-70b-versatile"},
+            "gemini": {"fast": "gemini-2.5-flash-lite", "smart": "gemini-2.5-flash"},
+            "cerebras": {"fast": "llama3.1-8b", "smart": "llama-3.3-70b"},
+            "openrouter": {
+                "fast": "meta-llama/llama-3.3-70b-instruct:free",
+                "smart": "meta-llama/llama-3.3-70b-instruct:free",
+            },
+            "ollama": {"fast": "qwen2.5:3b", "smart": "qwen2.5:7b"},
+        }
+    )
 
     # Budgets / quotas
     enrich_llm_daily_budget: int = 400
