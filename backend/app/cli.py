@@ -89,6 +89,37 @@ def enrich_llm(
     typer.echo(f"LLM-enriched {n} jobs")
 
 
+@app.command("eval")
+def run_eval(
+    suite: str = typer.Argument(..., help="retrieval | recommendation | extraction | agent | all"),
+    no_llm: bool = typer.Option(False, "--no-llm", help="Use template queries / rule judge only"),
+) -> None:
+    """Run offline evaluations and store the results."""
+    from app.evals.run import run_suite
+
+    suites = ["extraction", "retrieval", "recommendation", "agent"] if suite == "all" else [suite]
+    for name in suites:
+        res = run_suite(name, use_llm=not no_llm)
+        typer.echo(f"\n== {name} ==")
+        for variant, metrics in res.items():
+            shown = {k: v for k, v in metrics.items() if k != "details"}
+            typer.echo(f"{variant:24s} {json.dumps(shown)}")
+
+
+@app.command()
+def digest(email: str = typer.Option("", help="Send now to this user only")) -> None:
+    """Send due email digests (or one user's digest immediately)."""
+    from sqlalchemy import select
+
+    from app.alerts.digest import run_digests
+    from app.db import session_scope
+    from app.models import User
+
+    with session_scope() as s:
+        uid = s.scalar(select(User.id).where(User.email == email.lower())) if email else None
+        typer.echo(f"sent {run_digests(s, force_user_id=uid)} digests")
+
+
 @app.command()
 def stats() -> None:
     """Print index statistics."""
