@@ -185,7 +185,7 @@ class Job(Base):
         Computed(
             "setweight(to_tsvector('english', coalesce(title, '')), 'A') || "
             "setweight(to_tsvector('english', coalesce(company_name, '')), 'B') || "
-            "setweight(to_tsvector('english', array_to_string(skills, ' ')), 'B') || "
+            "setweight(to_tsvector('english', rc_join(skills)), 'B') || "
             "setweight(to_tsvector('english', left(coalesce(description_text, ''), 20000)), 'C')",
             persisted=True,
         ),

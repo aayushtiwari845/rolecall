@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     )
 
     env: Literal["development", "test", "production"] = "development"
-    database_url: str = "postgresql+psycopg://rolecall:rolecall@localhost:5432/rolecall"
+    database_url: str = "postgresql+psycopg://rolecall:rolecall@localhost:5433/rolecall"
 
     # Public URLs
     web_url: str = "http://localhost:3000"
