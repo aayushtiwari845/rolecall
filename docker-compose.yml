@@ -1,0 +1,53 @@
+# Local development stack. `docker compose up -d db` is enough to run the API and
+# worker on the host; `docker compose up` runs everything in containers.
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: rolecall
+      POSTGRES_PASSWORD: rolecall
+      POSTGRES_DB: rolecall
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rolecall"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: ./backend
+    command: ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://rolecall:rolecall@db:5432/rolecall
+      MODEL_CACHE_DIR: /models
+    ports:
+      - "8000:8000"
+    volumes:
+      - models:/models
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["full"]
+
+  worker:
+    build: ./backend
+    command: ["python", "-m", "app.worker"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://rolecall:rolecall@db:5432/rolecall
+      MODEL_CACHE_DIR: /models
+    volumes:
+      - models:/models
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["full"]
+
+volumes:
+  pgdata:
+  models:

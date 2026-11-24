@@ -1,0 +1,4 @@
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE DATABASE rolecall_test OWNER rolecall;
+\c rolecall_test
+CREATE EXTENSION IF NOT EXISTS vector;
