@@ -15,7 +15,7 @@ from app.enrich.locations import parse_location
 from app.enrich.skills import extract_skills
 from app.ingest.types import RawJob
 
-RULES_VERSION = 3
+RULES_VERSION = 4
 
 # ---------------------------------------------------------------- tech filter
 _TECH_TITLE = re.compile(
@@ -101,7 +101,7 @@ def years_of_experience(text: str) -> tuple[float | None, float | None]:
     return lo, hi
 
 
-def seniority(title: str, min_yoe: float | None, employment_hint: str | None, text: str = "") -> str:
+def seniority(title: str, min_yoe: float | None, employment_hint: str | None, text: str = "") -> str | None:
     if employment_hint == "intern" or _INTERN.search(title):
         return "intern"
     if _STAFF.search(title):
@@ -122,7 +122,7 @@ def seniority(title: str, min_yoe: float | None, employment_hint: str | None, te
         return "senior"
     if re.search(r"new grad|recent graduates?|freshers? (?:welcome|can apply)|0-1 years?|no experience required", text[:4000], re.I):
         return "new_grad"
-    return "mid"
+    return None  # no signal: unknown, the LLM pass or ranking handles it
 
 
 # ---------------------------------------------------------------- employment / remote
@@ -224,7 +224,7 @@ def annual_inr(amount: float | None, currency: str | None, period: str | None) -
 @dataclass
 class Enrichment:
     is_tech: bool
-    seniority: str
+    seniority: str | None
     role_family: str
     employment_type: str
     remote_type: str

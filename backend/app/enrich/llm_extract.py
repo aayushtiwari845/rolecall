@@ -59,9 +59,9 @@ def extract(llm: LLMRouter, job: Job) -> JobExtraction:
 def apply_extraction(job: Job, ex: JobExtraction) -> None:
     job.summary = ex.summary.strip()[:600] or None
     # Rules are precise when they fire on the title; the LLM fills the gaps.
-    if ex.seniority and (job.min_yoe is None and job.seniority == "mid"):
+    if ex.seniority and job.seniority is None:
         job.seniority = ex.seniority
-    if ex.seniority in ("intern", "new_grad") and ex.open_to_freshers and job.seniority in ("mid", "junior"):
+    if ex.seniority in ("intern", "new_grad") and ex.open_to_freshers and job.seniority in (None, "mid", "junior"):
         job.seniority = ex.seniority
     if ex.role_family and job.role_family in (None, "swe", "other"):
         job.role_family = ex.role_family
