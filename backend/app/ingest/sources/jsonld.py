@@ -17,7 +17,7 @@ import json
 import re
 from urllib.parse import urljoin, urlsplit
 
-from selectolax.parser import HTMLParser
+from selectolax.lexbor import LexborHTMLParser as HTMLParser
 
 from app.ingest.http import FetchError, PoliteClient
 from app.ingest.text import html_to_text, parse_dt, sha
