@@ -7,7 +7,18 @@ from collections.abc import Awaitable, Callable
 from app.ingest.http import PoliteClient
 from app.ingest.types import FetchResult
 
-from . import aggregators, ashby, greenhouse, hn, jsonld, lever, recruitee, smartrecruiters, workable
+from . import (
+    aggregators,
+    ashby,
+    greenhouse,
+    hn,
+    jsonld,
+    lever,
+    recruitee,
+    smartrecruiters,
+    workable,
+    workday,
+)
 
 Fetcher = Callable[[PoliteClient, str, str | None], Awaitable[FetchResult]]
 
@@ -18,6 +29,7 @@ ADAPTERS: dict[str, Fetcher] = {
     "workable": workable.fetch,
     "smartrecruiters": smartrecruiters.fetch,
     "recruitee": recruitee.fetch,
+    "workday": workday.fetch,
     "hn": hn.fetch,
     "remotive": aggregators.fetch_remotive,
     "arbeitnow": aggregators.fetch_arbeitnow,
@@ -26,5 +38,5 @@ ADAPTERS: dict[str, Fetcher] = {
 }
 
 # ATS boards that a company owns, as opposed to aggregators listing many companies.
-ATS_KINDS = {"greenhouse", "lever", "ashby", "workable", "smartrecruiters", "recruitee"}
+ATS_KINDS = {"greenhouse", "lever", "ashby", "workable", "smartrecruiters", "recruitee", "workday"}
 AGGREGATOR_KINDS = {"hn", "remotive", "arbeitnow", "remoteok"}

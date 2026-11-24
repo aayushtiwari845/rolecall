@@ -89,6 +89,18 @@ class PoliteClient:
         return True if rp is None else rp.can_fetch(self.user_agent, url)
 
     async def get(self, url: str, *, params=None, check_robots: bool = False, **kw) -> httpx.Response:
+        return await self.request("GET", url, params=params, check_robots=check_robots, **kw)
+
+    async def post_json(self, url: str, payload: dict, **kw):
+        resp = await self.request("POST", url, json=payload, **kw)
+        try:
+            return resp.json()
+        except ValueError as e:
+            raise FetchError(f"invalid JSON from {url}") from e
+
+    async def request(
+        self, method: str, url: str, *, params=None, check_robots: bool = False, **kw
+    ) -> httpx.Response:
         if check_robots and not await self.allowed(url):
             raise FetchError(f"disallowed by robots.txt: {url}", status=None)
         host = urlsplit(url).netloc
@@ -98,7 +110,7 @@ class PoliteClient:
             async with self._sem:
                 await self._wait_for_host(host)
                 try:
-                    resp = await self._client.get(url, params=params, **kw)
+                    resp = await self._client.request(method, url, params=params, **kw)
                 except httpx.HTTPError as e:
                     if attempt > self._max_retries:
                         raise FetchError(f"{type(e).__name__}: {e}") from e
