@@ -1,0 +1,441 @@
+# Candidate companies for discovery.
+# Format: Name | board slugs to try (optional) | tags | careers page URL (optional)
+# Without slugs, discovery guesses them from the name. Tags: in = India HQ or big India
+# engineering presence, ai, fintech, quant, devtools, infra, data, consumer, saas.
+
+# ---------------- India: fintech
+Razorpay | razorpay | in,fintech
+Zerodha | zerodha | in,fintech
+Groww | groww | in,fintech
+CRED | cred,dreamplug | in,fintech
+PhonePe | phonepe | in,fintech
+Paytm | paytm | in,fintech
+Juspay | juspay | in,fintech
+Setu | setu,setuhq | in,fintech
+Cashfree | cashfree,cashfreepayments | in,fintech
+Pine Labs | pinelabs | in,fintech
+BharatPe | bharatpe | in,fintech
+Jupiter | jupiter,jupitermoney | in,fintech
+Fi | fi,epifi | in,fintech
+Slice | slice,sliceit | in,fintech
+Smallcase | smallcase | in,fintech
+Upstox | upstox | in,fintech
+INDmoney | indmoney,finzoom | in,fintech
+Navi | navi,navitechnologies | in,fintech
+Zeta | zeta,zetaapp | in,fintech
+M2P Fintech | m2pfintech,m2p | in,fintech
+Open Financial | open,openfinancial | in,fintech
+Khatabook | khatabook | in,fintech
+OkCredit | okcredit | in,fintech
+Jar | jar,jarapp | in,fintech
+KreditBee | kreditbee | in,fintech
+Moneyview | moneyview,whizdm | in,fintech
+Fibe | fibe,earlysalary | in,fintech
+Perfios | perfios | in,fintech
+Signzy | signzy | in,fintech
+HyperVerge | hyperverge | in,fintech,ai
+IDfy | idfy | in,fintech
+Bureau | bureau,bureauid | in,fintech
+Acko | acko | in,fintech
+Digit Insurance | godigit,digit | in,fintech
+Plum | plum,plumhq | in,fintech
+PolicyBazaar | policybazaar | in,fintech
+Fampay | fampay | in,fintech
+Uni Cards | uni,unicards | in,fintech
+OneCard | onecard,fplabs | in,fintech
+Stashfin | stashfin | in,fintech
+Lendingkart | lendingkart | in,fintech
+Mswipe | mswipe | in,fintech
+Kotak811 | kotak811 | in,fintech
+Groww Mutual Fund | growwmf | in,fintech
+Dhan | dhan,raise | in,fintech
+Spenny | spenny | in,fintech
+Volt Money | voltmoney | in,fintech
+Scapia | scapia | in,fintech
+Kiwi | kiwi,gokiwi | in,fintech
+Cashify | cashify | in,consumer
+
+# ---------------- India: consumer / commerce / mobility
+Swiggy | swiggy | in,consumer
+Zomato | zomato,eternal | in,consumer
+Zepto | zepto,zeptonow | in,consumer
+Blinkit | blinkit | in,consumer
+Meesho | meesho | in,consumer
+Flipkart | flipkart | in,consumer
+Myntra | myntra | in,consumer
+Nykaa | nykaa | in,consumer
+Lenskart | lenskart | in,consumer
+Urban Company | urbancompany,urbanclap | in,consumer
+Dream11 | dream11,dreamsports | in,consumer
+Games24x7 | games24x7 | in,consumer
+MPL | mpl,mobilepremierleague | in,consumer
+ShareChat | sharechat,mohalla | in,consumer,ai
+Dailyhunt | dailyhunt,verse | in,consumer
+Pocket FM | pocketfm | in,consumer
+Kuku FM | kukufm | in,consumer
+Ola | ola,olacabs | in,consumer
+Ola Electric | olaelectric | in,consumer
+Rapido | rapido | in,consumer
+Porter | porter | in,consumer
+Ather Energy | atherenergy,ather | in,consumer
+Spinny | spinny | in,consumer
+Cars24 | cars24 | in,consumer
+CarDekho | cardekho,girnarsoft | in,consumer
+Delhivery | delhivery | in,consumer
+Shiprocket | shiprocket | in,consumer
+Udaan | udaan | in,consumer
+Licious | licious | in,consumer
+Country Delight | countrydelight | in,consumer
+Rebel Foods | rebelfoods | in,consumer
+magicpin | magicpin | in,consumer
+Apna | apna,apnatime | in,consumer
+PhysicsWallah | physicswallah,pw | in,consumer
+Unacademy | unacademy | in,consumer
+upGrad | upgrad | in,consumer
+Scaler | scaler,interviewbit | in,consumer
+Vedantu | vedantu | in,consumer
+Classplus | classplus | in,consumer
+Testbook | testbook | in,consumer
+Eruditus | eruditus,emeritus | in,consumer
+Cult.fit | curefit,cultfit | in,consumer
+PharmEasy | pharmeasy | in,consumer
+Practo | practo | in,consumer
+Innovaccer | innovaccer | in,saas,data
+Housing.com | housing | in,consumer
+NoBroker | nobroker | in,consumer
+Zetwerk | zetwerk | in,consumer
+OfBusiness | ofbusiness | in,consumer
+Infra.Market | inframarket | in,consumer
+Moglix | moglix | in,consumer
+Jumbotail | jumbotail | in,consumer
+DeHaat | dehaat | in,consumer
+BlackBuck | blackbuck,zinka | in,consumer
+Rivigo | rivigo | in,consumer
+Dukaan | dukaan | in,consumer
+Swiggy Instamart | instamart | in,consumer
+Hotstar | hotstar,disneyhotstar | in,consumer
+InMobi | inmobi | in,consumer,ai
+Glance | glance | in,consumer,ai
+Truecaller | truecaller | in,consumer
+Airtel Digital | airtel | in,consumer
+
+# ---------------- India: SaaS / devtools / infra / AI
+Freshworks | freshworks | in,saas
+Zoho | zoho | in,saas
+Postman | postman | in,devtools
+BrowserStack | browserstack | in,devtools
+Chargebee | chargebee | in,saas
+Hasura | hasura | in,devtools
+Atlan | atlan,atlanhq | in,data
+Rocketlane | rocketlane | in,saas
+Sprinklr | sprinklr | in,saas,ai
+Druva | druva | in,infra
+Icertis | icertis | in,saas
+Mindtickle | mindtickle | in,saas
+Whatfix | whatfix | in,saas
+Darwinbox | darwinbox | in,saas
+Keka | keka | in,saas
+MoEngage | moengage | in,saas
+CleverTap | clevertap | in,saas
+WebEngage | webengage | in,saas
+Netcore Cloud | netcore,netcorecloud | in,saas
+Exotel | exotel | in,saas
+Gupshup | gupshup | in,saas,ai
+Haptik | haptik | in,ai
+Yellow.ai | yellowai,yellow | in,ai
+Observe.AI | observeai | in,ai
+Uniphore | uniphore | in,ai
+Sarvam AI | sarvam,sarvamai | in,ai
+Krutrim | krutrim,olakrutrim | in,ai
+Fractal Analytics | fractal,fractalanalytics | in,ai,data
+Tredence | tredence | in,data
+Tiger Analytics | tigeranalytics | in,data
+Quantiphi | quantiphi | in,ai
+Sigmoid | sigmoid,sigmoidanalytics | in,data
+LatentView | latentview | in,data
+Mu Sigma | musigma | in,data
+Hevo Data | hevodata,hevo | in,data
+Amagi | amagi | in,infra
+Capillary Technologies | capillary,capillarytech | in,saas
+LeadSquared | leadsquared | in,saas
+Vymo | vymo | in,saas
+Unbxd | unbxd | in,saas,ai
+Zenoti | zenoti | in,saas
+Rubrik | rubrik | in,infra
+Cohesity | cohesity | in,infra
+Nutanix | nutanix | in,infra
+Harness | harness,harnessinc | in,devtools
+Plivo | plivo | in,devtools
+Zluri | zluri | in,saas
+Uptycs | uptycs | in,infra
+Nference | nference | in,ai
+Arcesium | arcesium | in,quant,fintech
+Thoughtworks | thoughtworks | in,saas
+Tekion | tekion | in,saas
+Sumo Logic | sumologic | in,infra
+Tata 1mg | 1mg,tata1mg | in,consumer
+SpotDraft | spotdraft | in,saas,ai
+Composio | composio | in,ai,devtools
+Ema | ema,emaunlimited | in,ai
+Gan.ai | ganai | in,ai
+Simplismart | simplismart | in,ai,infra
+TrueFoundry | truefoundry | in,ai,infra
+Rephrase.ai | rephraseai | in,ai
+Pixxel | pixxel | in,infra
+Skyroot Aerospace | skyroot | in,infra
+Agnikul | agnikul | in,infra
+Neysa | neysa | in,ai,infra
+CloudSEK | cloudsek | in,infra
+Hackerrank | hackerrank | in,devtools
+Turing | turing | in,devtools
+Instahyre | instahyre | in,saas
+Jupiter Meta | jupitermeta | in,ai
+Infinite Uptime | infiniteuptime | in,ai
+Ninjacart | ninjacart | in,consumer
+Even Healthcare | even,evenhealthcare | in,consumer
+Qure.ai | qureai | in,ai
+SigTuple | sigtuple | in,ai
+Wingify | wingify,vwo | in,saas
+Kapture CX | kapturecx | in,saas
+Tracxn | tracxn | in,data
+Locus | locus | in,saas,ai
+FarEye | fareye | in,saas
+Shipsy | shipsy | in,saas
+Zinier | zinier | in,saas
+Mad Street Den | madstreetden,vue.ai | in,ai
+Inshorts | inshorts | in,consumer
+Groupon India | groupon | in,consumer
+
+# ---------------- Global: AI labs and AI-native
+OpenAI | openai | ai
+Mistral AI | mistral | ai
+Cohere | cohere | ai
+Perplexity | perplexity,perplexityai | ai
+Scale AI | scaleai | ai
+Hugging Face | huggingface | ai
+Together AI | togetherai | ai,infra
+Fireworks AI | fireworksai | ai,infra
+Modal | modal | ai,infra
+Anyscale | anyscale | ai,infra
+Pinecone | pinecone | ai,data
+Weaviate | weaviate | ai,data
+Qdrant | qdrant | ai,data
+LangChain | langchain | ai,devtools
+LlamaIndex | llamaindex | ai,devtools
+Runway | runway,runwayml | ai
+ElevenLabs | elevenlabs | ai
+Glean | gleanwork,glean | ai
+Harvey | harvey | ai
+Sierra | sierra | ai
+Decagon | decagon | ai
+Anysphere | anysphere,cursor | ai,devtools
+Cognition | cognition | ai,devtools
+Character.AI | character | ai
+Stability AI | stabilityai | ai
+Replit | replit | ai,devtools
+Writer | writer | ai
+Jasper | jasper | ai
+Synthesia | synthesia | ai
+DeepL | deepl | ai
+Wayve | wayve | ai
+PolyAI | polyai | ai
+Cresta | cresta | ai
+Abridge | abridge | ai
+Hebbia | hebbia | ai
+Mercor | mercor | ai
+Suno | suno | ai
+Pika | pika | ai
+Luma AI | lumalabs,luma | ai
+Baseten | baseten | ai,infra
+Replicate | replicate | ai,infra
+Lambda | lambda,lambdalabs | ai,infra
+CoreWeave | coreweave | ai,infra
+Cerebras | cerebrassystems,cerebras | ai,infra
+Groq | groq | ai,infra
+SambaNova | sambanova | ai,infra
+Weights & Biases | wandb | ai,devtools
+Arize AI | arizeai | ai,devtools
+Braintrust | braintrust | ai,devtools
+Vapi | vapi | ai
+Lovable | lovable | ai,devtools
+Bolt | stackblitz | ai,devtools
+Sourcegraph | sourcegraph91,sourcegraph | ai,devtools
+Codeium | codeium,windsurf | ai,devtools
+Poolside | poolside | ai
+Adept | adept | ai
+Imbue | imbue | ai
+Contextual AI | contextualai | ai
+Unstructured | unstructured | ai,data
+Reka | reka | ai
+Nomic AI | nomic | ai
+Clay | clay | ai,saas
+Rippling | rippling | saas
+
+# ---------------- Global: product, infra, devtools, data
+Stripe | stripe | fintech
+Airbnb | airbnb | consumer
+Figma | figma | saas
+Notion | notion | saas
+Databricks | databricks | data,ai
+Snowflake | snowflake | data
+Cloudflare | cloudflare | infra
+Datadog | datadog | infra
+MongoDB | mongodb | data
+Elastic | elastic | data
+HashiCorp | hashicorp | infra
+GitLab | gitlab | devtools
+Discord | discord | consumer
+Reddit | reddit | consumer
+Pinterest | pinterest | consumer
+Dropbox | dropbox | saas
+Lyft | lyft | consumer
+Instacart | instacart | consumer
+DoorDash | doordash,doordashusa | consumer
+Robinhood | robinhood | fintech
+Coinbase | coinbase | fintech
+Plaid | plaid | fintech
+Brex | brex | fintech
+Ramp | ramp | fintech
+Gusto | gusto | saas
+Deel | deel | saas
+Remote | remote,remotecom | saas
+Retool | retool | devtools
+Vercel | vercel | devtools
+Supabase | supabase | devtools
+PlanetScale | planetscale | data
+Neon | neon,neondatabase | data
+Linear | linear | devtools
+Raycast | raycast | devtools
+Twilio | twilio | devtools
+Okta | okta | infra
+Atlassian | atlassian | devtools
+Asana | asana | saas
+Airtable | airtable | saas
+Canva | canva | saas
+Grammarly | grammarly | ai
+Duolingo | duolingo | consumer
+Spotify | spotify | consumer
+Klarna | klarna | fintech
+Revolut | revolut | fintech
+Wise | wise,transferwise | fintech
+Monzo | monzo | fintech
+N26 | n26 | fintech
+Delivery Hero | deliveryhero | consumer
+GetYourGuide | getyourguide | consumer
+Personio | personio | saas
+Celonis | celonis | data
+Miro | miro,realtimeboard | saas
+Contentful | contentful | devtools
+n8n | n8n | devtools
+Grafana Labs | grafanalabs | infra
+Sentry | sentry | devtools
+PostHog | posthog | devtools
+Temporal | temporal,temporaltechnologies | infra
+Confluent | confluent | data
+Cockroach Labs | cockroachlabs | data
+Redpanda | redpandadata | data
+ClickHouse | clickhouse | data
+Fivetran | fivetran | data
+dbt Labs | dbtlabsinc,dbtlabs | data
+Airbyte | airbyte | data
+Astronomer | astronomer | data
+Starburst | starburst | data
+Hightouch | hightouch | data
+Amplitude | amplitude | data
+Mixpanel | mixpanel | data
+LaunchDarkly | launchdarkly | devtools
+Snyk | snyk | infra
+Wiz | wizinc,wiz | infra
+Tailscale | tailscale | infra
+Netlify | netlify | devtools
+Render | render | devtools
+Fly.io | flyio | infra
+Railway | railway | devtools
+Docker | docker | devtools
+Canonical | canonical | infra
+Mozilla | mozilla | consumer
+Wikimedia Foundation | wikimedia | consumer
+DuckDuckGo | duckduckgo | consumer
+Proton | proton | infra
+1Password | 1password | infra
+Zapier | zapier | saas
+Webflow | webflow | saas
+Framer | framer | saas
+Loom | loom | saas
+Calendly | calendly | saas
+Intercom | intercom | saas,ai
+Toast | toast | fintech
+Chime | chime | fintech
+Affirm | affirm | fintech
+Marqeta | marqeta | fintech
+Nubank | nubank | fintech
+Mercury | mercury | fintech
+Checkout.com | checkoutcom,checkout | fintech
+Samsara | samsara | infra
+Coupang | coupang | consumer
+Grab | grab | consumer
+Agoda | agoda | consumer
+Booking.com | bookingcom | consumer
+Uber | uber | consumer
+Visa | visa | fintech
+Bosch | boschgroup | infra
+Square | square,block | fintech
+Shopify | shopify | consumer
+Doximity | doximity | consumer
+Flexport | flexport | consumer
+Benchling | benchling | saas
+Gong | gong,gongio | saas,ai
+Outreach | outreach | saas
+Zscaler | zscaler | infra
+CrowdStrike | crowdstrike | infra
+Palo Alto Networks | paloaltonetworks | infra
+Splunk | splunk | infra
+New Relic | newrelic | infra
+PagerDuty | pagerduty | infra
+Fastly | fastly | infra
+DigitalOcean | digitalocean | infra
+Akamai | akamai | infra
+Hugging Face Inc | hugging-face | ai
+Scribd | scribd | consumer
+Quizlet | quizlet | consumer
+Coursera | coursera | consumer
+Khan Academy | khanacademy | consumer
+Chess.com | chess,chesscom | consumer
+Strava | strava | consumer
+Peloton | peloton | consumer
+Nextdoor | nextdoor | consumer
+Patreon | patreon | consumer
+Substack | substack | consumer
+Medium | medium | consumer
+Tinder | tinder,matchgroup | consumer
+Bumble | bumble | consumer
+Roblox | roblox | consumer
+Unity | unity,unity3d | consumer
+Epic Games | epicgames | consumer
+Riot Games | riotgames | consumer
+
+# ---------------- Quant and trading (many hire new grads in India)
+Tower Research Capital | towerresearchcapital | quant
+Jane Street | janestreet | quant
+Optiver | optiverus,optiver | quant
+IMC Trading | imc,imctrading | quant
+Hudson River Trading | wehrtyou,hudsonrivertrading | quant
+Two Sigma | twosigma | quant
+Jump Trading | jumptrading | quant
+Five Rings | fiverings | quant
+DRW | drweng,drw | quant
+Squarepoint Capital | squarepointcapital | quant
+WorldQuant | worldquant | quant
+Graviton Research Capital | graviton,gravitonresearchcapital | in,quant
+Quadeye | quadeye | in,quant
+Alphagrep | alphagrep | in,quant
+Da Vinci Trading | davincitrading,davinci | quant
+Flow Traders | flowtraders | quant
+Akuna Capital | akunacapital | quant
+Virtu Financial | virtu | quant
+Citadel Securities | citadelsecurities | quant
+Millennium | mlp,millennium | quant
+Qube Research & Technologies | qube,qubert | quant
+Maven Securities | mavensecurities | quant
+NK Securities | nksecurities | in,quant
+Trexquant | trexquant | quant
