@@ -118,7 +118,7 @@ class PoliteClient:
                     continue
             if resp.status_code in RETRY_STATUS and attempt <= self._max_retries:
                 retry_after = resp.headers.get("Retry-After", "")
-                wait = float(retry_after) if retry_after.isdigit() else self._backoff(attempt)
+                wait = max(float(retry_after) if retry_after.isdigit() else 0.0, self._backoff(attempt))
                 log.info("retrying %s after %.1fs (status %s)", url, wait, resp.status_code)
                 await asyncio.sleep(min(wait, 60))
                 continue
