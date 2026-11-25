@@ -115,7 +115,7 @@ The methodology (pooling, rubric, metrics, statistics, tuning and its full log) 
 
 | Suite | What it measures |
 |---|---|
-| **recsys** | The main one. 16 personas (10 dev for tuning, 6 held out), 508 (persona, role) pairs pooled from eight rankers plus the tuned configs and graded 0–3 against a written rubric. Graded nDCG@5/10/20, P@10, MAP, MRR, bpref, Success@5, violations of hard expectations (level, experience, location), diversity, exposure Gini, stability under profile edits, latency; 95% bootstrap CIs, paired randomisation tests, per-segment breakdowns. |
+| **recsys** | The main one. 28 personas (10 dev for tuning, 6 test, 12 fresh personas written after tuning and judged blind), 826 (persona, role) pairs pooled from eight rankers plus the tuned configs and graded 0–3 against a written rubric. Graded nDCG@5/10/20, P@10, MAP, MRR, bpref, Success@5, violations of hard expectations (level, experience, location), diversity, exposure Gini, stability under profile edits, latency; 95% bootstrap CIs, paired randomisation tests, per-segment breakdowns. |
 | **retrieval** | Known-item search: for a stratified sample of live roles, generate the query a student would type (LLM or templates), measure Recall@10/50, MRR@10, nDCG@10 and latency for lexical, dense, hybrid RRF and hybrid + reranker. |
 | **recommendation** | Persona feeds (backend new grad, ML intern, data engineer, frontend, SRE). Each variant's top-k is pooled and judged once on a 0–3 scale (LLM judge or transparent rule judge); nDCG@10, P@10, company diversity, coverage. Ablations: dense only, lexical only, RRF only, no experience penalty, no diversity, full ranker. |
 | **extraction** | Field accuracy (level, role, work mode, employment type, min years) on hand-labelled real postings: rules vs rules + LLM. |
@@ -129,11 +129,15 @@ results; search fusion and reranking by grid under a measured 250 ms latency bud
 Each stage ships only if it holds on held-out personas or queries.
 
 Result, honestly: ranking-weight tuning gave large gains on tuning personas (nDCG@10
-0.58 → 0.75–0.79, p=0.002) that did not hold on held-out ones over four rounds, so the
-hand-set weights stay. Retrieval depth (feed latency 231 → 152 ms, same quality) and
-search fusion without the CPU cross-encoder (~2 s saved, no significant quality loss)
-shipped. Tuning also found two bugs: an O(n³) MMR (now vectorised, 25–50× faster) and
-a dev/test split that separated role families.
+0.58 → 0.75–0.79, p=0.002) that did not hold on the 6 test personas over four rounds.
+Twelve fresh personas, judged blind under a pre-registered rule, then showed the tuned
+weights at +0.07 nDCG@10 (7 wins, 4 losses, p=0.13), so they shipped as "not worse". Over
+all 18 held-out personas the difference is +0.04 and not significant. Retrieval depth
+(feed latency ~245 → ~150 ms, same quality) and search fusion without the CPU cross-encoder
+(~3 s saved, no significant quality loss) shipped too. Tuning found two bugs (an O(n³) MMR,
+now vectorised and 25–50× faster; a dev/test split that separated role families), and
+judging the fresh pools found location and experience extraction gaps (see
+[docs/evaluation.md](docs/evaluation.md#5b-fresh-held-out-personas-pre-registered)).
 
 Latest numbers: see [`backend/evals/results/`](backend/evals/results) and [docs/evals.md](docs/evals.md).
 
