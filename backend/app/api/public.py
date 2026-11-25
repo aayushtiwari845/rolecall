@@ -127,17 +127,24 @@ def demo_feed(
 
 @router.get("/evals")
 def eval_results(db: Session = Depends(get_db)):
-    """Latest run of every (suite, variant)."""
+    """Each suite's most recent run (variants from older runs, e.g. renamed ones, drop
+    out), in the order the suite reports them."""
     latest = (
         select(EvalRun.suite, EvalRun.variant, func.max(EvalRun.id).label("id"))
         .group_by(EvalRun.suite, EvalRun.variant)
         .subquery()
     )
-    rows = db.scalars(
-        select(EvalRun)
-        .join(latest, EvalRun.id == latest.c.id)
-        .order_by(EvalRun.suite, EvalRun.variant)
+    candidates = list(
+        db.scalars(
+            select(EvalRun)
+            .join(latest, EvalRun.id == latest.c.id)
+            .order_by(EvalRun.suite, EvalRun.id)
+        )
     )
+    newest = {}
+    for r in candidates:
+        newest[r.suite] = max(newest.get(r.suite, r.created_at), r.created_at)
+    rows = [r for r in candidates if (newest[r.suite] - r.created_at).total_seconds() < 600]
     history = db.scalars(select(EvalRun).order_by(EvalRun.created_at.desc()).limit(200))
     return {
         "latest": [
