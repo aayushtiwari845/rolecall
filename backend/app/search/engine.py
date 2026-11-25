@@ -230,8 +230,12 @@ def search(
     relevance = {c.job_id: c.rrf / top_rrf for c in cands}
 
     do_rerank = get_settings().rerank_enabled if use_rerank is None else use_rerank
-    if do_rerank and query:
-        head = cands[: cfg.rerank_head]
+    head_n, blend = cfg.rerank_head, cfg.rerank_blend
+    if use_rerank and not head_n:
+        # Asked for explicitly (evals, a faster host) while the released config has it off.
+        head_n, blend = Weights().rerank_head, Weights().rerank_blend
+    if do_rerank and query and head_n:
+        head = cands[:head_n]
         docs = [
             f"{jobs[c.job_id].title} at {jobs[c.job_id].company_name}. "
             f"{' '.join((jobs[c.job_id].skills or [])[:10])}. {(jobs[c.job_id].description_text or '')[:400]}"
@@ -243,10 +247,10 @@ def search(
             log.warning("rerank failed", exc_info=True)
             scores = []
         if scores:
-            b = cfg.rerank_blend
+            b = blend
             for c, sc in zip(head, scores, strict=True):
                 relevance[c.job_id] = (1 - b) * relevance[c.job_id] + b * _sigmoid(sc)
-            for c in cands[cfg.rerank_head :]:
+            for c in cands[head_n:]:
                 relevance[c.job_id] *= 1 - b  # below the reranked head
 
     personal = user.qvec is not None or bool(user.skills)

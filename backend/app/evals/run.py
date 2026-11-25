@@ -70,11 +70,11 @@ def _recsys(session) -> dict:
     from app.evals.recsys import Evaluator, compare
     from app.search.rank import Weights, load_config
 
-    ev = Evaluator(session, load_personas("test"))
-    default, current = (
-        ev.evaluate(Weights(), latency=True),
-        ev.evaluate(load_config(), latency=True),
-    )
+    personas = load_personas("test")
+    cfg = load_config()
+    # Each configuration ranks the candidates its own retrieval settings fetch.
+    default = Evaluator(session, personas, retrieval=Weights()).evaluate(Weights(), latency=True)
+    current = Evaluator(session, personas, retrieval=cfg).evaluate(cfg, latency=True)
     keep = (
         "ndcg@10",
         "p@10",
@@ -95,8 +95,8 @@ def _recsys(session) -> dict:
         out["personas"] = len(r.per_persona)
         return out
 
-    res = {"hand_set_defaults": row(default)}
+    res = {"hand_set_v1": row(default)}
     if current.config != default.config:
-        res["tuned"] = row(current)
-        res["tuned"]["p_value_vs_defaults"] = compare(default, current)["ndcg@10"]["p_value"]
+        res["released"] = row(current)
+        res["released"]["p_value_vs_v1"] = compare(default, current)["ndcg@10"]["p_value"]
     return res
