@@ -148,3 +148,42 @@ def test_rrf_rewards_agreement_between_retrievers():
 def test_config_roundtrip_ignores_unknown_keys():
     w = Weights.from_dict({"skills": 0.5, "not_a_field": 1})
     assert w.skills == 0.5 and Weights.from_dict(w.to_dict()) == w
+
+
+def _naive_mmr(items, lam):
+    """The textbook O(n^3) MMR the vectorised version must reproduce."""
+
+    def cos(a, b):
+        if a is None or b is None:
+            return 0.0
+        return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-9))
+
+    vecs = [np.asarray(r.job.embedding) if r.job.embedding is not None else None for r in items]
+    chosen, left = [], list(range(len(items)))
+    while left:
+        best, best_val = left[0], -1e9
+        for i in left:
+            sim = max((cos(vecs[i], vecs[j]) for j in chosen), default=0.0)
+            val = lam * items[i].score - (1 - lam) * sim
+            if val > best_val:
+                best, best_val = i, val
+        chosen.append(best)
+        left.remove(best)
+    return [items[i] for i in chosen]
+
+
+@pytest.mark.parametrize("lam", [0.95, 0.8, 0.5])
+def test_mmr_matches_reference(lam):
+    from app.search.rank import Ranked
+
+    rng = np.random.default_rng(int(lam * 100))
+    items = []
+    for i in range(30):
+        job = _job(seed=i % 7)  # repeated embeddings force near-duplicates
+        if i == 5:
+            job.embedding = None
+        items.append(Ranked(job, float(rng.random()), 0, {}, [], [], [], []))
+    items.sort(key=lambda r: -r.score)
+    got = [id(r) for r in mmr(items, lam)]
+    want = [id(r) for r in _naive_mmr(items, lam)]
+    assert got == want

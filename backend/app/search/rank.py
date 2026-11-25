@@ -347,21 +347,27 @@ def mmr(items: list[Ranked], lam: float, top: int = 60) -> list[Ranked]:
     if lam >= 1.0 or len(items) < 3:
         return items
     head, tail = items[:top], items[top:]
-    vecs = [
-        np.asarray(r.job.embedding, dtype=np.float32) if r.job.embedding is not None else None
-        for r in head
-    ]
+    n = len(head)
+    # One similarity matrix and a running "closest already-chosen" vector: O(n^2) numpy
+    # instead of O(n^3) Python. Roles without an embedding are similar to nothing.
+    dim = next((len(r.job.embedding) for r in head if r.job.embedding is not None), 0)
+    mat = np.zeros((n, max(dim, 1)), dtype=np.float32)
+    for i, r in enumerate(head):
+        if r.job.embedding is not None:
+            v = np.asarray(r.job.embedding, dtype=np.float32)
+            mat[i] = v / (np.linalg.norm(v) + 1e-9)
+    sims = mat @ mat.T
+    scores = np.array([r.score for r in head], dtype=np.float64)
+    closest = np.zeros(n)
+    taken = np.zeros(n, dtype=bool)
     chosen: list[int] = []
-    left = list(range(len(head)))
-    while left:
-        best, best_val = left[0], -1e9
-        for i in left:
-            sim = max((_cos(vecs[i], vecs[j]) for j in chosen), default=0.0)
-            val = lam * head[i].score - (1 - lam) * sim
-            if val > best_val:
-                best, best_val = i, val
+    for _ in range(n):
+        val = lam * scores - (1 - lam) * (closest if chosen else 0.0)
+        val[taken] = -np.inf
+        best = int(np.argmax(val))  # first maximum, so ties keep the incoming order
         chosen.append(best)
-        left.remove(best)
+        taken[best] = True
+        closest = np.maximum(closest, sims[best])
     return [head[i] for i in chosen] + tail
 
 
