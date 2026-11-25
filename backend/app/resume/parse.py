@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 from pypdf import PdfReader
 
 from app.enrich.rules import role_family
-from app.enrich.skills import CATEGORIES, canonicalize, extract_skills
+from app.enrich.skills import CATEGORIES, canonicalize, rank_skills
 from app.llm.router import LLMError, LLMRouter
 
 log = logging.getLogger(__name__)
@@ -172,7 +172,7 @@ class LLMProfile(BaseModel):
 
 def parse_resume(text: str, llm: LLMRouter | None = None) -> dict:
     text = redact(text)
-    skills = extract_skills(text)
+    skills = rank_skills(text)
     ranges = experience_ranges(text)
     fulltime = _merged_years([(s, e) for s, e, intern in ranges if not intern])
     intern_years = _merged_years([(s, e) for s, e, intern in ranges if intern])

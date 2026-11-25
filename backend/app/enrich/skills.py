@@ -296,3 +296,17 @@ def canonicalize(skill: str) -> str | None:
             return name
     found = extract_skills(s)
     return found[0] if found else None
+
+
+def rank_skills(text: str) -> list[str]:
+    """Skills ordered by how much the text talks about them; generic ones go last."""
+    if not text:
+        return []
+    pattern, names = _compiled()
+    counts: dict[str, int] = {}
+    first: dict[str, int] = {}
+    for m in pattern.finditer(text):
+        name = names[int(m.lastgroup[1:])]
+        counts[name] = counts.get(name, 0) + 1
+        first.setdefault(name, m.start())
+    return sorted(counts, key=lambda n: (n in WEAK_SKILLS, -counts[n], first[n]))
