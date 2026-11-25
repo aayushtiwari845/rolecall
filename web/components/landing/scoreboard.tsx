@@ -30,7 +30,7 @@ export function Scoreboard() {
     <section className="board relative overflow-hidden rounded-md">
       <div className="flex items-center justify-between border-b border-board-rule px-4 py-3 md:px-6">
         <span className="label flex items-center gap-2 text-chalk-2">
-          <span className="live-dot size-2 rounded-full bg-[#45dd8c]" aria-hidden />
+          <span className="live-dot size-2 rounded-full bg-green" aria-hidden />
           Live index{updated && ` · crawled ${updated}`}
         </span>
         <span className="label text-chalk-2">{stats ? `${num(stats.companies)} companies` : ""}</span>

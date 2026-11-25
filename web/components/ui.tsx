@@ -27,7 +27,7 @@ type Variant = "primary" | "ghost" | "outline" | "danger" | "board";
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    "bg-amber text-amber-ink hover:brightness-105 active:brightness-95 shadow-[0_2px_0_rgb(0_0_0/0.25)] font-semibold",
+    "bg-amber text-amber-ink hover:brightness-105 active:brightness-95 shadow-[0_2px_6px_rgb(0_0_0/0.18)] font-semibold",
   outline: "border border-rule-strong text-ink hover:bg-panel-2",
   ghost: "text-ink-2 hover:text-ink hover:bg-panel-2",
   danger: "border border-red/50 text-red hover:bg-red/10",
