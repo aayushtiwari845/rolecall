@@ -195,7 +195,10 @@ def test_presales_roles_are_not_tech():
     "text,expected",
     [
         ("Great team. #LI-Hybrid #LI-SM4", "hybrid"),
-        ("Roles that are based in an office are onsite Tuesday, Wednesday, and Thursday.", "hybrid"),
+        (
+            "Roles that are based in an office are onsite Tuesday, Wednesday, and Thursday.",
+            "hybrid",
+        ),
         ("We use a hybrid work model of 3 days in the office per week.", "hybrid"),
         ("This is a hybrid role at the intersection of engineering and data science.", "onsite"),
         ("Benefits for remote employees. #LI-Remote", "remote"),
@@ -204,3 +207,24 @@ def test_presales_roles_are_not_tech():
 )
 def test_work_mode_from_text(text, expected):
     assert rules.remote_type(None, "Bengaluru", "Engineer", text) == expected
+
+
+@pytest.mark.parametrize(
+    "text,countries,regions",
+    [
+        ("Acme | Engineer | REMOTE (US Citizenship Required) | Full-time", ["US"], []),
+        ("REMOTE (EEA) | Full-time", [], ["EU"]),
+        ("Database Support Engineer (AMER)", ["US"], []),
+        ("We are a remote-first team. You must be located in the US.", ["US"], []),
+        ("Remote (APAC)", [], ["APAC"]),
+        ("Fully remote, hire anywhere in the world", [], []),
+        ("Tell us about yourself", [], []),
+    ],
+)
+def test_remote_scope(text, countries, regions):
+    assert rules.remote_scope(text) == (countries, regions)
+
+
+def test_candidate_posts_are_not_jobs():
+    assert rules.is_candidate_post("I'm a software engineer focused on backend development")
+    assert not rules.is_candidate_post("We are hiring a software engineer to join us")

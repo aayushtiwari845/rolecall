@@ -37,6 +37,8 @@ def _tune(session: Session) -> None:
     try:
         session.execute(text("SET LOCAL hnsw.ef_search = 200"))
         session.execute(text("SET LOCAL hnsw.iterative_scan = relaxed_order"))
+        # A runaway query must never hang a request; callers fall back on timeout.
+        session.execute(text("SET LOCAL statement_timeout = '4s'"))
     except Exception:  # noqa: BLE001 - older pgvector: fine without it
         session.rollback()
 
@@ -89,16 +91,17 @@ def fuse(
     lex_hits: list[tuple[uuid.UUID, float]],
     w_dense: float = 1.0,
     w_lex: float = 1.0,
+    rrf_k: int = RRF_K,
 ) -> list[Candidate]:
     cands: dict[uuid.UUID, Candidate] = {}
     for rank, (jid, sim) in enumerate(dense_hits, 1):
         c = cands.setdefault(jid, Candidate(jid))
         c.dense_rank, c.dense_sim = rank, sim
-        c.rrf += w_dense / (RRF_K + rank)
+        c.rrf += w_dense / (rrf_k + rank)
     for rank, (jid, score) in enumerate(lex_hits, 1):
         c = cands.setdefault(jid, Candidate(jid))
         c.lex_rank, c.lex_score = rank, score
-        c.rrf += w_lex / (RRF_K + rank)
+        c.rrf += w_lex / (rrf_k + rank)
     return sorted(cands.values(), key=lambda c: c.rrf, reverse=True)
 
 
@@ -112,6 +115,9 @@ def hybrid(
     k_lex: int = 150,
     exclude=None,
     mode: str = "hybrid",
+    rrf_k: int = RRF_K,
+    w_dense: float = 1.0,
+    w_lex: float = 1.0,
 ) -> list[Candidate]:
     d = (
         dense(session, qvec, filters, k_dense, exclude)
@@ -123,4 +129,4 @@ def hybrid(
         if mode in ("hybrid", "lexical")
         else []
     )
-    return fuse(d, lx)
+    return fuse(d, lx, w_dense, w_lex, rrf_k)

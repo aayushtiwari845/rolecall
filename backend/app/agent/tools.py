@@ -20,7 +20,7 @@ from app.models import Alert, Application, AppStatus, Job, Memory, Preferences, 
 from app.search.engine import invalidate_user, ranked_to_dict, recommend, search
 from app.search.filters import JobFilters
 from app.search.personalize import build_context, filters_from_prefs
-from app.search.rank import Weights, score_candidates
+from app.search.rank import load_config, score_candidates
 from app.search.retrieval import Candidate
 
 LEVELS = ["intern", "new_grad", "junior", "mid", "senior", "staff_plus"]
@@ -135,7 +135,7 @@ def get_job_details(ctx: ToolContext, job_id: str) -> dict:
         [Candidate(job_id=job.id)],
         {job.id: job},
         uctx,
-        Weights(),
+        load_config(),
     )
     d = ranked_to_dict(r)
     ctx.register([d])

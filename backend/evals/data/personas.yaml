@@ -1,0 +1,147 @@
+# Evaluation personas. Each is a realistic job-seeker profile the feed must serve.
+# split: dev personas are used for tuning; test personas are only used to report the
+# final numbers. Groups let metrics be broken down by segment.
+- id: backend_intern_mumbai
+  split: dev
+  groups: [intern, backend, india_city]
+  text: Third-year CS student in Mumbai. Built REST APIs with Python, FastAPI and PostgreSQL, deployed with Docker on AWS. Wants backend internships.
+  skills: [Python, FastAPI, PostgreSQL, Docker, AWS, REST APIs, SQL, Git]
+  years: 0
+  levels: [intern, new_grad]
+  families: [backend, swe]
+  cities: [Mumbai]
+- id: ml_newgrad_blr
+  split: dev
+  groups: [new_grad, ml, india_city]
+  text: Final-year AI student. PyTorch models for computer vision and NLP, scikit-learn, pandas, some MLOps with Docker. Wants ML engineer new-grad roles in Bengaluru or remote.
+  skills: [Python, PyTorch, Machine Learning, Deep Learning, NLP, Computer Vision, scikit-learn, Pandas, Docker, SQL]
+  years: 0
+  levels: [new_grad, intern, junior]
+  families: [ml, data_science, swe]
+  cities: [Bengaluru]
+- id: llm_engineer_remote
+  split: test
+  groups: [new_grad, ai, remote]
+  text: Recent graduate who built LLM agents, RAG pipelines with embeddings and vector databases, prompt evaluation. Python and TypeScript. Wants AI/LLM engineering roles, remote or Bengaluru.
+  skills: [Python, LLMs, RAG, Embeddings, Vector Databases, AI Agents, Prompt Engineering, LLM Evals, TypeScript, FastAPI]
+  years: 0.5
+  levels: [new_grad, junior]
+  families: [ai_llm, ml, backend]
+  cities: [Bengaluru]
+- id: data_eng_junior_pune
+  split: dev
+  groups: [junior, data, india_city]
+  text: Data engineer with 1.5 years building batch and streaming pipelines with Spark, Airflow, Kafka and dbt on Snowflake and AWS.
+  skills: [Python, SQL, Apache Spark, Airflow, Kafka, dbt, Snowflake, ETL, Data Warehousing, AWS]
+  years: 1.5
+  levels: [new_grad, junior, mid]
+  families: [data_eng, backend]
+  cities: [Pune, Bengaluru]
+- id: frontend_newgrad
+  split: dev
+  groups: [new_grad, frontend, india_city]
+  text: Recent graduate focused on frontend. React, TypeScript, Next.js, Tailwind, accessibility, some Node.js.
+  skills: [React, TypeScript, JavaScript, Next.js, HTML/CSS, Tailwind CSS, Node.js, Redux]
+  years: 0
+  levels: [new_grad, junior]
+  families: [frontend, fullstack, swe]
+  cities: [Bengaluru, Pune]
+- id: sre_junior_hyd
+  split: test
+  groups: [junior, infra, india_city]
+  text: One year as a DevOps engineer. Kubernetes, Terraform, AWS, CI/CD, Prometheus and Grafana, Linux, scripting in Python and Go.
+  skills: [Kubernetes, Terraform, AWS, CI/CD, Observability, Linux, Python, Go, Docker]
+  years: 1
+  levels: [new_grad, junior, mid]
+  families: [infra, backend]
+  cities: [Hyderabad, Bengaluru]
+- id: security_intern
+  split: dev
+  groups: [intern, security, india_city]
+  text: Student into application security. CTFs, web pentesting, OWASP top 10, Python scripting, Linux, networking basics.
+  skills: [Security, Python, Linux, Networking, OAuth / Auth, Bash]
+  years: 0
+  levels: [intern, new_grad]
+  families: [security, swe]
+  cities: [Bengaluru, Mumbai]
+- id: mobile_newgrad
+  split: test
+  groups: [new_grad, mobile, india_city]
+  text: Recent graduate building Android apps in Kotlin and cross-platform apps with Flutter. Some iOS with Swift.
+  skills: [Android, Kotlin, Flutter, Dart, iOS, Swift, Java, Git]
+  years: 0
+  levels: [new_grad, junior]
+  families: [mobile, swe]
+  cities: [Bengaluru, Gurugram]
+- id: ds_intern
+  split: dev
+  groups: [intern, data, india_city]
+  text: Statistics student. Python, pandas, SQL, A/B testing, regression, dashboards in Tableau, some scikit-learn.
+  skills: [Python, Pandas, SQL, Statistics, Tableau, scikit-learn, Machine Learning, Excel]
+  years: 0
+  levels: [intern, new_grad]
+  families: [data_science, ml]
+  cities: [Bengaluru, Mumbai]
+- id: fullstack_gurugram
+  split: dev
+  groups: [new_grad, fullstack, india_city]
+  text: New grad full-stack developer. Node.js and Express APIs, React frontends, MongoDB and PostgreSQL, deployed on AWS.
+  skills: [Node.js, Express, React, JavaScript, TypeScript, MongoDB, PostgreSQL, AWS, REST APIs]
+  years: 0
+  levels: [new_grad, junior]
+  families: [fullstack, backend, frontend, swe]
+  cities: [Gurugram, Noida, Delhi]
+- id: backend_2yr_hyd
+  split: test
+  groups: [junior, backend, india_city]
+  text: Backend engineer with two years at a fintech. Java, Spring Boot, microservices, Kafka, PostgreSQL, Redis, AWS.
+  skills: [Java, Spring Boot, Microservices, Kafka, PostgreSQL, Redis, AWS, Distributed Systems, System Design]
+  years: 2
+  levels: [junior, mid]
+  families: [backend, swe]
+  cities: [Hyderabad, Bengaluru]
+- id: embedded_newgrad
+  split: dev
+  groups: [new_grad, embedded, india_city]
+  text: Electronics graduate writing embedded C and C++ firmware for microcontrollers and RTOS, some Linux drivers and Python test tooling.
+  skills: [C, C++, Embedded C, Linux, Python]
+  years: 0
+  levels: [new_grad, junior]
+  families: [embedded, swe]
+  cities: [Bengaluru, Hyderabad, Pune]
+- id: qa_sdet
+  split: test
+  groups: [new_grad, qa, india_city]
+  text: New grad SDET. Test automation with Selenium and Playwright, API testing, Java and Python, CI/CD pipelines.
+  skills: [Selenium, Testing, Java, Python, CI/CD, REST APIs, Git]
+  years: 0
+  levels: [new_grad, junior]
+  families: [qa, swe]
+  cities: [Bengaluru, Pune, Chennai]
+- id: generalist_sparse
+  split: dev
+  groups: [new_grad, sparse, india_city]
+  text: Computer science graduate looking for a first software engineering job.
+  skills: [Java, Python]
+  years: 0
+  levels: [new_grad]
+  families: []
+  cities: [Bengaluru]
+- id: senior_backend_remote
+  split: test
+  groups: [experienced, backend, remote]
+  text: Senior backend engineer, six years building distributed systems in Go and Python on Kubernetes and AWS, Postgres and Kafka.
+  skills: [Go, Python, Distributed Systems, Kubernetes, AWS, PostgreSQL, Kafka, System Design, Microservices]
+  years: 6
+  levels: [senior, staff_plus]
+  families: [backend, infra, swe]
+  cities: []
+- id: swe_resume_owner
+  split: dev
+  groups: [intern, backend, india_city]
+  text: Final-year AI and data science student (graduating 2027). Interned on a Python, FastAPI and React sanctions-screening platform; built an incident-response tool with FastAPI, Next.js, PostgreSQL/pgvector, Docker and Kubernetes; transformer and VAE models in PyTorch.
+  skills: [Python, FastAPI, React, TypeScript, PostgreSQL, Vector Databases, Docker, Kubernetes, PyTorch, Testing, Next.js, Java, Spring Boot, SQL]
+  years: 0
+  levels: [intern, new_grad]
+  families: [backend, ml, ai_llm, data_eng, infra, fullstack]
+  cities: [Mumbai, Bengaluru]

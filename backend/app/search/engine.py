@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import math
 import threading
 import time
@@ -11,15 +12,26 @@ import uuid
 
 import numpy as np
 from sqlalchemy import select
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.enrich.embed import embed_query, rerank
 from app.ingest.text import display_title
 from app.models import Job
-from app.search.filters import JobFilters
-from app.search.rank import Ranked, UserContext, Weights, diversify, score_candidates
-from app.search.retrieval import hybrid, lexical_query
+from app.search.filters import JobFilters, build_where
+from app.search.rank import (
+    Ranked,
+    UserContext,
+    Weights,
+    diversify,
+    finalize,
+    load_config,
+    score_candidates,
+)
+from app.search.retrieval import Candidate, hybrid, lexical_query
+
+log = logging.getLogger(__name__)
 
 _CACHE_TTL = 300
 _cache: dict[str, tuple[float, list[tuple[uuid.UUID, float, int]]]] = {}
@@ -32,6 +44,66 @@ def _load_jobs(session: Session, ids: list[uuid.UUID]) -> dict[uuid.UUID, Job]:
     return {j.id: j for j in session.scalars(select(Job).where(Job.id.in_(ids)))}
 
 
+def _fresh_candidates(
+    session: Session, filters: JobFilters, k: int, exclude=None
+) -> list[Candidate]:
+    """Cold start: with no resume and no history there is nothing to match against, so
+    start from the newest roles inside the user's filters."""
+    rows = session.execute(
+        select(Job.id)
+        .where(*build_where(filters, exclude))
+        .order_by(Job.posted_at.desc().nulls_last(), Job.id)
+        .limit(k)
+    ).all()
+    return [Candidate(job_id=r.id) for r in rows]
+
+
+def _relaxations(f: JobFilters) -> list[tuple[str, JobFilters]]:
+    """Ordered ways to widen too-narrow preferences, least surprising first."""
+    steps: list[tuple[str, JobFilters]] = []
+    cur = f
+    if cur.cities and not cur.onsite_anywhere:
+        cur = cur.model_copy(
+            update={"cities": [], "remote_india": True, "remote_global": True, "countries": ["IN"]}
+        )
+        steps.append(("anywhere in India or remote", cur))
+    if cur.role_families:
+        cur = cur.model_copy(update={"role_families": []})
+        steps.append(("any kind of engineering role", cur))
+    if cur.posted_within_days:
+        cur = cur.model_copy(update={"posted_within_days": None})
+        steps.append(("older postings", cur))
+    return steps
+
+
+def _retrieve(
+    session: Session, user: UserContext, filters: JobFilters, w: Weights, mode: str
+) -> list[Candidate]:
+    exclude = user.hidden_job_ids or None
+    lex = lexical_query(user.lex_terms)
+    if user.qvec is None and not lex:
+        return _fresh_candidates(session, filters, w.k_dense, exclude)
+    try:
+        return hybrid(
+            session,
+            qvec=user.qvec,
+            lex_query=lex,
+            filters=filters,
+            k_dense=w.k_dense,
+            k_lex=w.k_lex,
+            exclude=exclude,
+            mode=mode,
+            rrf_k=w.rrf_k,
+            w_dense=w.w_dense,
+            w_lex=w.w_lex,
+        )
+    except OperationalError:
+        # Timeout or transient DB error on the vector query: degrade to fresh roles.
+        session.rollback()
+        log.warning("hybrid retrieval failed; falling back to fresh roles", exc_info=True)
+        return _fresh_candidates(session, filters, w.k_dense, exclude)
+
+
 def recommend(
     session: Session,
     user: UserContext,
@@ -42,9 +114,14 @@ def recommend(
     weights: Weights | None = None,
     cache_key: str | None = None,
     mode: str = "hybrid",
+    relax: bool = True,
 ) -> list[Ranked]:
-    """Personalised feed for a profile."""
-    w = weights or Weights()
+    """Personalised feed for a profile.
+
+    If the preferences match fewer than ``min_results`` roles, they are widened step by
+    step (cities, then role kinds, then freshness) and every widened-in role says so.
+    """
+    w = weights or load_config()
     key = None
     if cache_key:
         key = f"{cache_key}:{hashlib.sha1(filters.model_dump_json().encode()).hexdigest()}"
@@ -53,20 +130,24 @@ def recommend(
         if hit and time.monotonic() - hit[0] < _CACHE_TTL and offset > 0:
             return _rehydrate(session, user, hit[1][offset : offset + limit], w)
 
-    cands = hybrid(
-        session,
-        qvec=user.qvec,
-        lex_query=lexical_query(user.lex_terms),
-        filters=filters,
-        k_dense=300,
-        k_lex=150,
-        exclude=user.hidden_job_ids or None,
-        mode=mode,
-    )
+    cands = _retrieve(session, user, filters, w, mode)
     jobs = _load_jobs(session, [c.job_id for c in cands])
-    ranked = score_candidates(cands, jobs, user, w)
-    if w.diversify:
-        ranked = diversify(ranked, w.max_per_company)
+    ranked = finalize(score_candidates(cands, jobs, user, w), w)
+
+    if relax and len(ranked) < w.min_results:
+        seen = {r.job.id for r in ranked}
+        for label, wider in _relaxations(filters):
+            extra = [c for c in _retrieve(session, user, wider, w, mode) if c.job_id not in seen]
+            if not extra:
+                continue
+            more = score_candidates(extra, _load_jobs(session, [c.job_id for c in extra]), user, w)
+            for r in more:
+                r.warnings.insert(0, f"Outside your preferences: {label}")
+            ranked += finalize(more, w)
+            seen |= {r.job.id for r in more}
+            if len(ranked) >= w.min_results:
+                break
+
     if key:
         with _cache_lock:
             _cache[key] = (time.monotonic(), [(r.job.id, r.score, r.match) for r in ranked])
@@ -77,8 +158,6 @@ def recommend(
 
 def _rehydrate(session: Session, user: UserContext, rows, w: Weights) -> list[Ranked]:
     # Re-score just the requested page so reasons are present; order comes from the cache.
-    from app.search.retrieval import Candidate
-
     jobs = _load_jobs(session, [r[0] for r in rows])
     cands = [Candidate(job_id=r[0], dense_rank=1, dense_sim=r[1]) for r in rows]
     scored = {r.job.id: r for r in score_candidates(cands, jobs, user, w)}
@@ -116,12 +195,33 @@ def search(
 ) -> list[Ranked]:
     """Free-text search with optional personalisation."""
     user = user or UserContext()
-    query = query.strip()
-    qvec = embed_query(query) if query else user.qvec
+    cfg = load_config()
+    query = " ".join(query.split())[:300]
+    qvec = user.qvec
+    if query:
+        try:
+            qvec = embed_query(query)
+        except Exception:  # noqa: BLE001 - model unavailable: keyword search still works
+            log.warning("query embedding failed; lexical only", exc_info=True)
+            qvec, mode = None, "lexical"
     lex = query if query else lexical_query(user.lex_terms)
-    cands = hybrid(
-        session, qvec=qvec, lex_query=lex, filters=filters, k_dense=150, k_lex=150, mode=mode
-    )
+    try:
+        cands = hybrid(
+            session,
+            qvec=qvec,
+            lex_query=lex,
+            filters=filters,
+            k_dense=150,
+            k_lex=150,
+            mode=mode,
+            rrf_k=cfg.rrf_k,
+            w_dense=cfg.w_dense,
+            w_lex=cfg.w_lex,
+        )
+    except OperationalError:
+        session.rollback()
+        log.warning("search retrieval failed", exc_info=True)
+        return []
     if not cands:
         return []
     jobs = _load_jobs(session, [c.job_id for c in cands[:200]])
@@ -131,17 +231,23 @@ def search(
 
     do_rerank = get_settings().rerank_enabled if use_rerank is None else use_rerank
     if do_rerank and query:
-        head = cands[:40]
+        head = cands[: cfg.rerank_head]
         docs = [
             f"{jobs[c.job_id].title} at {jobs[c.job_id].company_name}. "
             f"{' '.join((jobs[c.job_id].skills or [])[:10])}. {(jobs[c.job_id].description_text or '')[:400]}"
             for c in head
         ]
-        scores = rerank(query, docs)
-        for c, s in zip(head, scores, strict=True):
-            relevance[c.job_id] = 0.35 * relevance[c.job_id] + 0.65 * _sigmoid(s)
-        for c in cands[40:]:
-            relevance[c.job_id] *= 0.35  # below the reranked head
+        try:
+            scores = rerank(query, docs)
+        except Exception:  # noqa: BLE001 - reranker unavailable: keep fused order
+            log.warning("rerank failed", exc_info=True)
+            scores = []
+        if scores:
+            b = cfg.rerank_blend
+            for c, sc in zip(head, scores, strict=True):
+                relevance[c.job_id] = (1 - b) * relevance[c.job_id] + b * _sigmoid(sc)
+            for c in cands[cfg.rerank_head :]:
+                relevance[c.job_id] *= 1 - b  # below the reranked head
 
     personal = user.qvec is not None or bool(user.skills)
     w = Weights(

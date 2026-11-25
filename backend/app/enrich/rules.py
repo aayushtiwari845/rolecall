@@ -15,7 +15,7 @@ from app.enrich.locations import parse_location
 from app.enrich.skills import extract_skills
 from app.ingest.types import RawJob
 
-RULES_VERSION = 7
+RULES_VERSION = 8
 
 # ---------------------------------------------------------------- tech filter
 _TECH_TITLE = re.compile(
@@ -425,6 +425,47 @@ class Enrichment:
     salary_period: str | None = None
 
 
+_SCOPE_US = re.compile(
+    r"(?<![A-Za-z])(?:US|USA|U\.S\.)(?:[- ]only|[- ]based|\s+citizen\w*|\s+residents?|\s+work authori[sz]ation|\s+time\s?zones?)"
+    r"|(?i:remote)\s*[(\[,:\-–]\s*(?:US|USA|U\.S\.|United States|North America)(?![A-Za-z])"
+    r"|(?:located|based|reside|living) in the (?:US|U\.S\.|United States)"
+    r"|(?:within|across) the (?:US|United States)\b|must be (?:authori[sz]ed|eligible) to work in the (?:US|United States)"
+    r"|\((?:AMER|NA|NORAM)\)|(?:PT|PST|ET|EST) (?:to|-) (?:PT|PST|ET|EST)|overlap with (?:US|PT|PST|ET|EST)",
+)
+_SCOPE_EU = re.compile(
+    r"(?i:remote)\s*[(\[,:\-–]\s*(?:EU|EEA|Europe|EMEA|UK)(?![A-Za-z])|\((?:EMEA|EU|EEA|Europe)\)|"
+    r"(?:EU|EEA|Europe|UK)[- ]only|(?:located|based|reside) in (?:the )?(?:EU|EEA|Europe|UK)\b|right to work in the (?:UK|EU)",
+)
+_SCOPE_APAC = re.compile(r"\((?:APAC|Asia)\)|remote\s*[(\[,:\-–]\s*(?:APAC|Asia)", re.I)
+_SCOPE_CANADA = re.compile(r"remote\s*[(\[,:\-–]\s*Canada|(?:located|based) in Canada", re.I)
+
+
+def remote_scope(text: str) -> tuple[list[str], list[str]]:
+    """Who a remote role can hire, from phrases like "REMOTE (US)", "US only", "(EMEA)"."""
+    countries: list[str] = []
+    regions: list[str] = []
+    if _SCOPE_US.search(text):
+        countries.append("US")
+    if _SCOPE_CANADA.search(text):
+        countries.append("CA")
+    if _SCOPE_EU.search(text):
+        regions.append("EU")
+    if _SCOPE_APAC.search(text):
+        regions.append("APAC")
+    return countries, regions
+
+
+_CANDIDATE_POST = re.compile(
+    r"\b(?:I'?m|I am) (?:a|an)\b[^.]{0,80}\b(?:engineer|developer|programmer|scientist|designer)\b"
+    r"|\bhire me\b|\bmy (?:resume|cv|portfolio)\b|\b(?:I'?m|I am) (?:looking|open) (?:for|to)\b",
+    re.I,
+)
+
+
+def is_candidate_post(text: str) -> bool:
+    return bool(_CANDIDATE_POST.search(text[:400]))
+
+
 def enrich(job: RawJob) -> Enrichment:
     text = job.description_text or ""
     title = job.title or ""
@@ -433,14 +474,28 @@ def enrich(job: RawJob) -> Enrichment:
     if not tech and job.source_kind in {"hn"}:
         tech = bool(_TECH_TITLE.search(text[:500]))
     tech = tech and is_english(title, text)
+    if job.source_kind == "hn" and is_candidate_post(text):
+        tech = False  # a job seeker's post in the hiring thread, not a job
     lo, hi = years_of_experience(text)
     level = seniority(title, lo, job.employment_hint, text)
     loc = parse_location(job.location_raw, job.countries_hint)
     remote = remote_type(job.remote_hint, job.location_raw or "", title, text)
     countries = list(loc.countries)
-    if remote == "remote" and loc.worldwide and "WW" not in countries:
+    regions = list(loc.regions)
+    if remote == "remote" and not countries:
+        # "Remote" alone is ambiguous; postings usually say who can be hired.
+        r_countries, r_regions = remote_scope(f"{title}\n{job.location_raw or ''}\n{text[:2500]}")
+        countries += r_countries
+        regions += [r for r in r_regions if r not in regions]
+    if (
+        remote == "remote"
+        and loc.worldwide
+        and not countries
+        and not regions
+        and "WW" not in countries
+    ):
         countries.append("WW")
-    countries += [f"R:{r}" for r in loc.regions if f"R:{r}" not in countries]
+    countries += [f"R:{r}" for r in regions if f"R:{r}" not in countries]
     smin, smax, cur, period = (
         job.salary_min,
         job.salary_max,

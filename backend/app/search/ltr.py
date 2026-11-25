@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Interaction, Job, User
 from app.search.personalize import build_context
-from app.search.rank import Weights, score_candidates
+from app.search.rank import Weights, load_config, score_candidates
 from app.search.retrieval import Candidate
 
 log = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ def build_dataset(session: Session, max_users: int = 500) -> tuple[np.ndarray, n
         jobs = {j.id: j for j in session.scalars(select(Job).where(Job.id.in_(ids)))}
         cands = [Candidate(job_id=i, dense_rank=1, dense_sim=0.0) for i in ids if i in jobs]
         # semantic/lexical are not reconstructable offline per request; use similarity to profile.
-        for r in score_candidates(cands, jobs, ctx, Weights()):
+        for r in score_candidates(cands, jobs, ctx, load_config()):
             emb = r.job.embedding
             if ctx.qvec is not None and emb is not None:
                 r.features["semantic"] = float(np.dot(ctx.qvec, np.asarray(emb, dtype=np.float32)))
@@ -115,7 +115,7 @@ def train(session: Session, min_positives: int = MIN_POSITIVES) -> dict:
     cut = int(0.8 * len(y))
     tr, te = idx[:cut], idx[cut:]
     coef, _ = fit_logistic(X[tr], y[tr])
-    hand = np.array([getattr(Weights(), f) for f in FEATURES])
+    hand = np.array([getattr(load_config(), f) for f in FEATURES])
     learned = np.clip(coef, 0, None)
     if learned.sum() == 0:
         return {"trained": False, "reason": "no feature had a positive effect", "examples": len(y)}

@@ -161,10 +161,10 @@ def get_job(
 
 
 def _detail_weights():
-    from app.search.rank import Weights
+    from app.search.rank import load_config
 
     # Same weights as the feed, so a role's score is identical on both pages.
-    return Weights()
+    return load_config()
 
 
 @router.get("/jobs/{job_id}/similar")

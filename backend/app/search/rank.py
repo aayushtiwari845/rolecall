@@ -2,15 +2,22 @@
 
 Each feature is in [0, 1] and has a plain-language reason attached, so every
 recommendation can explain itself ("Matches 6 of your skills", "Asks for 3+ years").
-Weights are a dataclass so offline evals can compare variants.
+
+Every tunable number lives in ``Weights`` (the ranking configuration): feature weights,
+feature shape parameters, the experience penalty, diversity and retrieval pool sizes.
+Offline tuning (``app/evals/tune.py``) searches this space and writes the winning
+configuration to ``tuned_config.json``, which ``load_config()`` picks up.
 """
 
 from __future__ import annotations
 
+import json
 import math
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from datetime import UTC, datetime
+from functools import lru_cache
+from pathlib import Path
 
 import numpy as np
 
@@ -43,12 +50,16 @@ FAMILY_LABEL = {
     "embedded": "Embedded",
     "other": "Other",
 }
+FEATURES = ("semantic", "lexical", "skills", "level", "role", "location", "recency", "affinity")
+TUNED_FILE = Path(__file__).with_name("tuned_config.json")
 
 
 @dataclass
 class Weights:
-    # Lexical match feeds candidate retrieval (RRF) but not the score by default, so a
-    # role's score is the same wherever it is shown (feed, search, job page).
+    """The full ranking configuration (name kept for backwards compatibility)."""
+
+    # Feature weights. Lexical match feeds candidate retrieval (RRF) but not the score by
+    # default, so a role scores the same wherever it is shown (feed, search, job page).
     semantic: float = 0.33
     lexical: float = 0.0
     skills: float = 0.27
@@ -57,9 +68,66 @@ class Weights:
     location: float = 0.05
     recency: float = 0.05
     affinity: float = 0.05
+    # Feature shapes
+    sim_floor: float = 0.5  # cosine at which semantic fit is 0
+    sim_span: float = 0.35  # cosine range mapped onto [0, 1]
+    skill_saturation: int = 6  # matching this many strong skills = full skill fit
+    level_adjacent: float = 0.5  # one level away
+    level_two_away: float = 0.15
+    level_unknown: float = 0.55  # posting never states a level
+    role_adjacent: float = 0.75  # generic SWE / full-stack for a backend or frontend user
+    role_other: float = 0.3
+    recency_tau_days: float = 21.0  # exp(-age / tau)
+    negative_weight: float = 0.7  # pull of disliked roles in the affinity feature
+    # Experience penalty
     yoe_penalty: bool = True
+    yoe_slack: float = 1.0  # years beyond the user's experience tolerated for free
+    yoe_step: float = 0.2  # score multiplier lost per extra year
+    yoe_floor: float = 0.3
+    # Diversity
     diversify: bool = True
     max_per_company: int = 2
+    diversity_window: int = 20
+    mmr_lambda: float = 1.0  # 1.0 = off; lower trades relevance for embedding diversity
+    # Retrieval
+    k_dense: int = 300
+    k_lex: int = 150
+    rrf_k: int = 60
+    w_dense: float = 1.0
+    w_lex: float = 1.0
+    # Search reranking (cross-encoder over the fused head)
+    rerank_head: int = 40
+    rerank_blend: float = 0.65  # share of the cross-encoder in the head's relevance
+    # Feed fallbacks
+    min_results: int = 20  # below this, preferences are relaxed step by step
+
+    @property
+    def total(self) -> float:
+        return sum(getattr(self, k) for k in FEATURES) or 1.0
+
+    def shares(self) -> dict[str, float]:
+        t = self.total
+        return {k: round(getattr(self, k) / t, 3) for k in FEATURES if getattr(self, k) > 0}
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Weights:
+        names = {f.name for f in fields(cls)}
+        base = asdict(cls())
+        base.update({k: v for k, v in data.items() if k in names})
+        return cls(**base)
+
+
+@lru_cache(maxsize=1)
+def load_config() -> Weights:
+    """The tuned configuration when one has been validated, else the defaults."""
+    try:
+        data = json.loads(TUNED_FILE.read_text(encoding="utf-8"))
+        return Weights.from_dict(data["config"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return Weights()
 
 
 @dataclass
@@ -100,36 +168,40 @@ def _minmax(values: list[float]) -> list[float]:
     return [(v - lo) / (hi - lo) for v in values]
 
 
-def level_fit(job_level: str | None, targets: list[str]) -> float:
+def level_fit(job_level: str | None, targets: list[str], w: Weights | None = None) -> float:
+    w = w or Weights()
     if not targets:
         return 0.7
     if job_level is None:
-        return 0.55
+        return w.level_unknown
     if job_level in targets:
         return 1.0
     idx = LEVELS.index(job_level)
     dist = min(abs(idx - LEVELS.index(t)) for t in targets)
-    return {1: 0.5, 2: 0.15}.get(dist, 0.0)
+    return {1: w.level_adjacent, 2: w.level_two_away}.get(dist, 0.0)
 
 
-def role_fit(family: str | None, targets: list[str]) -> float:
+def role_fit(family: str | None, targets: list[str], w: Weights | None = None) -> float:
+    w = w or Weights()
     if not targets:
         return 0.7
     if family in targets:
         return 1.0
     if family == "swe" or (family == "fullstack" and {"backend", "frontend"} & set(targets)):
-        return 0.75
-    return 0.3
+        return w.role_adjacent
+    return w.role_other
 
 
-def skill_match(job_skills: list[str], user_skills: set[str]) -> tuple[float, list[str], list[str]]:
+def skill_match(
+    job_skills: list[str], user_skills: set[str], saturation: int = 6
+) -> tuple[float, list[str], list[str]]:
     strong = [s for s in job_skills if s not in WEAK_SKILLS]
     if not strong:
         return 0.5, [s for s in job_skills if s in user_skills], []
     matched = [s for s in strong if s in user_skills]
     missing = [s for s in strong if s not in user_skills]
-    # Saturates: matching 6 of a long wish-list is as good as matching all of a short one.
-    denom = min(len(strong), 6)
+    # Saturates: matching N of a long wish-list is as good as matching all of a short one.
+    denom = max(1, min(len(strong), saturation))
     return min(1.0, len(matched) / denom), matched, missing
 
 
@@ -146,10 +218,10 @@ def location_fit(job: Job, cities: list[str]) -> tuple[float, str | None]:
     return 0.5, None
 
 
-def recency(job: Job, now: datetime) -> tuple[float, int]:
+def recency(job: Job, now: datetime, tau: float = 21.0) -> tuple[float, int]:
     ts = job.posted_at or job.first_seen_at
     age = max(0.0, (now - ts).total_seconds() / 86400) if ts else 30.0
-    return math.exp(-age / 21), int(age)
+    return math.exp(-age / max(tau, 0.1)), int(age)
 
 
 def _cos(a: np.ndarray | None, b: np.ndarray | None) -> float:
@@ -170,9 +242,9 @@ def _age_text(days: int) -> str:
     return "Posted a while ago"
 
 
-def calibrate_similarity(cos: float) -> float:
+def calibrate_similarity(cos: float, floor: float = 0.5, span: float = 0.35) -> float:
     """Map bge-small cosine similarity (profile vs posting, typically 0.5-0.85) to [0, 1]."""
-    return max(0.0, min(1.0, (cos - 0.5) / 0.35))
+    return max(0.0, min(1.0, (cos - floor) / max(span, 1e-6)))
 
 
 def score_candidates(
@@ -187,63 +259,40 @@ def score_candidates(
     cands = [c for c in cands if c.job_id in jobs]
     sem = _minmax([c.dense_sim for c in cands])
     lex = _minmax([c.lex_score for c in cands])
-    total_w = (
-        w.semantic + w.lexical + w.skills + w.level + w.role + w.location + w.recency + w.affinity
-    ) or 1.0
-    shares = {
-        k: round(getattr(w, k) / total_w, 3)
-        for k in (
-            "semantic",
-            "lexical",
-            "skills",
-            "level",
-            "role",
-            "location",
-            "recency",
-            "affinity",
-        )
-        if getattr(w, k) > 0
-    }
+    total_w = w.total
+    shares = w.shares()
     out = []
     for i, c in enumerate(cands):
         job = jobs[c.job_id]
+        emb = np.asarray(job.embedding, dtype=np.float32) if job.embedding is not None else None
         f: dict[str, float] = {}
         if relevance is not None:
             f["semantic"] = relevance.get(c.job_id, 0.0)
             f["lexical"] = 0.0
         else:
-            emb_ = (
-                np.asarray(job.embedding, dtype=np.float32) if job.embedding is not None else None
-            )
             # Absolute, calibrated similarity (not min-max within a result set), so the
             # same profile and role always get the same semantic score.
             f["semantic"] = (
-                calibrate_similarity(_cos(emb_, user.qvec)) if user.qvec is not None else sem[i]
+                calibrate_similarity(_cos(emb, user.qvec), w.sim_floor, w.sim_span)
+                if user.qvec is not None
+                else sem[i]
             )
             f["lexical"] = lex[i] if c.lex_rank else 0.0
-        f["skills"], matched, missing = skill_match(job.skills or [], user.skills)
-        f["level"] = level_fit(job.seniority, user.levels)
-        f["role"] = role_fit(job.role_family, user.families)
+        f["skills"], matched, missing = skill_match(
+            job.skills or [], user.skills, w.skill_saturation
+        )
+        f["level"] = level_fit(job.seniority, user.levels, w)
+        f["role"] = role_fit(job.role_family, user.families, w)
         f["location"], loc_reason = location_fit(job, user.cities)
-        f["recency"], age = recency(job, now)
-        emb = np.asarray(job.embedding, dtype=np.float32) if job.embedding is not None else None
-        aff = _cos(emb, user.pos_centroid) - 0.7 * _cos(emb, user.neg_centroid)
+        f["recency"], age = recency(job, now, w.recency_tau_days)
+        aff = _cos(emb, user.pos_centroid) - w.negative_weight * _cos(emb, user.neg_centroid)
         aff += user.company_affinity.get(job.company_name, 0.0)
         f["affinity"] = max(0.0, min(1.0, 0.5 + aff))
-        raw = (
-            w.semantic * f["semantic"]
-            + w.lexical * f["lexical"]
-            + w.skills * f["skills"]
-            + w.level * f["level"]
-            + w.role * f["role"]
-            + w.location * f["location"]
-            + w.recency * f["recency"]
-            + w.affinity * f["affinity"]
-        ) / total_w
+        raw = sum(getattr(w, k) * f[k] for k in FEATURES) / total_w
         warnings: list[str] = []
-        if w.yoe_penalty and job.min_yoe is not None and job.min_yoe > user.years + 1:
-            gap = job.min_yoe - user.years - 1
-            raw *= max(0.3, 1 - 0.2 * gap)
+        if w.yoe_penalty and job.min_yoe is not None and job.min_yoe > user.years + w.yoe_slack:
+            gap = job.min_yoe - user.years - w.yoe_slack
+            raw *= max(w.yoe_floor, 1 - w.yoe_step * gap)
             warnings.append(f"Asks for {job.min_yoe:g}+ years of experience")
         if f["level"] < 0.5 and job.seniority:
             warnings.append(f"{LEVEL_LABEL.get(job.seniority, job.seniority)} role")
@@ -281,8 +330,39 @@ def score_candidates(
                 weights=shares,
             )
         )
-    out.sort(key=lambda r: r.score, reverse=True)
+    # Deterministic order: score, then freshness, then id (stable across runs and pages).
+    out.sort(
+        key=lambda r: (
+            -r.score,
+            -(r.job.posted_at or r.job.first_seen_at or now).timestamp(),
+            str(r.job.id),
+        )
+    )
     return out
+
+
+def mmr(items: list[Ranked], lam: float, top: int = 60) -> list[Ranked]:
+    """Maximal marginal relevance over the head: trade a little score for roles that
+    are less similar (in embedding space) to ones already shown."""
+    if lam >= 1.0 or len(items) < 3:
+        return items
+    head, tail = items[:top], items[top:]
+    vecs = [
+        np.asarray(r.job.embedding, dtype=np.float32) if r.job.embedding is not None else None
+        for r in head
+    ]
+    chosen: list[int] = []
+    left = list(range(len(head)))
+    while left:
+        best, best_val = left[0], -1e9
+        for i in left:
+            sim = max((_cos(vecs[i], vecs[j]) for j in chosen), default=0.0)
+            val = lam * head[i].score - (1 - lam) * sim
+            if val > best_val:
+                best, best_val = i, val
+        chosen.append(best)
+        left.remove(best)
+    return [head[i] for i in chosen] + tail
 
 
 def diversify(items: list[Ranked], max_per_company: int = 2, window: int = 20) -> list[Ranked]:
@@ -299,3 +379,11 @@ def diversify(items: list[Ranked], max_per_company: int = 2, window: int = 20) -
         else:
             deferred.append(r)
     return result + deferred
+
+
+def finalize(ranked: list[Ranked], w: Weights) -> list[Ranked]:
+    """Apply the configured diversity steps to a scored list."""
+    out = mmr(ranked, w.mmr_lambda)
+    if w.diversify:
+        out = diversify(out, w.max_per_company, w.diversity_window)
+    return out
