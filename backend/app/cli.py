@@ -178,8 +178,13 @@ def pool(
     config_file: list[str] = typer.Option(
         [], help="Also pool configs from these JSON files (a 'config' key, e.g. a tuning report)"
     ),
+    split: str = typer.Option("all", help="dev | test | fresh | all"),
+    shuffle: bool = typer.Option(
+        True, help="Shuffle each persona's sheet so judges can't infer which ranker found a role"
+    ),
 ) -> None:
     """Pool unjudged (persona, role) pairs from many ranking variants for judging."""
+    import random
     from pathlib import Path
 
     from app.db import session_scope
@@ -188,7 +193,7 @@ def pool(
     from app.search.rank import Weights, load_config
 
     with session_scope() as s:
-        personas = load_personas()
+        personas = load_personas(None if split == "all" else split)
         extra = {"tuned": load_config()} if with_tuned else {}
         for i, f in enumerate(config_file):
             data = json.loads(Path(f).read_text(encoding="utf-8"))
@@ -196,6 +201,10 @@ def pool(
             for j, c in enumerate(configs):
                 extra[f"file{i}_{j}"] = Weights.from_dict(c)
         pooled = run_pool(s, personas, extra=extra, depth=depth)
+    if shuffle:
+        rng = random.Random(13)
+        for items in pooled.values():
+            rng.shuffle(items)
     lines, index = [], {}
     for p in personas:
         lines.append(
