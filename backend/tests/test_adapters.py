@@ -5,7 +5,16 @@ import asyncio
 import httpx
 
 from app.ingest.http import PoliteClient
-from app.ingest.sources import aggregators, ashby, greenhouse, hn, jsonld, lever, recruitee, workable
+from app.ingest.sources import (
+    aggregators,
+    ashby,
+    greenhouse,
+    hn,
+    jsonld,
+    lever,
+    recruitee,
+    workable,
+)
 
 
 def test_greenhouse_parse():
@@ -43,7 +52,12 @@ def test_lever_parse():
             "descriptionPlain": "Join us.",
             "lists": [{"text": "Requirements", "content": "<li>Python</li><li>SQL</li>"}],
             "workplaceType": "hybrid",
-            "salaryRange": {"min": 50000, "max": 70000, "currency": "INR", "interval": "per-month-salary"},
+            "salaryRange": {
+                "min": 50000,
+                "max": 70000,
+                "currency": "INR",
+                "interval": "per-month-salary",
+            },
         }
     ]
     [job] = lever.parse(payload, "acme", "Acme")
@@ -56,10 +70,27 @@ def test_lever_parse():
 def test_ashby_parse_skips_unlisted():
     payload = {
         "jobs": [
-            {"id": "1", "title": "AI Engineer", "isListed": True, "location": "Remote", "isRemote": True,
-             "employmentType": "FullTime", "descriptionPlain": "LLMs", "jobUrl": "https://jobs.ashbyhq.com/acme/1",
-             "compensation": {"summaryComponents": [{"compensationType": "Salary", "interval": "1 YEAR",
-                                                     "currencyCode": "USD", "minValue": 1, "maxValue": 2}]}},
+            {
+                "id": "1",
+                "title": "AI Engineer",
+                "isListed": True,
+                "location": "Remote",
+                "isRemote": True,
+                "employmentType": "FullTime",
+                "descriptionPlain": "LLMs",
+                "jobUrl": "https://jobs.ashbyhq.com/acme/1",
+                "compensation": {
+                    "summaryComponents": [
+                        {
+                            "compensationType": "Salary",
+                            "interval": "1 YEAR",
+                            "currencyCode": "USD",
+                            "minValue": 1,
+                            "maxValue": 2,
+                        }
+                    ]
+                },
+            },
             {"id": "2", "title": "Hidden", "isListed": False},
         ]
     }
@@ -70,22 +101,48 @@ def test_ashby_parse_skips_unlisted():
 
 def test_workable_and_recruitee_parse():
     wk = workable.parse(
-        {"name": "Acme", "jobs": [{"title": "Data Engineer", "shortcode": "XYZ", "telecommuting": True,
-                                     "employment_type": "Full-time", "city": "Pune", "country": "India",
-                                     "description": "<p>Spark</p>"}]},
-        "acme", None,
+        {
+            "name": "Acme",
+            "jobs": [
+                {
+                    "title": "Data Engineer",
+                    "shortcode": "XYZ",
+                    "telecommuting": True,
+                    "employment_type": "Full-time",
+                    "city": "Pune",
+                    "country": "India",
+                    "description": "<p>Spark</p>",
+                }
+            ],
+        },
+        "acme",
+        None,
     )
     assert wk[0].remote_hint == "remote" and wk[0].location_raw == "Pune, India"
     rc = recruitee.parse(
-        {"offers": [{"id": 9, "title": "QA Engineer", "description": "<p>a</p>", "requirements": "<p>b</p>",
-                     "location": "Berlin", "remote": False, "employment_type_code": "fulltime"}]},
-        "acme", "Acme",
+        {
+            "offers": [
+                {
+                    "id": 9,
+                    "title": "QA Engineer",
+                    "description": "<p>a</p>",
+                    "requirements": "<p>b</p>",
+                    "location": "Berlin",
+                    "remote": False,
+                    "employment_type_code": "fulltime",
+                }
+            ]
+        },
+        "acme",
+        "Acme",
     )
     assert rc[0].employment_hint == "full_time"
 
 
 def test_hn_header_parsing():
-    company, title, loc, remote = hn.parse_header("Acme AI | Senior Backend Engineer | Bangalore, India | REMOTE (India) | https://acme.ai")
+    company, title, loc, remote = hn.parse_header(
+        "Acme AI | Senior Backend Engineer | Bangalore, India | REMOTE (India) | https://acme.ai"
+    )
     assert company == "Acme AI"
     assert title == "Senior Backend Engineer"
     assert "Bangalore" in loc
@@ -93,7 +150,9 @@ def test_hn_header_parsing():
 
 
 def test_remoteok_skips_legal_notice():
-    jobs = aggregators.parse_remoteok([{"legal": "..."}, {"id": 1, "position": "SRE", "company": "X"}])
+    jobs = aggregators.parse_remoteok(
+        [{"legal": "..."}, {"id": 1, "position": "SRE", "company": "X"}]
+    )
     assert len(jobs) == 1 and jobs[0].remote_hint == "remote"
 
 
@@ -116,7 +175,9 @@ def test_jsonld_parse_and_links():
     assert job.company_name == "Acme" and job.source_job_id == "ml-1"
     assert job.location_raw == "Mumbai, IN" and job.salary_period == "year"
     assert job.description_text == "PyTorch"
-    assert jsonld.job_links(JSONLD_PAGE, "https://acme.com/careers") == ["https://acme.com/careers/jobs/ml-1"]
+    assert jsonld.job_links(JSONLD_PAGE, "https://acme.com/careers") == [
+        "https://acme.com/careers/jobs/ml-1"
+    ]
 
 
 def test_detect_ats():
@@ -154,7 +215,9 @@ def test_polite_client_respects_robots():
     async def run():
         client = PoliteClient(per_host_delay=0, transport=httpx.MockTransport(handler))
         try:
-            return await client.allowed("https://example.com/private/x"), await client.allowed("https://example.com/jobs")
+            return await client.allowed("https://example.com/private/x"), await client.allowed(
+                "https://example.com/jobs"
+            )
         finally:
             await client.aclose()
 

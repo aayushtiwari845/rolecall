@@ -39,7 +39,10 @@ def test_structured_repairs_invalid_json():
 
 def test_tool_calls_are_returned_in_openai_format():
     router, _ = fake_router([{"tool_calls": [{"name": "search_jobs", "args": {"query": "ml"}}]}])
-    res = router.chat([{"role": "user", "content": "find ml jobs"}], tools=[{"type": "function", "function": {"name": "search_jobs"}}])
+    res = router.chat(
+        [{"role": "user", "content": "find ml jobs"}],
+        tools=[{"type": "function", "function": {"name": "search_jobs"}}],
+    )
     assert res.tool_calls[0]["function"]["name"] == "search_jobs"
     assert res.message()["tool_calls"] == res.tool_calls
 

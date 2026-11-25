@@ -13,11 +13,17 @@ from app.llm.router import LLMRouter, Provider
 
 def _resp(content: str = "", tool_calls: list[dict] | None = None):
     calls = [
-        SimpleNamespace(id=tc.get("id", f"call_{i}"), function=SimpleNamespace(name=tc["name"], arguments=json.dumps(tc.get("args", {}))))
+        SimpleNamespace(
+            id=tc.get("id", f"call_{i}"),
+            function=SimpleNamespace(name=tc["name"], arguments=json.dumps(tc.get("args", {}))),
+        )
         for i, tc in enumerate(tool_calls or [])
     ]
     msg = SimpleNamespace(content=content, tool_calls=calls or None)
-    return SimpleNamespace(choices=[SimpleNamespace(message=msg)], usage=SimpleNamespace(prompt_tokens=10, completion_tokens=5))
+    return SimpleNamespace(
+        choices=[SimpleNamespace(message=msg)],
+        usage=SimpleNamespace(prompt_tokens=10, completion_tokens=5),
+    )
 
 
 class ScriptedClient:
@@ -42,10 +48,17 @@ class ScriptedClient:
 
 def rate_limit_error() -> openai.RateLimitError:
     req = httpx.Request("POST", "https://x/chat/completions")
-    return openai.RateLimitError("rate limited", response=httpx.Response(429, request=req, headers={"retry-after": "30"}), body=None)
+    return openai.RateLimitError(
+        "rate limited",
+        response=httpx.Response(429, request=req, headers={"retry-after": "30"}),
+        body=None,
+    )
 
 
 def fake_router(*scripts: list) -> tuple[LLMRouter, list[ScriptedClient]]:
     clients = [ScriptedClient(s) for s in scripts]
-    providers = [Provider(f"p{i}", c, {"fast": f"m{i}", "smart": f"m{i}-smart"}) for i, c in enumerate(clients)]
+    providers = [
+        Provider(f"p{i}", c, {"fast": f"m{i}", "smart": f"m{i}-smart"})
+        for i, c in enumerate(clients)
+    ]
     return LLMRouter(providers=providers, record=False), clients

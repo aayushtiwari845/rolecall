@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     api_public_url: str = "http://localhost:3000/api"
 
     # Auth
-    jwt_secret: str = "dev-secret-change-me"
+    jwt_secret: str = "dev-only-secret-change-me-in-production-please"
     jwt_ttl_days: int = 30
     session_cookie: str = "rolecall_session"
     google_client_id: str = ""

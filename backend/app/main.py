@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import threading
 import time
 
 from fastapi import FastAPI, Request
@@ -73,18 +72,3 @@ def health():
     with session_scope() as s:
         s.execute(text("select 1"))
     return {"ok": True}
-
-
-@app.on_event("startup")
-def warm_models() -> None:
-    """Load the embedding model in the background so the first search isn't slow."""
-
-    def _warm():
-        try:
-            from app.enrich.embed import embed_query
-
-            embed_query("warm up")
-        except Exception:  # noqa: BLE001
-            log.exception("model warm-up failed")
-
-    threading.Thread(target=_warm, daemon=True).start()
