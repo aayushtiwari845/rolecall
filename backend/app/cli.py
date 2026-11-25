@@ -171,9 +171,14 @@ def pool(
     out: str = typer.Option("../data/pool.txt", help="Labelling sheet to write"),
     depth: int = typer.Option(10),
     with_tuned: bool = typer.Option(False, help="Also pool the tuned configuration's top results"),
+    config_file: list[str] = typer.Option(
+        [], help="Also pool configs from these JSON files (a 'config' key, e.g. a tuning report)"
+    ),
 ) -> None:
     """Pool unjudged (persona, role) pairs from many ranking variants for judging."""
     from pathlib import Path
+
+    from app.search.rank import Weights
 
     from app.db import session_scope
     from app.evals.judged import load_personas
@@ -182,7 +187,12 @@ def pool(
 
     with session_scope() as s:
         personas = load_personas()
-        extra = {"tuned": load_config()} if with_tuned else None
+        extra = {"tuned": load_config()} if with_tuned else {}
+        for i, f in enumerate(config_file):
+            data = json.loads(Path(f).read_text(encoding="utf-8"))
+            configs = data.get("top_configs") or [data.get("config", data)]
+            for j, c in enumerate(configs):
+                extra[f"file{i}_{j}"] = Weights.from_dict(c)
         pooled = run_pool(s, personas, extra=extra, depth=depth)
     lines, index = [], {}
     for p in personas:
