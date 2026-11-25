@@ -7,10 +7,11 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import func, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import current_user, get_db, optional_user, rate_limit
+from app.ingest.text import display_title
 from app.llm.router import LLMError, get_llm
 from app.models import Company, CompanySource, Interaction, Job, User
 from app.search.engine import ranked_to_dict, recommend, search, similar
@@ -109,7 +110,7 @@ def search_jobs(
 def _job_detail(job: Job) -> dict:
     return {
         "id": str(job.id),
-        "title": job.title,
+        "title": display_title(job.title),
         "company": job.company_name,
         "url": job.url,
         "apply_url": job.apply_url or job.url,
@@ -162,17 +163,8 @@ def get_job(
 def _detail_weights():
     from app.search.rank import Weights
 
-    # No retrieval scores on a direct view: rely on the profile features only.
-    return Weights(
-        semantic=0.0,
-        lexical=0.0,
-        skills=0.4,
-        level=0.25,
-        role=0.15,
-        location=0.1,
-        recency=0.05,
-        affinity=0.05,
-    )
+    # Same weights as the feed, so a role's score is identical on both pages.
+    return Weights()
 
 
 @router.get("/jobs/{job_id}/similar")
@@ -282,11 +274,11 @@ def public_stats(db: Session = Depends(get_db)):
     return {
         "open_jobs": db.scalar(select(func.count()).select_from(Job).where(*base)) or 0,
         "new_today": db.scalar(
-            select(func.count()).select_from(Job).where(*base, Job.first_seen_at >= day)
+            select(func.count()).select_from(Job).where(*base, Job.posted_at >= day)
         )
         or 0,
         "new_this_week": db.scalar(
-            select(func.count()).select_from(Job).where(*base, Job.first_seen_at >= week)
+            select(func.count()).select_from(Job).where(*base, Job.posted_at >= week)
         )
         or 0,
         "india_jobs": india,
@@ -339,10 +331,18 @@ def commentary(
     relevant: bool = True,
     db: Session = Depends(get_db),
 ):
-    """Newest postings for the live ticker: one per company, India or remote first."""
+    """Newest postings for the live ticker, one per company. By default only roles the
+    audience can take: in India or remote-from-India, and early-career or unlevelled."""
     where = [Job.status == "open", Job.is_tech.is_(True), Job.duplicate_of.is_(None)]
     if relevant:
-        where.append(or_(Job.countries.any("IN"), Job.remote_type == "remote"))
+        open_remote = and_(
+            Job.remote_type == "remote",
+            or_(Job.countries.any("WW"), Job.countries.any("R:APAC"), Job.countries == []),
+        )
+        where.append(or_(Job.countries.any("IN"), open_remote))
+        where.append(
+            or_(Job.seniority.in_(["intern", "new_grad", "junior"]), Job.seniority.is_(None))
+        )
     seen = func.coalesce(Job.posted_at, Job.first_seen_at)
     ranked = (
         select(
@@ -363,13 +363,13 @@ def commentary(
         "items": [
             {
                 "id": str(j.id),
-                "title": j.title,
+                "title": display_title(j.title),
                 "company": j.company_name,
                 "location": (j.cities or [None])[0]
                 or ("Remote" if j.remote_type == "remote" else (j.location_raw or "")[:40]),
                 "remote_type": j.remote_type,
                 "seniority": j.seniority,
-                "first_seen_at": (j.posted_at or j.first_seen_at).isoformat(),
+                "posted_at": (j.posted_at or j.first_seen_at).isoformat(),
             }
             for j in rows
         ]

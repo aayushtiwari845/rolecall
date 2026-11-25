@@ -98,3 +98,17 @@ def parse_dt(value) -> datetime | None:
         return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
     except (ValueError, OverflowError, OSError):
         return None
+
+
+_GENDER_TAG = re.compile(
+    r"\s*[\(\[]\s*(?:[mwfdx]\s*/\s*){1,3}[mwfdx]\s*[\)\]]|\s*\((?:all genders|gn)\)", re.I
+)
+
+
+def display_title(title: str) -> str:
+    """Tidy a posting title for display: drop gender tags like "(m/w/d)" and the
+    pipe-separated marketing tails some boards append."""
+    t = _GENDER_TAG.sub("", title)
+    if " | " in t:
+        t = t.split(" | ")[0]
+    return re.sub(r"\s{2,}", " ", t).strip(" -–|,") or title
