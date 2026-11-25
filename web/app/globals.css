@@ -139,6 +139,16 @@ textarea::placeholder {
   border: 3px solid var(--bg);
 }
 
+/* Light mode is the scorer's book: the page itself is ruled in faint green hairlines,
+   with a double margin rule down the left like a printed scoresheet. */
+:root:not([data-theme="dark"]) body {
+  background-image:
+    linear-gradient(90deg, transparent 22px, #cfdcd2 22px, #cfdcd2 23px, transparent 23px, transparent 26px, #cfdcd2 26px, #cfdcd2 27px, transparent 27px),
+    linear-gradient(to bottom, #e1eae2 1px, transparent 1px);
+  background-size: 100% 100%, 100% 28px;
+  background-attachment: fixed;
+}
+
 /* ------------------------------------------------------------------ type */
 .score {
   font-family: var(--font-score);

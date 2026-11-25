@@ -13,6 +13,7 @@ import { ago, FAMILY_LABEL, LEVEL_LABEL, REMOTE_LABEL, salary, sourceLabel } fro
 import type { JobDetail, JobItem } from "@/lib/types";
 
 const FEATURE_LABEL: Record<string, string> = {
+  semantic: "Profile match",
   skills: "Skills",
   level: "Level",
   role: "Role",
@@ -28,12 +29,61 @@ interface Fit {
   tips: string[];
 }
 
+/** Turn a plain-text posting into paragraphs and real lists (boards export bullets as
+ * "• ", "- " or ". " line prefixes). */
+function Description({ text }: { text: string }) {
+  const blocks: { kind: "p" | "ul"; lines: string[] }[] = [];
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    if (!line) {
+      blocks.push({ kind: "p", lines: [] });
+      continue;
+    }
+    const bullet = line.match(/^(?:[•·▪◦*-]|\.|\d+[.)])\s+(.*)$/);
+    const last = blocks[blocks.length - 1];
+    if (bullet) {
+      if (last?.kind === "ul") last.lines.push(bullet[1]);
+      else blocks.push({ kind: "ul", lines: [bullet[1]] });
+    } else if (last?.kind === "p" && last.lines.length) last.lines.push(line);
+    else blocks.push({ kind: "p", lines: [line] });
+  }
+  return (
+    <div className="mt-10 grid max-w-[72ch] gap-4 text-[0.9375rem] leading-7 text-ink-2">
+      {blocks
+        .filter((b) => b.lines.length)
+        .map((b, i) =>
+          b.kind === "ul" ? (
+            <ul key={i} className="grid list-disc gap-1.5 pl-5 marker:text-ink-3">
+              {b.lines.map((l, j) => (
+                <li key={j}>{l}</li>
+              ))}
+            </ul>
+          ) : b.lines.length === 1 && b.lines[0].length < 70 && !/[.!?]$/.test(b.lines[0]) ? (
+            <h3 key={i} className="mt-2 font-semibold text-ink">
+              {b.lines[0]}
+            </h3>
+          ) : (
+            <p key={i}>{b.lines.join(" ")}</p>
+          ),
+        )}
+    </div>
+  );
+}
+
 function Breakdown({ m }: { m: JobItem }) {
-  const rows = Object.entries(FEATURE_LABEL).map(([k, label]) => ({ k, label, v: m.features[k] ?? 0 }));
+  const rows = Object.entries(FEATURE_LABEL)
+    .filter(([k]) => (m.weights?.[k] ?? 0) > 0)
+    .map(([k, label]) => ({ k, label, v: m.features[k] ?? 0, w: m.weights?.[k] ?? 0 }));
   return (
     <div className="grid gap-2.5">
+      <p className="grid grid-cols-[7.5rem_1fr_2.5rem_2.75rem] gap-3 text-[0.6875rem] text-ink-3">
+        <span />
+        <span>how well it fits</span>
+        <span className="text-right">fit</span>
+        <span className="text-right">weight</span>
+      </p>
       {rows.map((r) => (
-        <div key={r.k} className="grid grid-cols-[7.5rem_1fr_2.5rem] items-center gap-3 text-sm">
+        <div key={r.k} className="grid grid-cols-[7.5rem_1fr_2.5rem_2.75rem] items-center gap-3 text-sm">
           <span className="text-ink-2">{r.label}</span>
           <span className="h-2 overflow-hidden rounded-full bg-panel-2">
             <span
@@ -42,8 +92,12 @@ function Breakdown({ m }: { m: JobItem }) {
             />
           </span>
           <span className="text-right tabular-nums text-ink-2">{Math.round(r.v * 100)}</span>
+          <span className="text-right tabular-nums text-ink-3">{Math.round(r.w * 100)}%</span>
         </div>
       ))}
+      <p className="mt-1 text-xs leading-relaxed text-ink-3">
+        The score is the weighted sum of these fits, reduced when a role asks for more experience than you have.
+      </p>
     </div>
   );
 }
@@ -202,7 +256,7 @@ export default function JobPage({ params }: { params: Promise<{ id: string }> })
             </div>
           )}
 
-          <div className="mt-10 max-w-[72ch] whitespace-pre-line text-[0.9375rem] leading-7 text-ink-2">{job.description}</div>
+          <Description text={job.description} />
         </article>
 
         <aside className="grid content-start gap-8 lg:sticky lg:top-24 lg:self-start">

@@ -78,7 +78,7 @@ export function Commentary({ limit = 12 }: { limit?: number }) {
           <span className="live-dot size-2 rounded-full bg-green" aria-hidden />
           Just posted
         </h2>
-        <span className="text-xs text-ink-3">updates every minute</span>
+        <span className="text-xs text-ink-3">India & remote, early-career</span>
       </div>
       <ol className="ruled flex-1">
         {items.length === 0 &&
@@ -87,14 +87,16 @@ export function Commentary({ limit = 12 }: { limit?: number }) {
               <div className="h-4 w-3/4 animate-pulse rounded bg-panel-2" />
             </li>
           ))}
-        {items.map((j, i) => (
-          <li key={j.id} className="ball-in grid grid-cols-[2.4rem_1fr] gap-3 py-3">
-            <span className="score pt-0.5 text-lg font-bold text-ink-3">{String(i + 1).padStart(2, "0")}</span>
+        {items.map((j) => (
+          <li key={j.id} className="ball-in grid grid-cols-[2.75rem_1fr] gap-3 py-3">
+            <time dateTime={j.posted_at} className="score pt-0.5 text-lg font-bold text-ink-3">
+              {ago(j.posted_at).replace(" ago", "")}
+            </time>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-ink">{j.title}</p>
               <p className="truncate text-xs text-ink-2">
                 {j.company} · {j.location || "Location n/a"}
-                {j.seniority && ` · ${LEVEL_LABEL[j.seniority]}`} · {ago(j.first_seen_at)}
+                {j.seniority && ` · ${LEVEL_LABEL[j.seniority]}`}
               </p>
             </div>
           </li>

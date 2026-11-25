@@ -35,23 +35,27 @@ function Card({
 }) {
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState(app.notes);
+  // A rejection is a wicket: struck through in red, like the scorer marks it.
+  const struck = app.status === "rejected" || app.status === "withdrawn";
   return (
     <li
       draggable
       onDragStart={(e) => e.dataTransfer.setData("text/plain", app.id)}
       className={clsx(
         "group cursor-grab rounded-md border border-rule bg-panel p-3 transition-shadow hover:shadow-[0_4px_14px_rgb(0_0_0/0.12)] active:cursor-grabbing",
-        app.status === "rejected" && "opacity-70",
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           {app.job_id ? (
-            <Link href={`/jobs/${app.job_id}`} className="block text-sm font-semibold leading-snug hover:underline">
+            <Link
+              href={`/jobs/${app.job_id}`}
+              className={clsx("block text-sm font-semibold leading-snug hover:underline", struck && "line-through decoration-red decoration-2")}
+            >
               {app.title}
             </Link>
           ) : (
-            <p className="text-sm font-semibold leading-snug">{app.title}</p>
+            <p className={clsx("text-sm font-semibold leading-snug", struck && "line-through decoration-red decoration-2")}>{app.title}</p>
           )}
           <p className="mt-0.5 truncate text-xs text-ink-2">
             {app.company}

@@ -177,12 +177,20 @@ export function Spinner({ className }: { className?: string }) {
 /** Hand-drawn pen ring, drawn around a saved role's score like a scorer circling a milestone. */
 export function PenRing({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 100 70" className={clsx("pointer-events-none absolute", className)} aria-hidden fill="none">
+    <svg
+      viewBox="0 0 100 70"
+      preserveAspectRatio="none"
+      className={clsx("pointer-events-none absolute", className)}
+      aria-hidden
+      fill="none"
+    >
       <path
         d="M52 6C27 4 6 15 5 33c-1 18 21 31 48 31 26 0 43-12 42-29C94 18 76 7 50 8c-12 .4-22 3-29 8"
         stroke="var(--pen)"
         strokeWidth="2.6"
         strokeLinecap="round"
+        vectorEffect="non-scaling-stroke"
+        pathLength={260}
         strokeDasharray="260"
         style={{ animation: "ring 650ms cubic-bezier(0.16,1,0.3,1)" }}
       />
@@ -207,7 +215,8 @@ export function Score({ value, saved, size = "md" }: { value: number; saved?: bo
         {value}
       </span>
       <span className="label mt-1 text-[0.6rem] text-ink-3">match</span>
-      {saved && <PenRing className="-inset-x-3 -inset-y-2.5 h-[130%] w-[150%]" />}
+      {/* The ring encloses numeral and label with clearance, never crossing the digits. */}
+      {saved && <PenRing className="-bottom-2.5 -left-3.5 -right-3.5 -top-3" />}
     </span>
   );
 }

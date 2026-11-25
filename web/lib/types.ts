@@ -44,6 +44,7 @@ export interface JobItem {
   matched_skills: string[];
   missing_skills: string[];
   features: Record<string, number>;
+  weights: Record<string, number>;
   saved?: boolean;
 }
 
@@ -172,7 +173,7 @@ export interface LatestJob {
   location: string | null;
   remote_type: string | null;
   seniority: Level | null;
-  first_seen_at: string;
+  posted_at: string;
 }
 
 export interface Alert {

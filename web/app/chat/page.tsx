@@ -8,6 +8,7 @@ import { AppShell } from "@/components/app-shell";
 import { JobRow } from "@/components/job-row";
 import { Spinner } from "@/components/ui";
 import { api, streamEvents } from "@/lib/api";
+import { useMe } from "@/lib/hooks";
 import type { JobItem } from "@/lib/types";
 
 interface ToolStep {
@@ -114,6 +115,7 @@ function Rich({ text, jobs }: { text: string; jobs: JobItem[] }) {
 
 export default function ChatPage() {
   const qc = useQueryClient();
+  const { data: me } = useMe();
   const { data: status } = useQuery({ queryKey: ["chat-status"], queryFn: () => api.get<{ available: boolean }>("/chat/status") });
   const { data: threads } = useQuery({
     queryKey: ["threads"],
@@ -238,23 +240,28 @@ export default function ChatPage() {
                 It searches the live index for you, compares roles against your resume, saves them to your tracker and sets up alerts. It
                 remembers what you tell it about your search.
               </p>
-              {status && !status.available && (
-                <p className="mt-6 rounded-md border border-amber/50 bg-amber/10 px-4 py-3 text-sm">
-                  The assistant needs an AI provider key on the server (Groq or Gemini have free tiers). Everything else works without it.
-                </p>
+              {status && !status.available ? (
+                <div className="mt-6 max-w-[56ch] rounded-md border border-amber/50 bg-amber/10 px-4 py-3 text-sm text-ink">
+                  <p>The assistant is offline right now. Your scorecard, search and tracker all work as usual.</p>
+                  {me?.is_admin && (
+                    <p className="mt-2 text-ink-2">Admin: add a free LLM key (GROQ_API_KEY or GEMINI_API_KEY) to the API’s environment and restart it.</p>
+                  )}
+                </div>
+              ) : (
+                <ul className="ruled mt-8 max-w-2xl border-y border-rule">
+                  {STARTERS.map((s) => (
+                    <li key={s}>
+                      <button
+                        onClick={() => send(s)}
+                        className="flex w-full items-center justify-between gap-4 py-3 text-left text-[0.9375rem] text-ink transition-colors hover:text-amber-text"
+                      >
+                        {s}
+                        <ArrowUp className="size-4 rotate-45 text-ink-3" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               )}
-              <div className="mt-8 grid gap-2 sm:grid-cols-2">
-                {STARTERS.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => send(s)}
-                    disabled={!status?.available}
-                    className="rounded-md border border-rule-strong px-4 py-3 text-left text-sm text-ink-2 transition-colors hover:border-ink-3 hover:text-ink disabled:opacity-50"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
             </div>
           ) : (
             <div className="flex-1 space-y-8 pb-8">
