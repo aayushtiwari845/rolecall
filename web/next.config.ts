@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
     return [{ source: "/api/:path*", destination: `${API_URL}/api/:path*` }];
   },
   poweredByHeader: false,
+  devIndicators: false,
   turbopack: {
     rules: {
       "*.css": {
