@@ -166,6 +166,108 @@ def run_eval(
             typer.echo(f"{variant:24s} {json.dumps(shown)}")
 
 
+@app.command()
+def pool(
+    out: str = typer.Option("../data/pool.txt", help="Labelling sheet to write"),
+    depth: int = typer.Option(10),
+    with_tuned: bool = typer.Option(False, help="Also pool the tuned configuration's top results"),
+) -> None:
+    """Pool unjudged (persona, role) pairs from many ranking variants for judging."""
+    from pathlib import Path
+
+    from app.db import session_scope
+    from app.evals.judged import load_personas
+    from app.evals.judged import pool as run_pool
+    from app.search.rank import load_config
+
+    with session_scope() as s:
+        personas = load_personas()
+        extra = {"tuned": load_config()} if with_tuned else None
+        pooled = run_pool(s, personas, extra=extra, depth=depth)
+    lines, index = [], {}
+    for p in personas:
+        lines.append(
+            f"\n### {p.id} | {p.text} | levels={p.levels} | cities={p.cities} | years={p.years}"
+        )
+        for i, (_jid, summ) in enumerate(pooled[p.id]):
+            lines.append(f"{i}. {summ}")
+        index[p.id] = [jid for jid, _ in pooled[p.id]]
+    Path(out).write_text("\n".join(lines), encoding="utf-8")
+    Path(out).with_suffix(".json").write_text(json.dumps(index), encoding="utf-8")
+    typer.echo(f"{sum(len(v) for v in index.values())} unjudged pairs -> {out}")
+
+
+@app.command("judge-add")
+def judge_add(
+    grades: str = typer.Argument(
+        ..., help="JSON file: {persona_id: [grade per pooled item, in sheet order]}"
+    ),
+    index: str = typer.Option("../data/pool.json", help="Pool index written by `rolecall pool`"),
+) -> None:
+    """Import graded judgements (0-3) for a pooled sheet."""
+    from pathlib import Path
+
+    from app.evals.judged import add_qrels
+
+    idx = json.loads(Path(index).read_text(encoding="utf-8"))
+    g = json.loads(Path(grades).read_text(encoding="utf-8"))
+    rows = []
+    for pid, values in g.items():
+        jobs = idx[pid]
+        if len(values) != len(jobs):
+            raise typer.BadParameter(f"{pid}: {len(values)} grades for {len(jobs)} pooled roles")
+        rows += [
+            {"persona": pid, "job": j, "grade": int(v)} for j, v in zip(jobs, values, strict=True)
+        ]
+    typer.echo(f"added {add_qrels(rows)} judgements")
+
+
+@app.command("eval-recsys")
+def eval_recsys(
+    split: str = typer.Option("test", help="dev | test | all"),
+    config: str = typer.Option("current", help="current (tuned if present) | default"),
+) -> None:
+    """Rigorous feed evaluation on judged personas (CIs, segments, constraints, stability)."""
+    from app.db import session_scope
+    from app.evals.judged import load_personas
+    from app.evals.recsys import Evaluator
+    from app.search.rank import Weights, load_config
+
+    w = Weights() if config == "default" else load_config()
+    with session_scope() as s:
+        ev = Evaluator(s, load_personas(None if split == "all" else split))
+        res = ev.evaluate(w, latency=True)
+    for m, v in res.summary.items():
+        typer.echo(f"{m:18s} {v['mean']:.4f}  [{v['lo']:.4f}, {v['hi']:.4f}]")
+    typer.echo("\nsegments:")
+    for g, v in res.segments.items():
+        typer.echo(f"  {g:14s} {json.dumps(v)}")
+
+
+@app.command()
+def tune(
+    trials: int = typer.Option(300),
+    seed: int = typer.Option(7),
+    dry_run: bool = typer.Option(False, help="Report only; do not write tuned_config.json"),
+) -> None:
+    """Two-stage hyperparameter optimisation on dev personas, validated on test."""
+    from pathlib import Path
+
+    from app.db import session_scope
+    from app.evals.tune import run
+
+    with session_scope() as s:
+        report = run(s, trials=trials, seed=seed, write=not dry_run)
+    out = Path(__file__).resolve().parents[1] / "evals" / "results" / "tuning.json"
+    out.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    typer.echo(
+        json.dumps(
+            {k: report[k] for k in ("best_objective_dev", "shipped", "param_importance")}, indent=2
+        )
+    )
+    typer.echo(json.dumps(report["test"]["compare"], indent=2))
+
+
 @app.command("train-ranker")
 def train_ranker() -> None:
     """Fit ranker weights from logged impressions vs clicks/saves (needs real usage)."""
