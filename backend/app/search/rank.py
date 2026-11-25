@@ -243,7 +243,7 @@ def score_candidates(
             Ranked(
                 job=job,
                 score=raw,
-                match=int(round(100 * min(1.0, raw / 0.85))),
+                match=int(round(100 * min(1.0, raw))),
                 features=f,
                 reasons=reasons,
                 warnings=warnings,

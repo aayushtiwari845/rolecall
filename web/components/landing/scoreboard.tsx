@@ -12,7 +12,7 @@ function Plate({ value, label, delay = 0, big }: { value: number | undefined; la
   return (
     <div className="grid content-end gap-2 border-board-rule p-4 md:p-6 [&:not(:first-child)]:border-l">
       <span
-        key={value ?? "x"}
+        key={value === undefined ? "pending" : "ready"}
         className={`score flip-in font-extrabold text-chalk ${big ? "text-[4.5rem] md:text-[8rem]" : "text-[3.25rem] md:text-[5.25rem]"}`}
         style={{ animationDelay: `${delay}ms` }}
       >

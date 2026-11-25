@@ -40,9 +40,9 @@ function Innings() {
   return (
     <div className="board rounded-md">
       <p className="label border-b border-board-rule px-4 py-2.5 text-chalk-2">Your hunt so far</p>
-      <div className="grid grid-cols-4">
+      <div className="grid grid-cols-2">
         {cells.map((c, i) => (
-          <div key={c.l} className={`px-3 py-4 ${i ? "border-l border-board-rule" : ""}`}>
+          <div key={c.l} className={`px-4 py-3.5 ${i % 2 ? "border-l border-board-rule" : ""} ${i > 1 ? "border-t border-board-rule" : ""}`}>
             <p className="score text-[2.25rem] font-extrabold text-chalk">{c.n}</p>
             <p className="label mt-1 text-[0.6rem] text-chalk-2">{c.l}</p>
           </div>

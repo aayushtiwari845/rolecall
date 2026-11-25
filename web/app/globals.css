@@ -165,15 +165,12 @@ textarea::placeholder {
   border-top: 1px solid var(--rule);
 }
 
-/* The scoreboard panel: dark in both themes, faint panel seams. */
+/* The scoreboard panel: dark in both themes. Its plates are divided by real rules,
+   not a background grid, so seams never cut through numerals. */
 .board {
   background-color: var(--board);
   color: var(--chalk);
-  background-image:
-    linear-gradient(var(--board-rule) 1px, transparent 1px),
-    linear-gradient(90deg, var(--board-rule) 1px, transparent 1px);
-  background-size: 100% 25%, 25% 100%;
-  background-position: -1px -1px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
 }
 
 /* A numeral plate hung on the board. */
