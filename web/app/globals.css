@@ -143,8 +143,8 @@ textarea::placeholder {
    with a double margin rule down the left like a printed scoresheet. */
 :root:not([data-theme="dark"]) body {
   background-image:
-    linear-gradient(90deg, transparent 22px, #cfdcd2 22px, #cfdcd2 23px, transparent 23px, transparent 26px, #cfdcd2 26px, #cfdcd2 27px, transparent 27px),
-    linear-gradient(to bottom, #e1eae2 1px, transparent 1px);
+    linear-gradient(90deg, transparent 22px, #b7ccbc 22px, #b7ccbc 23px, transparent 23px, transparent 26px, #b7ccbc 26px, #b7ccbc 27px, transparent 27px),
+    linear-gradient(to bottom, #d6e3d8 1px, transparent 1px);
   background-size: 100% 100%, 100% 28px;
   background-attachment: fixed;
 }

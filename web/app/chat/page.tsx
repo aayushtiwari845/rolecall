@@ -241,7 +241,7 @@ export default function ChatPage() {
                 remembers what you tell it about your search.
               </p>
               {status && !status.available ? (
-                <div className="mt-6 max-w-[56ch] rounded-md border border-amber/50 bg-amber/10 px-4 py-3 text-sm text-ink">
+                <div className="mt-6 max-w-[56ch] rounded-md border border-amber bg-panel px-4 py-3 text-sm text-ink">
                   <p>The assistant is offline right now. Your scorecard, search and tracker all work as usual.</p>
                   {me?.is_admin && (
                     <p className="mt-2 text-ink-2">Admin: add a free LLM key (GROQ_API_KEY or GEMINI_API_KEY) to the API’s environment and restart it.</p>
