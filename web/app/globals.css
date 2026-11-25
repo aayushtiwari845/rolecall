@@ -232,12 +232,14 @@ textarea::placeholder {
   }
 }
 
+/* No fill-mode: the resting (visible) state is the default, so content never sticks
+   in the start frame if a tab stops compositing. */
 .flip-in {
-  animation: flip-in 600ms var(--ease-out-expo) both;
+  animation: flip-in 600ms var(--ease-out-expo);
   transform-origin: 50% 0;
 }
 .ball-in {
-  animation: ball-in 700ms var(--ease-out-expo) both;
+  animation: ball-in 700ms var(--ease-out-expo);
 }
 .live-dot {
   animation: pulse-dot 1.6s ease-in-out infinite;

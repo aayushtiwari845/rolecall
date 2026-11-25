@@ -8,13 +8,13 @@ import { useStats } from "@/lib/hooks";
 import type { LatestJob } from "@/lib/types";
 import { ButtonLink } from "../ui";
 
-function Plate({ value, label, delay = 0, big }: { value: number | undefined; label: string; delay?: number; big?: boolean }) {
+function Plate({ value, label, big }: { value: number | undefined; label: string; big?: boolean }) {
   return (
     <div className="grid content-end gap-2 border-board-rule p-4 md:p-6 [&:not(:first-child)]:border-l">
       <span
         key={value === undefined ? "pending" : "ready"}
         className={`score flip-in font-extrabold text-chalk ${big ? "text-[4.5rem] md:text-[8rem]" : "text-[3.25rem] md:text-[5.25rem]"}`}
-        style={{ animationDelay: `${delay}ms` }}
+       
       >
         {value === undefined ? "–" : num(value)}
       </span>
@@ -39,8 +39,8 @@ export function Scoreboard() {
         <div className="col-span-2 md:col-span-1">
           <Plate value={stats?.new_today} label="New roles in the last 24 hours" big />
         </div>
-        <Plate value={stats?.india_jobs} label="In India or remote-India" delay={120} />
-        <Plate value={stats?.early_career_jobs} label="Internship & new grad" delay={240} />
+        <Plate value={stats?.india_jobs} label="In India or remote-India" />
+        <Plate value={stats?.early_career_jobs} label="Internship & new grad" />
       </div>
       <div className="grid grid-cols-2 border-t border-board-rule md:grid-cols-[1.4fr_1fr_1fr]">
         <div className="col-span-2 flex items-center px-4 py-4 md:col-span-1 md:px-6">
@@ -88,7 +88,7 @@ export function Commentary({ limit = 12 }: { limit?: number }) {
             </li>
           ))}
         {items.map((j, i) => (
-          <li key={j.id} className="ball-in grid grid-cols-[2.4rem_1fr] gap-3 py-3" style={{ animationDelay: `${i * 60}ms` }}>
+          <li key={j.id} className="ball-in grid grid-cols-[2.4rem_1fr] gap-3 py-3">
             <span className="score pt-0.5 text-lg font-bold text-ink-3">{String(i + 1).padStart(2, "0")}</span>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-ink">{j.title}</p>
