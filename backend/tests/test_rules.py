@@ -243,3 +243,15 @@ def test_junk_postings_are_dropped():
     assert not rules.enrich(raw).is_tech
     assert not rules.looks_tech_title("Hydraulics Component Design Engineer, Mobile Control valve")
     assert not rules.looks_tech_title("Content Developer")
+    assert not rules.looks_tech_title("Developer Engagement Representative - LATAM")
+    assert not rules.looks_tech_title("QA Tester (Remote): Test Real Apps, Flexible Hours")
+    not_a_job = RawJob(
+        "hn",
+        "2",
+        "Sparcle",
+        "Software Engineer",
+        "u",
+        description_text="Remote | Equity, full-time, part-time, fractional, project, "
+        "partnership or revenue share. We build an AI workspace in Python. " * 3,
+    )
+    assert not rules.enrich(not_a_job).is_tech

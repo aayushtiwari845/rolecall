@@ -15,7 +15,7 @@ from app.enrich.locations import parse_location
 from app.enrich.skills import extract_skills
 from app.ingest.types import RawJob
 
-RULES_VERSION = 9
+RULES_VERSION = 10
 
 # ---------------------------------------------------------------- tech filter
 _TECH_TITLE = re.compile(
@@ -37,7 +37,8 @@ _NON_TECH = re.compile(
     r"product manager|program manager|project manager|product owner|scrum master|"
     r"solutions? (?:engineer|architect|consultant)|customer (?:engineer|architect)|pre-?sales|"
     r"technical account manager|implementation (?:consultant|specialist)|"
-    r"hydraulic|valve|content developer|sales specialist|\bgtm\b|brand identity|designer\b",
+    r"hydraulic|valve|content developer|sales specialist|\bgtm\b|brand identity|designer\b|"
+    r"representative|crowd-?test|test real apps|partner strategy",
     re.I,
 )
 
@@ -471,6 +472,12 @@ _HN_ROLE = re.compile(
 )
 
 
+_NOT_A_JOB = re.compile(
+    r"looking for (?:contributors|co-?founders)|revenue[- ]share|equity[- ]only|unpaid",
+    re.I,
+)
+
+
 def is_candidate_post(text: str) -> bool:
     return bool(_CANDIDATE_POST.search(text[:400]))
 
@@ -489,6 +496,8 @@ def enrich(job: RawJob) -> Enrichment:
         tech = False
     if len(text) < 100 or re.search(r"\bblah blah\b|lorem ipsum", text[:2000], re.I):
         tech = False  # placeholder or empty postings carry nothing to match on
+    if _NOT_A_JOB.search(text[:1500]):
+        tech = False  # unpaid, equity-only or "looking for contributors" posts
     lo, hi = years_of_experience(text)
     level = seniority(title, lo, job.employment_hint, text)
     loc = parse_location(job.location_raw, job.countries_hint)
