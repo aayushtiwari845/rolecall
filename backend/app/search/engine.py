@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.enrich.embed import embed_query, rerank
+from app.ingest.text import display_title
 from app.models import Job
 from app.search.filters import JobFilters
 from app.search.rank import Ranked, UserContext, Weights, diversify, score_candidates
@@ -199,7 +200,7 @@ def ranked_to_dict(r: Ranked) -> dict:
     j = r.job
     return {
         "id": str(j.id),
-        "title": j.title,
+        "title": display_title(j.title),
         "company": j.company_name,
         "url": j.url,
         "location": j.location_raw,
@@ -218,6 +219,7 @@ def ranked_to_dict(r: Ranked) -> dict:
         "matched_skills": r.matched_skills,
         "missing_skills": r.missing_skills,
         "features": {k: round(v, 3) for k, v in r.features.items()},
+        "weights": r.weights,
     }
 
 

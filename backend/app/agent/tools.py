@@ -135,16 +135,7 @@ def get_job_details(ctx: ToolContext, job_id: str) -> dict:
         [Candidate(job_id=job.id)],
         {job.id: job},
         uctx,
-        Weights(
-            semantic=0,
-            lexical=0,
-            skills=0.4,
-            level=0.25,
-            role=0.15,
-            location=0.1,
-            recency=0.05,
-            affinity=0.05,
-        ),
+        Weights(),
     )
     d = ranked_to_dict(r)
     ctx.register([d])

@@ -47,9 +47,11 @@ FAMILY_LABEL = {
 
 @dataclass
 class Weights:
-    semantic: float = 0.30
-    lexical: float = 0.08
-    skills: float = 0.25
+    # Lexical match feeds candidate retrieval (RRF) but not the score by default, so a
+    # role's score is the same wherever it is shown (feed, search, job page).
+    semantic: float = 0.33
+    lexical: float = 0.0
+    skills: float = 0.27
     level: float = 0.15
     role: float = 0.07
     location: float = 0.05
@@ -86,6 +88,7 @@ class Ranked:
     warnings: list[str]
     matched_skills: list[str]
     missing_skills: list[str]
+    weights: dict[str, float] = field(default_factory=dict)  # share of the score per feature
 
 
 def _minmax(values: list[float]) -> list[float]:
@@ -167,6 +170,11 @@ def _age_text(days: int) -> str:
     return "Posted a while ago"
 
 
+def calibrate_similarity(cos: float) -> float:
+    """Map bge-small cosine similarity (profile vs posting, typically 0.5-0.85) to [0, 1]."""
+    return max(0.0, min(1.0, (cos - 0.5) / 0.35))
+
+
 def score_candidates(
     cands: list[Candidate],
     jobs: dict[uuid.UUID, Job],
@@ -182,6 +190,20 @@ def score_candidates(
     total_w = (
         w.semantic + w.lexical + w.skills + w.level + w.role + w.location + w.recency + w.affinity
     ) or 1.0
+    shares = {
+        k: round(getattr(w, k) / total_w, 3)
+        for k in (
+            "semantic",
+            "lexical",
+            "skills",
+            "level",
+            "role",
+            "location",
+            "recency",
+            "affinity",
+        )
+        if getattr(w, k) > 0
+    }
     out = []
     for i, c in enumerate(cands):
         job = jobs[c.job_id]
@@ -190,7 +212,14 @@ def score_candidates(
             f["semantic"] = relevance.get(c.job_id, 0.0)
             f["lexical"] = 0.0
         else:
-            f["semantic"] = sem[i] if c.dense_rank else 0.0
+            emb_ = (
+                np.asarray(job.embedding, dtype=np.float32) if job.embedding is not None else None
+            )
+            # Absolute, calibrated similarity (not min-max within a result set), so the
+            # same profile and role always get the same semantic score.
+            f["semantic"] = (
+                calibrate_similarity(_cos(emb_, user.qvec)) if user.qvec is not None else sem[i]
+            )
             f["lexical"] = lex[i] if c.lex_rank else 0.0
         f["skills"], matched, missing = skill_match(job.skills or [], user.skills)
         f["level"] = level_fit(job.seniority, user.levels)
@@ -249,6 +278,7 @@ def score_candidates(
                 warnings=warnings,
                 matched_skills=matched,
                 missing_skills=missing[:5],
+                weights=shares,
             )
         )
     out.sort(key=lambda r: r.score, reverse=True)
