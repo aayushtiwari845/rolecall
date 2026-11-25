@@ -351,9 +351,16 @@ def tune_search(session: Session, n_queries: int = 160, seed: int = 11) -> dict:
         ]
 
     # Latency of the cross-encoder per document on this machine.
-    t = time.perf_counter()
-    rerank("latency probe", ["a software engineer role " * 40] * 20)
-    per_doc_ms = (time.perf_counter() - t) * 1000 / 20
+    # Measured on real documents of the shape search sends, after a warm-up call, as the
+    # median of five batches of the head size most likely to fit.
+    probe = [doc(j) for j in jobs[:20]]
+    rerank(cases[0]["q"], probe[:2])
+    runs = []
+    for c in cases[:5]:
+        t = time.perf_counter()
+        rerank(c["q"], probe)
+        runs.append((time.perf_counter() - t) * 1000 / len(probe))
+    per_doc_ms = statistics.median(runs)
 
     grid = []
     for rrf_k in (10, 30, 60, 100):
