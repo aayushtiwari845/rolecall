@@ -58,6 +58,7 @@ def seeded(client):
     with session_scope() as s:
         s.execute(text("TRUNCATE jobs, users CASCADE"))
         for i, (company, title, loc, desc) in enumerate(JOBS):
+            desc = desc + " You will join a small product team, own features end to end and ship every week."
             raw = RawJob(
                 "greenhouse",
                 f"t:{i}",
@@ -258,8 +259,15 @@ def test_narrow_preferences_are_relaxed_and_labelled(seeded):
     c.post("/api/auth/dev-login", json={"email": "narrow@example.com"})
     prefs = c.get("/api/preferences").json()
     # Nothing matches Kolkata; the feed widens to India/remote and says so on those rows.
-    prefs.update(seniorities=["intern", "new_grad"], cities=["Kolkata"], remote_india=False, remote_global=False)
+    prefs.update(
+        seniorities=["intern", "new_grad"],
+        cities=["Kolkata"],
+        remote_india=False,
+        remote_global=False,
+    )
     c.put("/api/preferences", json=prefs)
     items = c.post("/api/feed", json={}).json()["items"]
     assert items, "relaxation should find something"
-    assert all(any(w.startswith("Outside your preferences") for w in it["warnings"]) for it in items)
+    assert all(
+        any(w.startswith("Outside your preferences") for w in it["warnings"]) for it in items
+    )

@@ -136,7 +136,8 @@ def test_enrich_end_to_end():
         title="Backend Engineer, New Grad",
         url="https://example.com/1",
         location_raw="Bengaluru, India (Hybrid)",
-        description_text="We use Python, FastAPI, PostgreSQL and Kubernetes. 0-1 years of experience.",
+        description_text="We use Python, FastAPI, PostgreSQL and Kubernetes. 0-1 years of experience. "
+        "You will build and run the services behind our payments product with a small, friendly team.",
     )
     e = rules.enrich(job)
     assert e.is_tech and e.role_family == "backend" and e.seniority == "new_grad"
@@ -228,3 +229,17 @@ def test_remote_scope(text, countries, regions):
 def test_candidate_posts_are_not_jobs():
     assert rules.is_candidate_post("I'm a software engineer focused on backend development")
     assert not rules.is_candidate_post("We are hiring a software engineer to join us")
+
+
+def test_junk_postings_are_dropped():
+    raw = RawJob(
+        "greenhouse",
+        "1",
+        "Acme",
+        "Software Engineer, Backend",
+        "u",
+        description_text="Blah Blah Blah. Qualifications Blah Blah Blah " * 5,
+    )
+    assert not rules.enrich(raw).is_tech
+    assert not rules.looks_tech_title("Hydraulics Component Design Engineer, Mobile Control valve")
+    assert not rules.looks_tech_title("Content Developer")

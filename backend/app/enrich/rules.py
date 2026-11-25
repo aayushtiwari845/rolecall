@@ -15,7 +15,7 @@ from app.enrich.locations import parse_location
 from app.enrich.skills import extract_skills
 from app.ingest.types import RawJob
 
-RULES_VERSION = 8
+RULES_VERSION = 9
 
 # ---------------------------------------------------------------- tech filter
 _TECH_TITLE = re.compile(
@@ -36,7 +36,8 @@ _NON_TECH = re.compile(
     r"executive assistant|community manager|social media|\bpr\b|data entry|"
     r"product manager|program manager|project manager|product owner|scrum master|"
     r"solutions? (?:engineer|architect|consultant)|customer (?:engineer|architect)|pre-?sales|"
-    r"technical account manager|implementation (?:consultant|specialist)",
+    r"technical account manager|implementation (?:consultant|specialist)|"
+    r"hydraulic|valve|content developer|sales specialist|\bgtm\b|brand identity|designer\b",
     re.I,
 )
 
@@ -48,7 +49,8 @@ _STRONG_TECH_TITLE = re.compile(
     r"developer|programmer|\bsde\b|\bswe\b|software|machine learning|\bml\b|\bai\b|\bllm|"
     r"\bdata (?:engineer|scien|analy|platform)|analytics engineer|devops|\bsre\b|site reliability|"
     r"\bcloud|security engineer|\bsdet\b|test automation|full[- ]?stack|back[- ]?end|front[- ]?end|"
-    r"\bmobile|android|\bios\b|firmware|embedded software|platform engineer|infrastructure engineer|"
+    r"\bmobile (?:app|developer|engineer|software)|android|\bios\b|firmware|embedded software|"
+    r"platform engineer|infrastructure engineer|"
     r"web |\bapplied scientist|research (?:engineer|scientist)|\bqa\b",
     re.I,
 )
@@ -462,6 +464,13 @@ _CANDIDATE_POST = re.compile(
 )
 
 
+_HN_ROLE = re.compile(
+    r"engineer|developer|programmer|\bswe\b|\bsde\b|scientist|\bml\b|devops|\bsre\b|data|"
+    r"full[- ]?stack|back[- ]?end|front[- ]?end|founding|intern\b",
+    re.I,
+)
+
+
 def is_candidate_post(text: str) -> bool:
     return bool(_CANDIDATE_POST.search(text[:400]))
 
@@ -474,8 +483,12 @@ def enrich(job: RawJob) -> Enrichment:
     if not tech and job.source_kind in {"hn"}:
         tech = bool(_TECH_TITLE.search(text[:500]))
     tech = tech and is_english(title, text)
-    if job.source_kind == "hn" and is_candidate_post(text):
-        tech = False  # a job seeker's post in the hiring thread, not a job
+    if job.source_kind == "hn" and (is_candidate_post(text) or not _HN_ROLE.search(text[:300])):
+        # A job seeker's post in the hiring thread, or a post whose header names no
+        # engineering role (sales, GTM, design), is not a job we can match.
+        tech = False
+    if len(text) < 100 or re.search(r"\bblah blah\b|lorem ipsum", text[:2000], re.I):
+        tech = False  # placeholder or empty postings carry nothing to match on
     lo, hi = years_of_experience(text)
     level = seniority(title, lo, job.employment_hint, text)
     loc = parse_location(job.location_raw, job.countries_hint)
