@@ -90,7 +90,9 @@ def job_evals():
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+    )
     logging.getLogger("httpx").setLevel(logging.WARNING)
     from app.db import session_scope as _scope
     from app.ingest.pipeline import seed_sources
@@ -98,7 +100,10 @@ def main() -> None:
     with _scope() as s:
         seed_sources(s)
 
-    sched = BlockingScheduler(timezone="UTC", job_defaults={"coalesce": True, "max_instances": 1, "misfire_grace_time": 600})
+    sched = BlockingScheduler(
+        timezone="UTC",
+        job_defaults={"coalesce": True, "max_instances": 1, "misfire_grace_time": 600},
+    )
     sched.add_job(job_ingest, "interval", hours=2, id="ingest", next_run_time=_soon(5))
     sched.add_job(job_embed, "interval", minutes=10, id="embed", next_run_time=_soon(60))
     sched.add_job(job_enrich, "interval", minutes=30, id="enrich", next_run_time=_soon(120))

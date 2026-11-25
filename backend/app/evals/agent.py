@@ -18,14 +18,46 @@ from app.llm.router import get_llm
 from app.models import ChatThread, Job, Preferences, User
 
 SCENARIOS = [
-    {"msg": "Find me backend internships in Bengaluru that use Python", "expect": ["search_jobs"], "jobs": True},
-    {"msg": "What should I apply to this week?", "expect_any": ["recommend_jobs", "search_jobs"], "jobs": True},
-    {"msg": "Show me remote ML new grad roles posted in the last 2 weeks", "expect_any": ["search_jobs", "recommend_jobs"], "jobs": True},
-    {"msg": "What jobs are open at Stripe?", "expect_any": ["jobs_at_company", "search_jobs"], "jobs": True},
-    {"msg": "Remember that I only want roles in Mumbai or remote", "expect_any": ["remember", "update_preferences"], "jobs": False},
-    {"msg": "How many applications do I have in the interview stage?", "expect": ["list_applications"], "jobs": False},
-    {"msg": "Set up an alert for data engineering internships", "expect": ["create_alert"], "jobs": False},
-    {"msg": "Hi! what can you do?", "forbid": ["save_job", "create_alert", "update_preferences"], "jobs": False},
+    {
+        "msg": "Find me backend internships in Bengaluru that use Python",
+        "expect": ["search_jobs"],
+        "jobs": True,
+    },
+    {
+        "msg": "What should I apply to this week?",
+        "expect_any": ["recommend_jobs", "search_jobs"],
+        "jobs": True,
+    },
+    {
+        "msg": "Show me remote ML new grad roles posted in the last 2 weeks",
+        "expect_any": ["search_jobs", "recommend_jobs"],
+        "jobs": True,
+    },
+    {
+        "msg": "What jobs are open at Stripe?",
+        "expect_any": ["jobs_at_company", "search_jobs"],
+        "jobs": True,
+    },
+    {
+        "msg": "Remember that I only want roles in Mumbai or remote",
+        "expect_any": ["remember", "update_preferences"],
+        "jobs": False,
+    },
+    {
+        "msg": "How many applications do I have in the interview stage?",
+        "expect": ["list_applications"],
+        "jobs": False,
+    },
+    {
+        "msg": "Set up an alert for data engineering internships",
+        "expect": ["create_alert"],
+        "jobs": False,
+    },
+    {
+        "msg": "Hi! what can you do?",
+        "forbid": ["save_job", "create_alert", "update_preferences"],
+        "jobs": False,
+    },
 ]
 
 
@@ -34,7 +66,9 @@ def _eval_user(session: Session) -> User:
     user = session.query(User).filter_by(email=email).one_or_none()
     if user is None:
         user = User(email=email, name="Eval Bot", onboarded=True)
-        user.preferences = Preferences(seniorities=["intern", "new_grad"], cities=["Bengaluru", "Mumbai"])
+        user.preferences = Preferences(
+            seniorities=["intern", "new_grad"], cities=["Bengaluru", "Mumbai"]
+        )
         session.add(user)
         session.commit()
     return user
@@ -65,17 +99,33 @@ def run(session: Session) -> dict[str, dict]:
         refs = JOB_REF.findall(final)
         real = [r for r in refs if session.get(Job, uuid.UUID(r)) is not None]
         fake = len(refs) - len(real)
-        ok_ground = (not sc["jobs"]) or bool(real) or bool(re.search(r"no (matching )?(jobs|roles)", final, re.I))
+        ok_ground = (
+            (not sc["jobs"])
+            or bool(real)
+            or bool(re.search(r"no (matching )?(jobs|roles)", final, re.I))
+        )
         tool_ok += ok_tools
         grounded += ok_ground
         fabricated += fake
         passed += ok_tools and ok_ground and fake == 0 and error is None
-        details.append({"msg": sc["msg"], "tools": tools, "ok": ok_tools and ok_ground and not fake, "error": error})
+        details.append(
+            {
+                "msg": sc["msg"],
+                "tools": tools,
+                "ok": ok_tools and ok_ground and not fake,
+                "error": error,
+            }
+        )
         session.delete(thread)
         session.commit()
     n = len(SCENARIOS)
-    return {"tool_use": {
-        "pass_rate": round(passed / n, 3), "tool_selection_acc": round(tool_ok / n, 3),
-        "grounded_rate": round(grounded / n, 3), "fabricated_job_refs": fabricated, "scenarios": n,
-        "details": details,
-    }}
+    return {
+        "tool_use": {
+            "pass_rate": round(passed / n, 3),
+            "tool_selection_acc": round(tool_ok / n, 3),
+            "grounded_rate": round(grounded / n, 3),
+            "fabricated_job_refs": fabricated,
+            "scenarios": n,
+            "details": details,
+        }
+    }

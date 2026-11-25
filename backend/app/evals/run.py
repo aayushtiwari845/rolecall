@@ -15,7 +15,9 @@ RESULTS = Path(__file__).resolve().parents[2] / "evals" / "results"
 
 def _git_sha() -> str | None:
     try:
-        return subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], text=True, timeout=5).strip()
+        return subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"], text=True, timeout=5
+        ).strip()
     except (OSError, subprocess.SubprocessError):
         return None
 
@@ -36,10 +38,25 @@ def run_suite(suite: str, use_llm: bool = True, **kw) -> dict:
             raise ValueError(f"unknown suite {suite}")
         sha = _git_sha()
         for variant, metrics in res.items():
-            s.add(EvalRun(suite=suite, variant=variant, metrics=metrics, config={"git_sha": sha, "use_llm": use_llm, **kw}))
+            s.add(
+                EvalRun(
+                    suite=suite,
+                    variant=variant,
+                    metrics=metrics,
+                    config={"git_sha": sha, "use_llm": use_llm, **kw},
+                )
+            )
     RESULTS.mkdir(parents=True, exist_ok=True)
     (RESULTS / f"{suite}.json").write_text(
-        json.dumps({"suite": suite, "run_at": datetime.now(UTC).isoformat(), "git_sha": sha, "results": res}, indent=2),
+        json.dumps(
+            {
+                "suite": suite,
+                "run_at": datetime.now(UTC).isoformat(),
+                "git_sha": sha,
+                "results": res,
+            },
+            indent=2,
+        ),
         encoding="utf-8",
     )
     return res

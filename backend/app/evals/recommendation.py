@@ -25,33 +25,113 @@ from app.search.rank import UserContext, Weights
 PERSONAS = {
     **DEMO_PROFILES,
     "frontend_new_grad": {
-        "label": "Frontend new grad", "text": "Recent graduate, React and TypeScript projects, Next.js, Tailwind, "
+        "label": "Frontend new grad",
+        "text": "Recent graduate, React and TypeScript projects, Next.js, Tailwind, "
         "accessibility, some Node.js. Wants frontend or full-stack roles.",
-        "skills": ["React", "TypeScript", "JavaScript", "Next.js", "HTML/CSS", "Tailwind CSS", "Node.js", "Git"],
-        "levels": ["new_grad", "junior"], "families": ["frontend", "fullstack", "swe"], "cities": ["Bengaluru", "Pune"],
+        "skills": [
+            "React",
+            "TypeScript",
+            "JavaScript",
+            "Next.js",
+            "HTML/CSS",
+            "Tailwind CSS",
+            "Node.js",
+            "Git",
+        ],
+        "levels": ["new_grad", "junior"],
+        "families": ["frontend", "fullstack", "swe"],
+        "cities": ["Bengaluru", "Pune"],
     },
     "infra_junior": {
-        "label": "Infra / SRE junior", "text": "1 year as a DevOps engineer: Kubernetes, Terraform, AWS, CI/CD, "
+        "label": "Infra / SRE junior",
+        "text": "1 year as a DevOps engineer: Kubernetes, Terraform, AWS, CI/CD, "
         "Prometheus and Grafana, Linux, Python and Go scripting.",
-        "skills": ["Kubernetes", "Terraform", "AWS", "CI/CD", "Observability", "Linux", "Python", "Go", "Docker"],
-        "levels": ["new_grad", "junior", "mid"], "families": ["infra", "backend", "swe"], "cities": ["Bengaluru", "Hyderabad"],
+        "skills": [
+            "Kubernetes",
+            "Terraform",
+            "AWS",
+            "CI/CD",
+            "Observability",
+            "Linux",
+            "Python",
+            "Go",
+            "Docker",
+        ],
+        "levels": ["new_grad", "junior", "mid"],
+        "families": ["infra", "backend", "swe"],
+        "cities": ["Bengaluru", "Hyderabad"],
     },
 }
 
 
 def persona_context(p: dict) -> tuple[UserContext, JobFilters]:
-    ctx = UserContext(skills=set(p["skills"]), years=0.0 if "intern" in p["levels"] else 1.0, levels=p["levels"],
-                      families=p["families"], cities=p["cities"], qvec=embed_query(p["text"]), lex_terms=p["skills"][:10])
-    f = JobFilters(seniorities=p["levels"], role_families=p["families"], cities=p["cities"], remote_india=True, remote_global=True)
+    ctx = UserContext(
+        skills=set(p["skills"]),
+        years=0.0 if "intern" in p["levels"] else 1.0,
+        levels=p["levels"],
+        families=p["families"],
+        cities=p["cities"],
+        qvec=embed_query(p["text"]),
+        lex_terms=p["skills"][:10],
+    )
+    f = JobFilters(
+        seniorities=p["levels"],
+        role_families=p["families"],
+        cities=p["cities"],
+        remote_india=True,
+        remote_global=True,
+    )
     return ctx, f
 
 
 def variants() -> dict[str, dict]:
     full = Weights()
     return {
-        "dense_only": {"mode": "dense", "weights": Weights(semantic=1, lexical=0, skills=0, level=0, role=0, location=0, recency=0, affinity=0, yoe_penalty=False, diversify=False)},
-        "lexical_only": {"mode": "lexical", "weights": Weights(semantic=0, lexical=1, skills=0, level=0, role=0, location=0, recency=0, affinity=0, yoe_penalty=False, diversify=False)},
-        "hybrid_rrf_only": {"mode": "hybrid", "weights": Weights(semantic=0.6, lexical=0.4, skills=0, level=0, role=0, location=0, recency=0, affinity=0, yoe_penalty=False, diversify=False)},
+        "dense_only": {
+            "mode": "dense",
+            "weights": Weights(
+                semantic=1,
+                lexical=0,
+                skills=0,
+                level=0,
+                role=0,
+                location=0,
+                recency=0,
+                affinity=0,
+                yoe_penalty=False,
+                diversify=False,
+            ),
+        },
+        "lexical_only": {
+            "mode": "lexical",
+            "weights": Weights(
+                semantic=0,
+                lexical=1,
+                skills=0,
+                level=0,
+                role=0,
+                location=0,
+                recency=0,
+                affinity=0,
+                yoe_penalty=False,
+                diversify=False,
+            ),
+        },
+        "hybrid_rrf_only": {
+            "mode": "hybrid",
+            "weights": Weights(
+                semantic=0.6,
+                lexical=0.4,
+                skills=0,
+                level=0,
+                role=0,
+                location=0,
+                recency=0,
+                affinity=0,
+                yoe_penalty=False,
+                diversify=False,
+            ),
+        },
         "ranker_no_yoe_penalty": {"mode": "hybrid", "weights": replace(full, yoe_penalty=False)},
         "ranker_no_diversity": {"mode": "hybrid", "weights": replace(full, diversify=False)},
         "full_ranker": {"mode": "hybrid", "weights": full},
@@ -88,7 +168,9 @@ def llm_judge(p: dict, job: Job) -> int | None:
         "Consider role, level / years asked, skills and location."
     )
     try:
-        return llm.structured([{"role": "user", "content": prompt}], Judgement, purpose="eval_judge").score
+        return llm.structured(
+            [{"role": "user", "content": prompt}], Judgement, purpose="eval_judge"
+        ).score
     except (LLMError, ValueError):
         return None
 
@@ -121,8 +203,11 @@ def run(session: Session, k: int = 10, use_llm: bool = True) -> dict[str, dict]:
             uniq_companies.append(len({j.company_name for j in jobs[:k]}) / max(1, len(jobs[:k])))
             all_ids |= set(ids)
         out[vname] = {
-            f"ndcg@{k}": round(mean(ndcg), 4), f"p@{k}": round(mean(prec), 4),
-            "company_diversity": round(mean(uniq_companies), 3), "coverage": round(len(all_ids) / total_open, 4),
-            "personas": len(PERSONAS), "judge": judge_source,
+            f"ndcg@{k}": round(mean(ndcg), 4),
+            f"p@{k}": round(mean(prec), 4),
+            "company_diversity": round(mean(uniq_companies), 3),
+            "coverage": round(len(all_ids) / total_open, 4),
+            "personas": len(PERSONAS),
+            "judge": judge_source,
         }
     return out

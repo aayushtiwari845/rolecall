@@ -23,16 +23,32 @@ FIELDS = ["seniority", "role_family", "remote_type", "employment_type", "min_yoe
 def load_gold(path: Path = GOLD) -> list[dict]:
     if not path.exists():
         return []
-    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    return [
+        json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
 
 
 def _predict_rules(case: dict) -> dict:
-    raw = RawJob(source_kind=case.get("source", "gold"), source_job_id=case["id"], company_name=case["company"],
-                 title=case["title"], url="", description_text=case["text"], location_raw=case.get("location"),
-                 remote_hint=case.get("remote_hint"), employment_hint=case.get("employment_hint"))
+    raw = RawJob(
+        source_kind=case.get("source", "gold"),
+        source_job_id=case["id"],
+        company_name=case["company"],
+        title=case["title"],
+        url="",
+        description_text=case["text"],
+        location_raw=case.get("location"),
+        remote_hint=case.get("remote_hint"),
+        employment_hint=case.get("employment_hint"),
+    )
     e = rules.enrich(raw)
-    return {"seniority": e.seniority, "role_family": e.role_family, "remote_type": e.remote_type,
-            "employment_type": e.employment_type, "min_yoe": e.min_yoe, "_enrichment": e}
+    return {
+        "seniority": e.seniority,
+        "role_family": e.role_family,
+        "remote_type": e.remote_type,
+        "employment_type": e.employment_type,
+        "min_yoe": e.min_yoe,
+        "_enrichment": e,
+    }
 
 
 def _predict_llm(case: dict, base: dict) -> dict | None:
@@ -40,14 +56,26 @@ def _predict_llm(case: dict, base: dict) -> dict | None:
     if not llm.available:
         return None
     e = base["_enrichment"]
-    job = Job(title=case["title"], company_name=case["company"], location_raw=case.get("location"),
-              description_text=case["text"], seniority=e.seniority, role_family=e.role_family,
-              min_yoe=e.min_yoe, skills=list(e.skills))
+    job = Job(
+        title=case["title"],
+        company_name=case["company"],
+        location_raw=case.get("location"),
+        description_text=case["text"],
+        seniority=e.seniority,
+        role_family=e.role_family,
+        min_yoe=e.min_yoe,
+        skills=list(e.skills),
+    )
     try:
         apply_extraction(job, extract(llm, job))
     except (LLMError, ValueError):
         return None
-    return {**base, "seniority": job.seniority, "role_family": job.role_family, "min_yoe": job.min_yoe}
+    return {
+        **base,
+        "seniority": job.seniority,
+        "role_family": job.role_family,
+        "min_yoe": job.min_yoe,
+    }
 
 
 def _match(field: str, pred, gold) -> bool:

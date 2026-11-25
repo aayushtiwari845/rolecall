@@ -57,15 +57,23 @@ def llm_query(job: Job) -> str | None:
         'Return {"queries": ["..."]}'
     )
     try:
-        return llm.structured([{"role": "user", "content": prompt}], Queries, purpose="eval").queries[0]
+        return llm.structured(
+            [{"role": "user", "content": prompt}], Queries, purpose="eval"
+        ).queries[0]
     except (LLMError, ValueError, IndexError):
         return None
 
 
 def sample_jobs(session: Session, n: int, seed: int) -> list[Job]:
-    base = select(Job).where(Job.status == "open", Job.is_tech.is_(True), Job.duplicate_of.is_(None),
-                             Job.embedding.is_not(None))
-    jobs = list(session.scalars(base.order_by(func.md5(func.concat(Job.id, str(seed)))).limit(n * 3)))
+    base = select(Job).where(
+        Job.status == "open",
+        Job.is_tech.is_(True),
+        Job.duplicate_of.is_(None),
+        Job.embedding.is_not(None),
+    )
+    jobs = list(
+        session.scalars(base.order_by(func.md5(func.concat(Job.id, str(seed)))).limit(n * 3))
+    )
     # Stratify by role family so a few huge employers don't dominate.
     by_family: dict[str, list[Job]] = {}
     for j in jobs:
@@ -110,8 +118,13 @@ def run(session: Session, n: int = 150, seed: int = 7, use_llm: bool = True) -> 
             ndcg.append(ndcg_at(ranked, {i: 1 for i in relevant}, 10))
         lat.sort()
         results[name] = {
-            "recall@10": round(mean(r10), 4), "recall@50": round(mean(r50), 4), "mrr@10": round(mean(mrr), 4),
-            "ndcg@10": round(mean(ndcg), 4), "p50_ms": round(lat[len(lat) // 2], 1),
-            "p95_ms": round(lat[int(len(lat) * 0.95) - 1], 1), "queries": len(cases), "query_source": query_source,
+            "recall@10": round(mean(r10), 4),
+            "recall@50": round(mean(r50), 4),
+            "mrr@10": round(mean(mrr), 4),
+            "ndcg@10": round(mean(ndcg), 4),
+            "p50_ms": round(lat[len(lat) // 2], 1),
+            "p95_ms": round(lat[int(len(lat) * 0.95) - 1], 1),
+            "queries": len(cases),
+            "query_source": query_source,
         }
     return results
