@@ -21,17 +21,18 @@ measure one of those.
 
 ## 2. Ground truth: judged personas (TREC-style pooling)
 
-- **16 personas** (`backend/evals/data/personas.yaml`): interns, new grads, juniors, one
+- **28 personas** (`backend/evals/data/personas.yaml`): interns, new grads, juniors, one
   experienced engineer; backend, ML, LLM, data, frontend, infra, security, mobile,
   embedded, QA; Indian cities and remote-only; one deliberately sparse profile; one
   matching the project owner's resume. Each has a text profile, skills, years of
   experience, target levels, role kinds and cities.
-- **Split:** 10 dev personas for tuning, 6 test personas only for reporting. Groups are
-  balanced so test covers intern, new grad, junior, experienced, remote and India.
+- **Split:** 10 dev personas for tuning, 6 test personas for ship decisions, and 12 fresh
+  personas (5b) written after tuning and judged blind. Groups are balanced so each
+  held-out set covers intern, new grad, junior, experienced, remote and India.
 - **Pooling:** for each persona, the top 10 of eight deliberately different rankers
   (dense only, lexical only, fusion only, hand-set defaults, skills-heavy,
   semantic-heavy, level-heavy, MMR-diversified) are unioned: 408 pairs, plus 100 more from two rounds of
-  pooling the tuned configurations (508 in all).
+  pooling the tuned configurations, plus 318 for the fresh personas (826 in all).
 - **Judging:** every pair graded 0-3 against a rubric written before judging (in
   `backend/app/evals/judged.py`), reading the posting's title, company, location and
   eligibility, level, required experience, skills and description, without seeing any
@@ -127,13 +128,13 @@ are only used for the ship decision; every look at them is listed here.
 | Stage | Decision | Evidence on held-out data |
 |---|---|---|
 | Feed retrieval depth | 200 dense, 0 lexical (was 300 + 150) | test nDCG@10 identical (0.624), candidate recall 0.98 both, feed latency 231 → 152 ms |
-| Ranking weights | stay hand-set | CV gain inside dev (+0.12, p=0.03) did not hold on test (-0.022, p=0.75) |
+| Ranking weights | stayed hand-set after round 4; **shipped later on fresh personas** (5b) | CV gain inside dev (+0.12, p=0.03) did not hold on test (-0.022, p=0.75); on 12 fresh personas +0.072 (p=0.13) |
 | Search fusion | RRF k 30, lexical weight 2, no cross-encoder | 40-doc rerank measured at ~2.2 s on CPU, far over the 250 ms budget; dropping it moves test MRR@10 0.210 → 0.200 (p=0.72) |
 
 The cross-encoder stays in the code and in the search eval as a variant: on a GPU or a
 faster host, set `rerank_head` back above zero.
 
-The honest summary: on 16 personas, Bayesian optimisation of the ranking weights finds
+The honest summary after round 4: on 16 personas, Bayesian optimisation of the ranking weights finds
 real gains on personas it was tuned on (and, by nested CV, on unseen *dev* personas), but
 not on the held-out set. The hand-set weights are as good as anything the tuner found
 within the noise of this evaluation. Getting a reliable gain needs more personas or real
@@ -189,6 +190,42 @@ Plan, fixed before pooling and committed with the personas:
   eval-fresh`). The result is reported whatever it is, and the fresh set then becomes
   validation data like the test set.
 
+**Result** (`backend/evals/results/fresh_holdout.json`): 318 pooled pairs, all judged, so
+judged@10 is 1.0 for every configuration.
+
+| Ranking weights | nDCG@10 | P@10 | bpref | vs hand-set (paired test) |
+|---|---|---|---|---|
+| hand-set (released before) | 0.635 | 0.200 | 0.393 | |
+| round 2 tuned | 0.685 | 0.275 | 0.468 | +0.050, 6 wins / 5 losses, p=0.52 |
+| round 3 tuned | 0.699 | 0.275 | 0.443 | +0.064, 7 / 4, p=0.25 |
+| round 4 tuned | 0.707 | 0.267 | 0.447 | +0.072, 7 / 4, p=0.13 |
+
+No configuration added violations. Round 4's weights met the rule and shipped
+(`rolecall fresh-apply`); retrieval depth and search settings are unchanged.
+
+How strong this is, honestly:
+- On fresh personas every tuned configuration beat the hand-set weights, the reverse of
+  the 6 test personas. Neither difference is significant.
+- Much of the fresh gain is one persona (Go new grad, 0.21 to 0.69). Pooling all 18
+  held-out personas (not pre-registered, reported for context): +0.041 nDCG@10, 9 wins /
+  8 losses, p=0.30; P@10 +0.067, p=0.09.
+- So the evidence says the tuned weights are *not worse* on unseen personas, which is
+  what the rule asks. It does not show they are better. They shipped because they are no
+  worse and were chosen by a validated procedure, not because of a measured win.
+
+What judging the fresh pools revealed (beyond the ranking weights):
+- **Absolute quality is low for some segments.** Fresh P@10 is 0.27 against 0.47 on the
+  test set. The MERN intern in Delhi NCR, the junior Android developer in Mumbai and the
+  remote NLP intern had at most two roles graded 2 or higher in their entire pools: the
+  catalogue barely has them. Condensed nDCG normalises per persona, so such personas can
+  score high (the MERN intern scores 1.0) while being badly served; read P@10 alongside.
+- **Location gaps.** Postings located "Remote US", "US - Remote", "Remote, KSA",
+  "Argentina" or "Ontario - Remote" get no country, pass the remote filter and are not
+  counted as violations. They were graded 0 where ineligible, which nDCG reflects, but
+  violations@10 is blind to them.
+- **Experience gaps.** Phrases such as "at least 8 years" in a requirements list are
+  missed by the experience extractor, so some senior roles reach intern feeds.
+
 ## 6. Robustness built into the engine
 
 - Cold start: no resume and no history falls back to the freshest roles inside the
@@ -208,11 +245,14 @@ Plan, fixed before pooling and committed with the personas:
 - Judgements come from a single judge pass per pair, not multiple annotators, so
   inter-annotator agreement cannot be reported yet. The rubric and every judgement are
   in the repository for anyone to audit or re-judge.
-- 16 personas give wide confidence intervals. Differences smaller than the intervals are
+- Few personas give wide confidence intervals. Differences smaller than the intervals are
   reported as such, not as wins.
-- The 6 test personas have informed four ship decisions. The next step for a clean
-  estimate is a fresh set of personas, judged from scratch and used once.
-- Judgements cover 508 (persona, role) pairs across four pooling rounds; roles a future
+- The 6 test personas have informed four ship decisions, and the 12 fresh personas one.
+  Both are now validation data; the next clean estimate needs another new set, or real
+  usage.
+- 18 held-out personas still cannot separate configurations whose nDCG@10 differs by
+  less than about 0.1.
+- Judgements cover 826 (persona, role) pairs across five pooling rounds; roles a future
   configuration surfaces will need judging again (judged@10 is reported for that).
 - Retrieval depth tuning uses pools built at the default depths, which biases
   candidate recall toward depths at or below them.
