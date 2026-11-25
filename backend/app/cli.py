@@ -166,6 +166,16 @@ def run_eval(
             typer.echo(f"{variant:24s} {json.dumps(shown)}")
 
 
+@app.command("train-ranker")
+def train_ranker() -> None:
+    """Fit ranker weights from logged impressions vs clicks/saves (needs real usage)."""
+    from app.db import session_scope
+    from app.search.ltr import train
+
+    with session_scope() as s:
+        typer.echo(json.dumps(train(s), indent=2))
+
+
 @app.command("eval-report")
 def eval_report() -> None:
     """Render the latest eval results (evals/results/*.json) into docs/evals.md."""
