@@ -15,7 +15,7 @@ from app.enrich.locations import parse_location
 from app.enrich.skills import extract_skills
 from app.ingest.types import RawJob
 
-RULES_VERSION = 4
+RULES_VERSION = 5
 
 # ---------------------------------------------------------------- tech filter
 _TECH_TITLE = re.compile(
@@ -39,8 +39,70 @@ _NON_TECH = re.compile(
 )
 
 
+# Titles that are software work on their own. Generic ones ("Engineer", "Architect",
+# "Intern") need evidence from the description, since "Simulation Engineer" or
+# "Hardware Engineer" are engineering but not software.
+_STRONG_TECH_TITLE = re.compile(
+    r"developer|programmer|\bsde\b|\bswe\b|software|machine learning|\bml\b|\bai\b|\bllm|"
+    r"\bdata (?:engineer|scien|analy|platform)|analytics engineer|devops|\bsre\b|site reliability|"
+    r"\bcloud|security engineer|\bsdet\b|test automation|full[- ]?stack|back[- ]?end|front[- ]?end|"
+    r"\bmobile|android|\bios\b|firmware|embedded software|platform engineer|infrastructure engineer|"
+    r"web |\bapplied scientist|research (?:engineer|scientist)|\bqa\b",
+    re.I,
+)
+_SOFTWARE_CATEGORIES = {
+    "language",
+    "backend",
+    "frontend",
+    "mobile",
+    "database",
+    "data",
+    "ml",
+    "ai",
+    "cloud",
+    "infra",
+}
+
+
 def looks_tech_title(title: str) -> bool:
     return bool(_TECH_TITLE.search(title)) and not _NON_TECH.search(title)
+
+
+def is_tech_role(title: str, skills: list[str]) -> bool:
+    if not looks_tech_title(title):
+        return False
+    if _STRONG_TECH_TITLE.search(title):
+        return True
+    from app.enrich.skills import CATEGORIES
+
+    software = [s for s in skills if CATEGORIES.get(s) in _SOFTWARE_CATEGORIES]
+    return len(software) >= 3
+
+
+# Common function words; postings mostly in another language are dropped because the
+# audience applies in English.
+_EN = re.compile(r"\b(the|and|with|you|our|will|for|are|your|team|experience)\b", re.I)
+_OTHER = re.compile(
+    r"\b(und|mit|für|der|die|das|wir|sie|ihre|bei|oder|"  # German
+    r"el|los|las|para|con|una|nuestro|experiencia|"  # Spanish
+    r"les|des|pour|avec|vous|nous|une|"  # French
+    r"você|para|com|uma|não|nosso|"  # Portuguese
+    r"het|een|wij|voor|"  # Dutch
+    r"och|att|för|med)\b",  # Swedish
+    re.I,
+)
+
+
+def is_english(title: str, text: str) -> bool:
+    sample = f"{title} {text[:2500]}"
+    en, other = len(_EN.findall(sample)), len(_OTHER.findall(sample))
+    if en + other < 8:
+        return not re.search(
+            r"\(m/w/d\)|\(w/m/d\)|praktikum|werkstudent|ingenieur|desarrollador|estágio|stagiaire",
+            title,
+            re.I,
+        )
+    return en >= other * 1.5
 
 
 # ---------------------------------------------------------------- role family
@@ -345,9 +407,11 @@ class Enrichment:
 def enrich(job: RawJob) -> Enrichment:
     text = job.description_text or ""
     title = job.title or ""
-    tech = looks_tech_title(title)
+    skills = extract_skills(f"{title}\n{text}")[:40]
+    tech = is_tech_role(title, skills)
     if not tech and job.source_kind in {"hn"}:
         tech = bool(_TECH_TITLE.search(text[:500]))
+    tech = tech and is_english(title, text)
     lo, hi = years_of_experience(text)
     level = seniority(title, lo, job.employment_hint, text)
     loc = parse_location(job.location_raw, job.countries_hint)

@@ -147,3 +147,26 @@ def test_enrich_remote_worldwide_flag():
     job = RawJob("remotive", "1", "Acme", "ML Engineer", "u", location_raw="Worldwide", remote_hint="remote")
     e = rules.enrich(job)
     assert "WW" in e.countries and e.remote_type == "remote"
+
+
+@pytest.mark.parametrize(
+    "title,text,expected",
+    [
+        ("Simulation Engineer", "CAD, FEA and ANSYS for vehicle structures.", False),
+        ("Hardware Engineer", "PCB layout and analog circuits.", False),
+        ("Engineer, Payments", "We build services in Python and Go on AWS with PostgreSQL and Kafka.", True),
+        ("Backend Developer", "", True),
+    ],
+)
+def test_tech_role_needs_software_evidence_for_generic_titles(title, text, expected):
+    from app.enrich.skills import extract_skills
+
+    assert rules.is_tech_role(title, extract_skills(f"{title} {text}")) is expected
+
+
+def test_language_filter():
+    de = "Wir suchen für unser Team einen Entwickler (m/w/d) mit Erfahrung in Java und Python. Sie arbeiten mit der Cloud und die Kollegen."
+    en = "You will join our team and work with Python. The role is for engineers with experience in cloud and data."
+    assert not rules.is_english("Softwareentwickler (m/w/d)", de)
+    assert rules.is_english("Software Engineer", en)
+    assert not rules.is_english("Praktikum Softwareentwicklung", "")
