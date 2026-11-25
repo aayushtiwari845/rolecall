@@ -1,10 +1,10 @@
 {
   "suite": "recsys",
-  "run_at": "2026-11-25T15:13:18.487109+00:00",
-  "git_sha": "22abd16",
+  "run_at": "2026-11-25T17:38:04.514387+00:00",
+  "git_sha": "298e299",
   "results": {
-    "hand_set_v1": {
-      "ndcg@10": 0.6243,
+    "test_hand_set_v1": {
+      "ndcg@10": 0.6237,
       "p@10": 0.4,
       "map": 0.5646,
       "bpref": 0.4571,
@@ -14,25 +14,56 @@
       "companies@10": 0.8167,
       "stability_rbo": 0.8539,
       "judged@10": 1.0,
-      "latency_ms": 241.1435,
-      "ndcg@10_95ci": "0.504-0.737",
+      "latency_ms": 245.5275,
+      "ndcg@10_95ci": "0.504-0.735",
       "personas": 6
     },
-    "released": {
-      "ndcg@10": 0.6243,
-      "p@10": 0.4,
-      "map": 0.5646,
-      "bpref": 0.4571,
-      "success@5": 0.8333,
+    "test_released": {
+      "ndcg@10": 0.603,
+      "p@10": 0.4667,
+      "map": 0.5626,
+      "bpref": 0.4712,
+      "success@5": 0.6667,
       "violations@10": 0.0,
-      "ild@10": 0.2749,
-      "companies@10": 0.8167,
-      "stability_rbo": 0.8539,
+      "ild@10": 0.2774,
+      "companies@10": 0.8667,
+      "stability_rbo": 0.8763,
       "judged@10": 1.0,
-      "latency_ms": 143.9375,
-      "ndcg@10_95ci": "0.504-0.737",
+      "latency_ms": 158.1964,
+      "ndcg@10_95ci": "0.529-0.671",
       "personas": 6,
-      "p_value_vs_v1": 1.0
+      "p_value_vs_v1": 0.7786
+    },
+    "fresh_hand_set_v1": {
+      "ndcg@10": 0.635,
+      "p@10": 0.2,
+      "map": 0.4915,
+      "bpref": 0.3933,
+      "success@5": 0.3333,
+      "violations@10": 0.0,
+      "ild@10": 0.2771,
+      "companies@10": 0.8083,
+      "stability_rbo": 0.876,
+      "judged@10": 1.0,
+      "latency_ms": 266.4191,
+      "ndcg@10_95ci": "0.504-0.772",
+      "personas": 12
+    },
+    "fresh_released": {
+      "ndcg@10": 0.707,
+      "p@10": 0.2667,
+      "map": 0.5528,
+      "bpref": 0.4474,
+      "success@5": 0.3333,
+      "violations@10": 0.0,
+      "ild@10": 0.2754,
+      "companies@10": 0.7833,
+      "stability_rbo": 0.9447,
+      "judged@10": 1.0,
+      "latency_ms": 134.8336,
+      "ndcg@10_95ci": "0.613-0.806",
+      "personas": 12,
+      "p_value_vs_v1": 0.1252
     }
   }
 }

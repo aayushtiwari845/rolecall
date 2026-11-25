@@ -29,7 +29,7 @@ Run 2026-11-25 15:12 UTC at commit `22abd16`.
 
 Persona feeds; each variant's top 10 pooled and judged once on a 0-3 scale. Ablations remove one ranking component at a time.
 
-Run 2026-11-25 15:00 UTC at commit `2b1b954`.
+Run 2026-11-25 17:38 UTC at commit `298e299`.
 
 | variant | ndcg@10 | p@10 | company_diversity | coverage | personas | judge |
 |---|---|---|---|---|---|---|
