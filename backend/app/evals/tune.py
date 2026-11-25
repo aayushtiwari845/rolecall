@@ -192,6 +192,19 @@ def run(session: Session, trials: int = 300, seed: int = 7, write: bool = True) 
     cmp_test = compare(res_default_test, res_best_test)
     cmp_dev = compare(res_default_dev, res_best_dev)
 
+    # Search fusion and reranking, tuned separately on known-item queries.
+    search = tune_search(session)
+    sb, sd = search["test_mrr@10"]["best"][0], search["test_mrr@10"]["default"][0]
+    if sb >= sd - 0.005:
+        best = replace(
+            best,
+            rrf_k=search["best"]["rrf_k"],
+            w_lex=search["best"]["w_lex"],
+            rerank_head=search["best"]["rerank_head"],
+            rerank_blend=search["best"]["rerank_blend"],
+        )
+    search_summary = {k: v for k, v in search.items() if k != "grid"}
+
     # Ship only if the tuned config is not worse on personas it never saw.
     d = cmp_test["ndcg@10"]
     ships = (
@@ -220,6 +233,7 @@ def run(session: Session, trials: int = 300, seed: int = 7, write: bool = True) 
             "segments_default": res_default_test.segments,
             "segments_tuned": res_best_test.segments,
         },
+        "search_stage": search_summary,
         "shipped": ships,
         "config": best.to_dict(),
     }
@@ -227,3 +241,151 @@ def run(session: Session, trials: int = 300, seed: int = 7, write: bool = True) 
         TUNED_FILE.write_text(json.dumps(report, indent=2), encoding="utf-8")
         load_config.cache_clear()
     return report
+
+
+# ------------------------------------------------------------------ stage 3 (search)
+def tune_search(session: Session, n_queries: int = 160, seed: int = 11) -> dict:
+    """Grid over fusion and reranking for free-text search, on known-item queries.
+
+    Dense and lexical hits and cross-encoder scores are cached per query, so each grid
+    point is evaluated without touching the database or the model again. The rerank
+    head is capped by a latency budget measured on this machine.
+    """
+    import math
+    import random
+
+    import numpy as np
+    from sqlalchemy import select
+
+    from app.enrich.embed import embed_query, rerank
+    from app.evals.metrics import bootstrap_ci, mrr_at, recall_at
+    from app.evals.retrieval import sample_jobs, template_query
+    from app.models import Job
+    from app.search.engine import _load_jobs
+    from app.search.filters import JobFilters
+    from app.search.rank import UserContext, score_candidates
+    from app.search.retrieval import dense, fuse, lexical
+
+    rng = random.Random(seed)
+    jobs = sample_jobs(session, n_queries, seed)
+    cases = []
+    for i, j in enumerate(jobs):
+        q = template_query(j, rng)
+        dupes = {str(x) for x in session.scalars(select(Job.id).where(Job.duplicate_of == j.id))}
+        d = dense(session, embed_query(q), JobFilters(), 150)
+        lx = lexical(session, q, JobFilters(), 150)
+        cases.append(
+            {
+                "q": q,
+                "rel": {str(j.id)} | dupes,
+                "d": d,
+                "lx": lx,
+                "split": "dev" if i % 2 == 0 else "test",
+                "rr": {},
+            }
+        )
+
+    def doc(job) -> str:
+        return f"{job.title} at {job.company_name}. {' '.join((job.skills or [])[:10])}. {(job.description_text or '')[:400]}"
+
+    def run_case(c, rrf_k, w_lex, head, blend):
+        fused = fuse(c["d"], c["lx"], 1.0, w_lex, rrf_k)
+        if not fused:
+            return []
+        loaded = _load_jobs(session, [x.job_id for x in fused[:200]])
+        fused = [x for x in fused if x.job_id in loaded]
+        top = max(x.rrf for x in fused) or 1.0
+        relv = {x.job_id: x.rrf / top for x in fused}
+        if head:
+            need = [x for x in fused[:head] if x.job_id not in c["rr"]]
+            if need:
+                for x, s in zip(
+                    need, rerank(c["q"], [doc(loaded[x.job_id]) for x in need]), strict=True
+                ):
+                    c["rr"][x.job_id] = 1 / (1 + math.exp(-s))
+            for x in fused[:head]:
+                relv[x.job_id] = (1 - blend) * relv[x.job_id] + blend * c["rr"][x.job_id]
+            for x in fused[head:]:
+                relv[x.job_id] *= 1 - blend
+        w = replace(
+            Weights(),
+            semantic=0.7,
+            lexical=0,
+            skills=0,
+            level=0,
+            role=0,
+            location=0.03,
+            recency=0.07,
+            affinity=0,
+            diversify=False,
+        )
+        return [
+            str(r.job.id) for r in score_candidates(fused, loaded, UserContext(), w, relevance=relv)
+        ]
+
+    # Latency of the cross-encoder per document on this machine.
+    t = time.perf_counter()
+    rerank("latency probe", ["a software engineer role " * 40] * 20)
+    per_doc_ms = (time.perf_counter() - t) * 1000 / 20
+
+    grid = []
+    for rrf_k in (10, 30, 60, 100):
+        for w_lex in (0.5, 1.0, 2.0):
+            for head, blend in [(0, 0.0)] + [
+                (h, b) for h in (10, 20, 40) for b in (0.4, 0.65, 0.85)
+            ]:
+                dev_mrr, dev_r10 = [], []
+                for c in (c for c in cases if c["split"] == "dev"):
+                    ranked = run_case(c, rrf_k, w_lex, head, blend)
+                    dev_mrr.append(mrr_at(ranked, c["rel"], 10))
+                    dev_r10.append(recall_at(ranked, c["rel"], 10))
+                grid.append(
+                    {
+                        "rrf_k": rrf_k,
+                        "w_lex": w_lex,
+                        "rerank_head": head,
+                        "rerank_blend": blend,
+                        "dev_mrr@10": round(float(np.mean(dev_mrr)), 4),
+                        "dev_recall@10": round(float(np.mean(dev_r10)), 4),
+                        "rerank_ms_est": round(head * per_doc_ms, 1),
+                    }
+                )
+    budget_ms = 250.0
+    affordable = [g for g in grid if g["rerank_ms_est"] <= budget_ms]
+    best = max(affordable, key=lambda g: (g["dev_mrr@10"], -g["rerank_ms_est"]))
+    default = next(
+        g
+        for g in grid
+        if g["rrf_k"] == 60
+        and g["w_lex"] == 1.0
+        and g["rerank_head"] == 40
+        and g["rerank_blend"] == 0.65
+    )
+
+    def test_scores(g):
+        return [
+            mrr_at(
+                run_case(c, g["rrf_k"], g["w_lex"], g["rerank_head"], g["rerank_blend"]),
+                c["rel"],
+                10,
+            )
+            for c in cases
+            if c["split"] == "test"
+        ]
+
+    from app.evals.metrics import paired_randomization_test
+
+    tb, td = test_scores(best), test_scores(default)
+    return {
+        "queries": len(cases),
+        "per_doc_rerank_ms": round(per_doc_ms, 2),
+        "latency_budget_ms": budget_ms,
+        "best": best,
+        "default": default,
+        "test_mrr@10": {
+            "default": bootstrap_ci(td),
+            "best": bootstrap_ci(tb),
+            "p_value": paired_randomization_test(tb, td),
+        },
+        "grid": grid,
+    }
