@@ -267,3 +267,19 @@ def export(
             "Content-Disposition": f'attachment; filename="rolecall-applications-{stamp}.xlsx"'
         },
     )
+
+
+@router.delete("/job/{job_id}")
+def delete_by_job(
+    job_id: uuid.UUID, user: User = Depends(current_user), db: Session = Depends(get_db)
+):
+    """Unsave a role from the feed without knowing its tracker id."""
+    a = db.scalar(
+        select(Application).where(Application.user_id == user.id, Application.job_id == job_id)
+    )
+    if a is not None:
+        db.delete(a)
+        db.add(Interaction(user_id=user.id, job_id=job_id, type="unsave", surface="feed"))
+        db.commit()
+        invalidate_user(str(user.id))
+    return {"ok": True}

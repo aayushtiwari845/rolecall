@@ -25,6 +25,7 @@ router = APIRouter(prefix="/api", tags=["jobs"])
 class FeedRequest(BaseModel):
     resume_id: uuid.UUID | None = None
     filters: JobFilters | None = None  # overrides saved preferences when given
+    posted_within_days: int | None = None  # narrows the saved preferences for this view
     limit: int = 20
     offset: int = 0
 
@@ -64,6 +65,8 @@ def feed(
 ):
     ctx = build_context(db, user, body.resume_id)
     filters = body.filters or filters_from_prefs(user.preferences, ctx)
+    if body.posted_within_days:
+        filters = filters.model_copy(update={"posted_within_days": body.posted_within_days})
     items = recommend(
         db,
         ctx,
@@ -326,5 +329,38 @@ def company_jobs(name: str, limit: int = Query(50, le=200), db: Session = Depend
                 ctx,
                 _detail_weights(),
             )
+        ]
+    }
+
+
+@router.get("/commentary")
+def commentary(
+    limit: int = Query(15, le=40),
+    early_career: bool = False,
+    india: bool = False,
+    db: Session = Depends(get_db),
+):
+    """The newest postings, for the live ticker on the landing page."""
+    q = select(Job).where(Job.status == "open", Job.is_tech.is_(True), Job.duplicate_of.is_(None))
+    if early_career:
+        q = q.where(Job.seniority.in_(["intern", "new_grad", "junior"]))
+    if india:
+        q = q.where(Job.countries.any("IN"))
+    rows = db.scalars(
+        q.order_by(Job.first_seen_at.desc(), Job.posted_at.desc().nulls_last()).limit(limit)
+    )
+    return {
+        "items": [
+            {
+                "id": str(j.id),
+                "title": j.title,
+                "company": j.company_name,
+                "location": (j.cities or [None])[0]
+                or ("Remote" if j.remote_type == "remote" else (j.location_raw or "")[:40]),
+                "remote_type": j.remote_type,
+                "seniority": j.seniority,
+                "first_seen_at": (j.posted_at or j.first_seen_at).isoformat(),
+            }
+            for j in rows
         ]
     }
