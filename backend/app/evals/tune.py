@@ -122,16 +122,61 @@ def suggest(trial, base: Weights) -> Weights:
     )
 
 
-def tune_ranking(
-    session: Session, base: Weights, trials: int = 300, seed: int = 7
-) -> tuple[Weights, object, Evaluator]:
+FEATURES = ("semantic", "skills", "level", "role", "location", "recency", "affinity")
+
+
+def suggest_trust(trial, base: Weights) -> Weights:
+    """A trust region around ``base``: the feature weights within half to one and a half
+    times their value, plus four shape parameters in tight ranges. Twelve parameters
+    instead of twenty-two, none far from a sensible prior."""
+    s = trial.suggest_float
+    feats = {k: s(k, 0.5 * getattr(base, k), 1.5 * getattr(base, k)) for k in FEATURES}
+    return replace(
+        base,
+        **feats,
+        sim_floor=s("sim_floor", base.sim_floor - 0.05, base.sim_floor + 0.05),
+        level_unknown=s(
+            "level_unknown", max(0.2, base.level_unknown - 0.15), base.level_unknown + 0.15
+        ),
+        yoe_step=s("yoe_step", 0.5 * base.yoe_step, 1.5 * base.yoe_step),
+        mmr_lambda=s("mmr_lambda", 0.85, 1.0),
+        max_per_company=trial.suggest_int("max_per_company", 1, 3),
+    )
+
+
+SPACES = {"full": suggest, "trust_region": suggest_trust}
+SPACE_PARAMS = {
+    "full": FEATURES
+    + (
+        "sim_floor",
+        "sim_span",
+        "skill_saturation",
+        "level_adjacent",
+        "level_two_away",
+        "level_unknown",
+        "role_adjacent",
+        "role_other",
+        "recency_tau_days",
+        "yoe_slack",
+        "yoe_step",
+        "yoe_floor",
+        "mmr_lambda",
+        "max_per_company",
+        "diversity_window",
+    ),
+    "trust_region": FEATURES
+    + ("sim_floor", "level_unknown", "yoe_step", "mmr_lambda", "max_per_company"),
+}
+
+
+def _study(ev: Evaluator, base: Weights, space: str, trials: int, seed: int):
     import optuna
 
     optuna.logging.set_verbosity(optuna.logging.WARNING)
-    dev = Evaluator(session, load_personas("dev"), retrieval=base)
+    fn = SPACES[space]
 
     def objective(trial) -> float:
-        res = dev.evaluate(suggest(trial, base), stability=False)
+        res = ev.evaluate(fn(trial, base), stability=False)
         for k in ("ndcg@10", "violations@10", "judged@10", "ild@10"):
             trial.set_user_attr(k, res.summary[k]["mean"])
         return objective_value(res)
@@ -139,47 +184,74 @@ def tune_ranking(
     study = optuna.create_study(
         direction="maximize", sampler=optuna.samplers.TPESampler(seed=seed, multivariate=True)
     )
-    study.enqueue_trial(
-        {
-            k: getattr(base, k)
-            for k in (
-                "semantic",
-                "skills",
-                "level",
-                "role",
-                "location",
-                "recency",
-                "affinity",
-                "sim_floor",
-                "sim_span",
-                "skill_saturation",
-                "level_adjacent",
-                "level_two_away",
-                "level_unknown",
-                "role_adjacent",
-                "role_other",
-                "recency_tau_days",
-                "yoe_slack",
-                "yoe_step",
-                "yoe_floor",
-                "mmr_lambda",
-                "max_per_company",
-                "diversity_window",
-            )
-        }
-    )  # trial 0 = current defaults, so the search can only match or improve on them
+    # Trial 0 = current defaults, so the search can only match or improve on them.
+    study.enqueue_trial({k: getattr(base, k) for k in SPACE_PARAMS[space]})
     study.optimize(objective, n_trials=trials, show_progress_bar=False)
+    return study
+
+
+def _select(study, ev: Evaluator, base: Weights, space: str) -> tuple[Weights, list]:
+    """Re-score the ten best trials and keep the one with the highest lower bound."""
+    import optuna
+
     done = [t for t in study.trials if t.value is not None]
     top = sorted(done, key=lambda t: t.value, reverse=True)[:10]
     scored = []
     for t in top:
-        w = suggest(optuna.trial.FixedTrial(t.params), base)
-        scored.append((robust_value(dev.evaluate(w, stability=False)), t.number, w))
+        w = SPACES[space](optuna.trial.FixedTrial(t.params), base)
+        scored.append((robust_value(ev.evaluate(w, stability=False)), t.number, w))
     scored.sort(key=lambda x: (-x[0], x[1]))
+    return scored[0][2], scored
+
+
+def cross_validate(
+    ev: Evaluator, base: Weights, space: str, folds: int = 5, trials: int = 150, seed: int = 7
+) -> dict:
+    """Nested cross-validation of the tuning *procedure* inside the dev personas.
+
+    Each fold tunes on the other personas and scores the held-out ones, so every persona
+    gets a held-out (tuned - default) objective. A search space that only helps on the
+    personas it was tuned on shows up here as a non-positive mean.
+    """
+    from app.evals.metrics import bootstrap_ci, paired_randomization_test
+
+    ids = sorted(p.id for p in ev.personas)
+    tuned: dict[str, float] = {}
+    default: dict[str, float] = {}
+    for f in range(folds):
+        held = set(ids[f::folds])
+        train, test = ev.subset(set(ids) - held), ev.subset(held)
+        w, _ = _select(_study(train, base, space, trials, seed + f), train, base, space)
+        for pid, row in test.evaluate(w, stability=False).per_persona.items():
+            tuned[pid] = persona_objective(row)
+        for pid, row in test.evaluate(base, stability=False).per_persona.items():
+            default[pid] = persona_objective(row)
+    a = [default[i] for i in ids]
+    b = [tuned[i] for i in ids]
+    deltas = [y - x for x, y in zip(a, b, strict=True)]
+    mean, lo, hi = bootstrap_ci(deltas)
+    return {
+        "space": space,
+        "folds": folds,
+        "trials_per_fold": trials,
+        "heldout_delta": {"mean": round(mean, 4), "lo": round(lo, 4), "hi": round(hi, 4)},
+        "p_value": round(paired_randomization_test(a, b), 4),
+        "wins": sum(d > 1e-9 for d in deltas),
+        "losses": sum(d < -1e-9 for d in deltas),
+        "per_persona": {i: round(d, 4) for i, d in zip(ids, deltas, strict=True)},
+    }
+
+
+def tune_ranking(
+    session: Session, base: Weights, trials: int = 300, seed: int = 7, space: str = "full"
+) -> tuple[Weights, object, Evaluator]:
+    dev = Evaluator(session, load_personas("dev"), retrieval=base)
+    study = _study(dev, base, space, trials, seed)
+    best, scored = _select(study, dev, base, space)
     study.set_user_attr("selection", [{"trial": n, "robust": round(v, 4)} for v, n, _ in scored])
     study.set_user_attr("top_configs", [w.to_dict() for _, _, w in scored[:5]])
     study.set_user_attr("chosen_trial", scored[0][1])
-    return scored[0][2], study, dev
+    return best, study, dev
 
 
 def importance(study) -> dict[str, float]:
@@ -200,13 +272,19 @@ def _sha() -> str | None:
         return None
 
 
-def run(session: Session, trials: int = 300, seed: int = 7, write: bool = True) -> dict:
+def run(
+    session: Session, trials: int = 300, seed: int = 7, write: bool = True, cv_trials: int = 150
+) -> dict:
     current = load_config()
     retrieval = tune_retrieval(session)
     base = replace(
         current, k_dense=retrieval["choice"]["k_dense"], k_lex=retrieval["choice"]["k_lex"]
     )
-    best, study, dev = tune_ranking(session, base, trials=trials, seed=seed)
+    # Which search space generalises? Nested CV inside dev decides, before test is used.
+    dev_ev = Evaluator(session, load_personas("dev"), retrieval=base)
+    cv = {sp: cross_validate(dev_ev, base, sp, trials=cv_trials, seed=seed) for sp in SPACES}
+    space = max(cv, key=lambda sp: cv[sp]["heldout_delta"]["mean"])
+    best, study, dev = tune_ranking(session, base, trials=trials, seed=seed, space=space)
 
     test = Evaluator(session, load_personas("test"), retrieval=base)
     res_default_dev = dev.evaluate(current, latency=True)
@@ -232,7 +310,8 @@ def run(session: Session, trials: int = 300, seed: int = 7, write: bool = True) 
     # Ship only if the tuned config is not worse on personas it never saw.
     d = cmp_test["ndcg@10"]
     ships = (
-        d["delta"] >= -0.005
+        cv[space]["heldout_delta"]["mean"] > 0
+        and d["delta"] >= -0.005
         and res_best_test.mean("violations@10") <= res_default_test.mean("violations@10") + 0.01
     )
     report = {
@@ -242,6 +321,8 @@ def run(session: Session, trials: int = 300, seed: int = 7, write: bool = True) 
         "seed": seed,
         "objective": OBJECTIVE,
         "retrieval_stage": retrieval,
+        "cross_validation": cv,
+        "space": space,
         "param_importance": importance(study),
         "best_trial": study.best_trial.number,
         "best_objective_dev": round(study.best_value, 4),

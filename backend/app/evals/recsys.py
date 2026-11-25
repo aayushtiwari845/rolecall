@@ -77,6 +77,13 @@ class Evaluator:
         self._cache: dict[str, CachedPersona] = {}
         self.catalogue = None
 
+    def subset(self, ids: set[str]) -> Evaluator:
+        """A view over some of the personas that shares this evaluator's caches."""
+        view = Evaluator.__new__(Evaluator)
+        view.__dict__.update(self.__dict__)
+        view.personas = [p for p in self.personas if p.id in ids]
+        return view
+
     def _prepare(self, p: Persona) -> CachedPersona:
         if p.id in self._cache:
             return self._cache[p.id]
