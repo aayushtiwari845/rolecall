@@ -65,16 +65,14 @@ def run_suite(suite: str, use_llm: bool = True, **kw) -> dict:
 
 
 def _recsys(session) -> dict:
-    """Judged feed evaluation on held-out test personas: default vs shipped config."""
+    """Judged feed evaluation, hand-set v1 vs the released config, on both held-out sets:
+    the test personas (informed earlier ship decisions) and the fresh personas (judged
+    blind, used once for the pre-registered ranking decision)."""
     from app.evals.judged import load_personas
     from app.evals.recsys import Evaluator, compare
     from app.search.rank import Weights, load_config
 
-    personas = load_personas("test")
     cfg = load_config()
-    # Each configuration ranks the candidates its own retrieval settings fetch.
-    default = Evaluator(session, personas, retrieval=Weights()).evaluate(Weights(), latency=True)
-    current = Evaluator(session, personas, retrieval=cfg).evaluate(cfg, latency=True)
     keep = (
         "ndcg@10",
         "p@10",
@@ -95,8 +93,15 @@ def _recsys(session) -> dict:
         out["personas"] = len(r.per_persona)
         return out
 
-    res = {"hand_set_v1": row(default)}
-    if current.config != default.config:
-        res["released"] = row(current)
-        res["released"]["p_value_vs_v1"] = compare(default, current)["ndcg@10"]["p_value"]
+    res = {}
+    for split in ("test", "fresh"):
+        personas = load_personas(split)
+        # Each configuration ranks the candidates its own retrieval settings fetch.
+        default = Evaluator(session, personas, retrieval=Weights()).evaluate(
+            Weights(), latency=True
+        )
+        current = Evaluator(session, personas, retrieval=cfg).evaluate(cfg, latency=True)
+        res[f"{split}_hand_set_v1"] = row(default)
+        res[f"{split}_released"] = row(current)
+        res[f"{split}_released"]["p_value_vs_v1"] = compare(default, current)["ndcg@10"]["p_value"]
     return res
