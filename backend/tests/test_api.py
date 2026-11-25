@@ -239,3 +239,27 @@ def test_agent_reports_unconfigured(seeded):
     tid = c.post("/api/chat/threads").json()["id"]
     body = c.post(f"/api/chat/threads/{tid}/messages", json={"content": "hi"}).text
     assert "isn't configured" in body
+
+
+def test_cold_start_user_still_gets_a_feed(seeded):
+    """No resume and no history: the feed falls back to fresh roles inside the filters."""
+    c = seeded
+    c.post("/api/auth/dev-login", json={"email": "cold@example.com"})
+    prefs = c.get("/api/preferences").json()
+    prefs.update(seniorities=["intern", "new_grad"], cities=["Bengaluru"], remote_india=True)
+    c.put("/api/preferences", json=prefs)
+    body = c.post("/api/feed", json={}).json()
+    assert body["has_profile"] is False
+    assert len(body["items"]) >= 1
+
+
+def test_narrow_preferences_are_relaxed_and_labelled(seeded):
+    c = seeded
+    c.post("/api/auth/dev-login", json={"email": "narrow@example.com"})
+    prefs = c.get("/api/preferences").json()
+    # Nothing matches Kolkata; the feed widens to India/remote and says so on those rows.
+    prefs.update(seniorities=["intern", "new_grad"], cities=["Kolkata"], remote_india=False, remote_global=False)
+    c.put("/api/preferences", json=prefs)
+    items = c.post("/api/feed", json={}).json()["items"]
+    assert items, "relaxation should find something"
+    assert all(any(w.startswith("Outside your preferences") for w in it["warnings"]) for it in items)
