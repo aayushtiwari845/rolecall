@@ -289,6 +289,37 @@ def tune(
     typer.echo(json.dumps(report["test"]["compare"], indent=2))
 
 
+@app.command("eval-fresh")
+def eval_fresh() -> None:
+    """The pre-registered one-look comparison on fresh held-out personas."""
+    from app.db import session_scope
+    from app.evals.fresh import run
+
+    with session_scope() as s:
+        report = run(s)
+    for name, summ in report["summary"].items():
+        shown = {
+            m: summ[m]["mean"]
+            for m in ("ndcg@10", "ndcg@10_strict", "p@10", "violations@10", "judged@10")
+        }
+        typer.echo(f"{name:14s} {json.dumps(shown)}")
+    typer.echo(json.dumps(report["compare_vs_released"], indent=2))
+    typer.echo(json.dumps(report["decision"], indent=2))
+
+
+@app.command("fresh-apply")
+def fresh_apply(
+    report: str = typer.Option("evals/results/fresh_holdout.json", help="Written by eval-fresh"),
+) -> None:
+    """Apply the pre-registered fresh-persona decision to tuned_config.json."""
+    from pathlib import Path
+
+    from app.evals.fresh import apply_decision
+
+    out = apply_decision(json.loads(Path(report).read_text(encoding="utf-8")))
+    typer.echo("ranking weights shipped" if out else "decision rule failed; nothing changed")
+
+
 @app.command("tune-release")
 def tune_release(
     report: str = typer.Option("evals/results/tuning.json", help="Report written by `tune`"),
