@@ -7,7 +7,7 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import current_user, get_db, optional_user, rate_limit
@@ -336,18 +336,28 @@ def company_jobs(name: str, limit: int = Query(50, le=200), db: Session = Depend
 @router.get("/commentary")
 def commentary(
     limit: int = Query(15, le=40),
-    early_career: bool = False,
-    india: bool = False,
+    relevant: bool = True,
     db: Session = Depends(get_db),
 ):
-    """The newest postings, for the live ticker on the landing page."""
-    q = select(Job).where(Job.status == "open", Job.is_tech.is_(True), Job.duplicate_of.is_(None))
-    if early_career:
-        q = q.where(Job.seniority.in_(["intern", "new_grad", "junior"]))
-    if india:
-        q = q.where(Job.countries.any("IN"))
+    """Newest postings for the live ticker: one per company, India or remote first."""
+    where = [Job.status == "open", Job.is_tech.is_(True), Job.duplicate_of.is_(None)]
+    if relevant:
+        where.append(or_(Job.countries.any("IN"), Job.remote_type == "remote"))
+    seen = func.coalesce(Job.posted_at, Job.first_seen_at)
+    ranked = (
+        select(
+            Job.id,
+            func.row_number().over(partition_by=Job.company_name, order_by=seen.desc()).label("rn"),
+        )
+        .where(*where)
+        .subquery()
+    )
     rows = db.scalars(
-        q.order_by(Job.first_seen_at.desc(), Job.posted_at.desc().nulls_last()).limit(limit)
+        select(Job)
+        .join(ranked, ranked.c.id == Job.id)
+        .where(ranked.c.rn == 1)
+        .order_by(seen.desc())
+        .limit(limit)
     )
     return {
         "items": [
