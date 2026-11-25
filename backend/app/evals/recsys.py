@@ -114,6 +114,9 @@ class Evaluator:
                 "ndcg@5": M.ndcg_at(cond, rel, 5),
                 "ndcg@10": M.ndcg_at(cond, rel, 10),
                 "ndcg@20": M.ndcg_at(cond, rel, 20),
+                # Unjudged roles count as not relevant: a pessimistic bound that stops a
+                # configuration winning by surfacing roles nobody has graded.
+                "ndcg@10_strict": M.ndcg_at(ids, rel, 10),
                 "p@10": M.precision_at(cond, rel, 10),
                 "map": M.average_precision(cond, rel),
                 "mrr": M.mrr_at(cond, {d for d, g in rel.items() if g >= M.REL}, 10),

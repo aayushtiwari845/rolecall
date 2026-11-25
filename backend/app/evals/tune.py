@@ -7,9 +7,15 @@ recall wins: more candidates cost latency and cannot be ranked if never retrieve
 
 Stage 2, ranking: Optuna TPE over 22 scoring parameters (feature weights, feature
 shapes, experience penalty, diversity), on dev personas only. Objective:
-    condensed nDCG@10 - 0.5 * violations@10 - 0.5 * max(0, 0.6 - judged@10)
-so a configuration cannot win by breaking hard expectations or by hiding in unjudged
-documents. The study is seeded and reproducible.
+    0.5 * condensed nDCG@10 + 0.5 * strict nDCG@10 - 0.5 * violations@10
+Condensed nDCG (unjudged roles removed) rewards ordering the judged roles well; strict
+nDCG (unjudged roles count as 0) stops a configuration winning by surfacing roles nobody
+graded; the violation term stops it breaking hard expectations. The study is seeded.
+
+Selection: the trial with the best objective is prone to the winner's curse on ten
+personas, so the ten best trials are re-scored per persona and the one with the highest
+lower bound (mean - standard error) is chosen: a smaller gain that holds across personas
+beats a larger one carried by two of them.
 
 Selection: the best trial is compared with the current defaults on the held-out test
 personas with a paired randomisation test. It ships (``tuned_config.json``) only if it is
@@ -36,13 +42,22 @@ from app.search.rank import TUNED_FILE, Weights, load_config
 log = logging.getLogger(__name__)
 
 
+OBJECTIVE = "0.5*ndcg@10 + 0.5*ndcg@10_strict - 0.5*violations@10"
+
+
+def persona_objective(row: dict) -> float:
+    return 0.5 * row["ndcg@10"] + 0.5 * row["ndcg@10_strict"] - 0.5 * row["violations@10"]
+
+
 def objective_value(res) -> float:
-    s = res.summary
-    return (
-        s["ndcg@10"]["mean"]
-        - 0.5 * s["violations@10"]["mean"]
-        - 0.5 * max(0.0, 0.6 - s["judged@10"]["mean"])
-    )
+    return statistics.fmean(persona_objective(r) for r in res.per_persona.values())
+
+
+def robust_value(res) -> float:
+    """Mean minus standard error of the per-persona objective."""
+    vals = [persona_objective(r) for r in res.per_persona.values()]
+    se = statistics.stdev(vals) / len(vals) ** 0.5 if len(vals) > 1 else 0.0
+    return statistics.fmean(vals) - se
 
 
 # ------------------------------------------------------------------ stage 1
@@ -154,8 +169,17 @@ def tune_ranking(
         }
     )  # trial 0 = current defaults, so the search can only match or improve on them
     study.optimize(objective, n_trials=trials, show_progress_bar=False)
-    best = suggest(optuna.trial.FixedTrial(study.best_params), base)
-    return best, study, dev
+    done = [t for t in study.trials if t.value is not None]
+    top = sorted(done, key=lambda t: t.value, reverse=True)[:10]
+    scored = []
+    for t in top:
+        w = suggest(optuna.trial.FixedTrial(t.params), base)
+        scored.append((robust_value(dev.evaluate(w, stability=False)), t.number, w))
+    scored.sort(key=lambda x: (-x[0], x[1]))
+    study.set_user_attr("selection", [{"trial": n, "robust": round(v, 4)} for v, n, _ in scored])
+    study.set_user_attr("top_configs", [w.to_dict() for _, _, w in scored[:5]])
+    study.set_user_attr("chosen_trial", scored[0][1])
+    return scored[0][2], study, dev
 
 
 def importance(study) -> dict[str, float]:
@@ -216,11 +240,14 @@ def run(session: Session, trials: int = 300, seed: int = 7, write: bool = True) 
         "git_sha": _sha(),
         "trials": trials,
         "seed": seed,
-        "objective": "ndcg@10 - 0.5*violations@10 - 0.5*max(0, 0.6 - judged@10)",
+        "objective": OBJECTIVE,
         "retrieval_stage": retrieval,
         "param_importance": importance(study),
         "best_trial": study.best_trial.number,
         "best_objective_dev": round(study.best_value, 4),
+        "selection": study.user_attrs.get("selection"),
+        "chosen_trial": study.user_attrs.get("chosen_trial"),
+        "top_configs": study.user_attrs.get("top_configs"),
         "dev": {
             "default": res_default_dev.summary,
             "tuned": res_best_dev.summary,
