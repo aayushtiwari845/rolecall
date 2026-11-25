@@ -1,36 +1,28 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rolecall web
 
-## Getting Started
-
-First, run the development server:
+Next.js (App Router, TypeScript, Tailwind CSS v4) front end for Rolecall.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+pnpm dev          # http://localhost:3000, proxies /api/* to API_URL (default http://localhost:8000)
+pnpm lint && pnpm exec tsc --noEmit
+pnpm build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The browser only talks to this origin: `next.config.ts` rewrites `/api/*` to the FastAPI
+service, so the session cookie is first-party and no CORS is needed. On Vercel set
+`API_URL` to the API's public URL.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Structure:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `app/` routes: landing, login, onboarding, feed (scorecard), search, jobs/[id], tracker,
+  chat, settings, admin, evals, privacy
+- `components/` shared UI: the scorecard job row and keyboard-driven list, app shell,
+  landing scoreboard and ticker, resume upload, preference form
+- `lib/` API client (CSRF header, SSE reader), paginated job lists with optimistic
+  updates, formatting, types
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Design: the "Scorecard" world. Dark mode is the stadium scoreboard (pitch-black green,
+chalk numerals in Big Shoulders, scoreboard amber); light mode is the scorer's book
+(cool white, ruled green hairlines). Saved roles get a hand-drawn pen ring, hidden ones
+a red strike. See `/DESIGN.md` at the repository root.
