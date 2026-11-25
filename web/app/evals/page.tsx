@@ -23,7 +23,7 @@ const SUITES: { id: string; title: string; how: string; best: string[] }[] = [
   {
     id: "recsys",
     title: "Scorecard quality",
-    how: "Sixteen realistic personas, split into tuning (dev) and held-out (test) sets. Roles pooled from eight different rankers were each graded 0–3 against a written rubric. Reported on the held-out personas only: graded nDCG@10 with a 95% bootstrap interval, precision, MAP, bpref (robust to unjudged roles), share of top-10 results breaking a persona's hard expectations (level, experience, location), diversity, stability when one skill is removed, and latency.",
+    how: "Twenty-eight realistic personas: ten for tuning, six held out for ship decisions, and twelve fresh ones written after tuning and judged blind. Roles pooled from eight different rankers and the tuned configurations were each graded 0–3 against a written rubric. Reported on the two held-out sets only: graded nDCG@10 with a 95% bootstrap interval, precision, MAP, bpref (robust to unjudged roles), share of top-10 results breaking a persona's hard expectations (level, experience, location), diversity, stability when one skill is removed, and latency.",
     best: ["ndcg@10", "p@10", "map", "bpref", "success@5"],
   },
   {
