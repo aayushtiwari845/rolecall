@@ -296,26 +296,8 @@ def run(
     cmp_test = compare(res_default_test, res_best_test)
     cmp_dev = compare(res_default_dev, res_best_dev)
 
-    # Search fusion and reranking, tuned separately on known-item queries.
     search = tune_search(session)
-    sb, sd = search["test_mrr@10"]["best"][0], search["test_mrr@10"]["default"][0]
-    if sb >= sd - 0.005:
-        best = replace(
-            best,
-            rrf_k=search["best"]["rrf_k"],
-            w_lex=search["best"]["w_lex"],
-            rerank_head=search["best"]["rerank_head"],
-            rerank_blend=search["best"]["rerank_blend"],
-        )
     search_summary = {k: v for k, v in search.items() if k != "grid"}
-
-    # Ship only if the tuned config is not worse on personas it never saw.
-    d = cmp_test["ndcg@10"]
-    ships = (
-        cv[space]["heldout_delta"]["mean"] > 0
-        and d["delta"] >= -0.005
-        and res_best_test.mean("violations@10") <= res_default_test.mean("violations@10") + 0.01
-    )
     report = {
         "run_at": datetime.now(UTC).isoformat(),
         "git_sha": _sha(),
@@ -344,11 +326,92 @@ def run(
             "segments_tuned": res_best_test.segments,
         },
         "search_stage": search_summary,
-        "shipped": ships,
         "config": best.to_dict(),
     }
-    if write and ships:
-        TUNED_FILE.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    return release(session, report, current, write=write)
+
+
+def release(session: Session, report: dict, current: Weights, write: bool = True) -> dict:
+    """Decide stage by stage what ships, and write ``tuned_config.json``.
+
+    The three stages change independent parts of the config, so each is accepted or
+    rejected on its own evidence from personas or queries it was not tuned on:
+
+    - retrieval depth: the current ranking with the new depth must not be worse on test
+      personas (nDCG@10 delta >= -0.005, no added violations);
+    - ranking weights: held-out CV gain inside dev must be positive and the tuned weights
+      must not be worse on test personas;
+    - search: a setting over the latency budget is not eligible. The best affordable
+      setting ships if the current one is over budget and the new one is not
+      significantly worse on test queries (p >= 0.05), or if it is at least as good.
+    """
+    decisions: dict[str, dict] = {}
+    out = current
+
+    # Stage 1: retrieval depth, judged with the current ranking weights.
+    choice = report["retrieval_stage"]["choice"]
+    depth = replace(current, k_dense=choice["k_dense"], k_lex=choice["k_lex"])
+    test = Evaluator(session, load_personas("test"), retrieval=current)
+    test_depth = Evaluator(session, load_personas("test"), retrieval=depth)
+    a, b = test.evaluate(current, latency=True), test_depth.evaluate(depth, latency=True)
+    c = compare(a, b)["ndcg@10"]
+    ok = c["delta"] >= -0.005 and b.mean("violations@10") <= a.mean("violations@10") + 0.01
+    decisions["retrieval"] = {
+        "ships": ok,
+        "k_dense": choice["k_dense"],
+        "k_lex": choice["k_lex"],
+        "test_ndcg@10": [a.mean("ndcg@10"), b.mean("ndcg@10")],
+        "p_value": c["p_value"],
+        "latency_ms": [round(a.mean("latency_ms"), 1), round(b.mean("latency_ms"), 1)],
+    }
+    if ok:
+        out = replace(out, k_dense=choice["k_dense"], k_lex=choice["k_lex"])
+
+    # Stage 2: ranking weights.
+    cv = report["cross_validation"][report["space"]]["heldout_delta"]["mean"]
+    t = report["test"]["compare"]["ndcg@10"]
+    vt = report["test"]["tuned"]["violations@10"]["mean"]
+    vd = report["test"]["default"]["violations@10"]["mean"]
+    ok = cv > 0 and t["delta"] >= -0.005 and vt <= vd + 0.01
+    decisions["ranking"] = {
+        "ships": ok,
+        "space": report["space"],
+        "cv_heldout_delta": cv,
+        "test_ndcg@10_delta": t["delta"],
+        "p_value": t["p_value"],
+    }
+    if ok:
+        tuned = Weights.from_dict(report["config"])
+        keep = {
+            k: getattr(out, k)
+            for k in ("k_dense", "k_lex", "rrf_k", "w_lex", "rerank_head", "rerank_blend")
+        }
+        out = replace(tuned, **keep)
+
+    # Stage 3: free-text search fusion and reranking.
+    ss = report["search_stage"]
+    budget = ss["latency_budget_ms"]
+    over = ss["default"]["rerank_ms_est"] > budget
+    sb, sd = ss["test_mrr@10"]["best"][0], ss["test_mrr@10"]["default"][0]
+    p_val = ss["test_mrr@10"]["p_value"]
+    ok = sb >= sd - 0.005 or (over and p_val >= 0.05)
+    decisions["search"] = {
+        "ships": ok,
+        "current_over_budget": over,
+        "test_mrr@10": [round(sd, 4), round(sb, 4)],
+        "p_value": p_val,
+        "setting": {k: ss["best"][k] for k in ("rrf_k", "w_lex", "rerank_head", "rerank_blend")},
+    }
+    if ok:
+        out = replace(out, **decisions["search"]["setting"])
+
+    report["decisions"] = decisions
+    report["shipped"] = any(d["ships"] for d in decisions.values())
+    report["released_config"] = out.to_dict()
+    if write and report["shipped"]:
+        TUNED_FILE.write_text(
+            json.dumps({**report, "config": out.to_dict()}, indent=2), encoding="utf-8"
+        )
         load_config.cache_clear()
     return report
 

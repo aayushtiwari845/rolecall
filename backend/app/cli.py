@@ -280,6 +280,25 @@ def tune(
     typer.echo(json.dumps(report["test"]["compare"], indent=2))
 
 
+@app.command("tune-release")
+def tune_release(
+    report: str = typer.Option("evals/results/tuning.json", help="Report written by `tune`"),
+    dry_run: bool = typer.Option(False),
+) -> None:
+    """Re-apply the per-stage ship decisions to an existing tuning report."""
+    from pathlib import Path
+
+    from app.db import session_scope
+    from app.evals.tune import release
+    from app.search.rank import Weights
+
+    data = json.loads(Path(report).read_text(encoding="utf-8"))
+    with session_scope() as s:
+        out = release(s, data, Weights(), write=not dry_run)
+    Path(report).write_text(json.dumps(out, indent=2), encoding="utf-8")
+    typer.echo(json.dumps(out["decisions"], indent=2))
+
+
 @app.command("train-ranker")
 def train_ranker() -> None:
     """Fit ranker weights from logged impressions vs clicks/saves (needs real usage)."""
