@@ -30,7 +30,8 @@ measure one of those.
   balanced so test covers intern, new grad, junior, experienced, remote and India.
 - **Pooling:** for each persona, the top 10 of eight deliberately different rankers
   (dense only, lexical only, fusion only, hand-set defaults, skills-heavy,
-  semantic-heavy, level-heavy, MMR-diversified) are unioned. 408 pairs.
+  semantic-heavy, level-heavy, MMR-diversified) are unioned: 408 pairs, plus 100 more from two rounds of
+  pooling the tuned configurations (508 in all).
 - **Judging:** every pair graded 0-3 against a rubric written before judging (in
   `backend/app/evals/judged.py`), reading the posting's title, company, location and
   eligibility, level, required experience, skills and description, without seeing any
@@ -108,6 +109,59 @@ retrieval depths, fusion and reranking.
    violations. The file records dev and test metrics, the search space, seed, trials
    and commit.
 
+## 5a. Tuning log (what actually happened)
+
+Each round's full report is in `backend/evals/results/tuning_history/`. The test personas
+are only used for the ship decision; every look at them is listed here.
+
+| Round | Change | Dev nDCG@10 (default → tuned) | Test nDCG@10 (default → tuned) | Shipped |
+|---|---|---|---|---|
+| 1 | 22 params, objective on condensed nDCG | 0.616 → 0.824 | 0.630 → 0.602, judged@10 0.67 | no |
+| 2 | +72 judgements from round 1's results; strict nDCG in the objective; lower-bound trial selection | 0.584 → 0.776 (p=0.004) | 0.624 → 0.512 (p=0.12) | no |
+| 3 | +28 judgements; nested 5-fold CV inside dev picks the search space | 0.584 → 0.789 (p=0.002) | 0.624 → 0.559 (p=0.34) | no |
+| 4 | space chosen by CV lower bound (trust region); search split fixed | 0.584 → 0.753 (p=0.002) | 0.624 → 0.602 (p=0.75) | ranking no; retrieval and search yes |
+
+**What shipped after round 4** (decided stage by stage by `release()` in
+`backend/app/evals/tune.py`, reproducible with `rolecall tune-release`):
+
+| Stage | Decision | Evidence on held-out data |
+|---|---|---|
+| Feed retrieval depth | 200 dense, 0 lexical (was 300 + 150) | test nDCG@10 identical (0.624), candidate recall 0.98 both, feed latency 231 → 152 ms |
+| Ranking weights | stay hand-set | CV gain inside dev (+0.12, p=0.03) did not hold on test (-0.022, p=0.75) |
+| Search fusion | RRF k 30, lexical weight 2, no cross-encoder | 40-doc rerank measured at ~2.2 s on CPU, far over the 250 ms budget; dropping it moves test MRR@10 0.210 → 0.200 (p=0.72) |
+
+The cross-encoder stays in the code and in the search eval as a variant: on a GPU or a
+faster host, set `rerank_head` back above zero.
+
+The honest summary: on 16 personas, Bayesian optimisation of the ranking weights finds
+real gains on personas it was tuned on (and, by nested CV, on unseen *dev* personas), but
+not on the held-out set. The hand-set weights are as good as anything the tuner found
+within the noise of this evaluation. Getting a reliable gain needs more personas or real
+interaction data (`rolecall train-ranker`), not more trials.
+
+What each round taught:
+- **Round 1:** the tuned ranker had pushed unjudged roles into the top 10 (only 67% judged
+  on test). Condensed metrics hid that. Fix: pool and judge those roles, and add strict
+  nDCG (unjudged = not relevant) to the objective.
+- **Round 2:** a large, significant dev gain did not transfer. 22 parameters on 10
+  personas overfit. The newly judged roles also exposed junk postings (developer
+  engagement "representatives", equity-only HN posts, crowdtesting gigs), now filtered.
+- **Round 3:** nested CV *inside dev* said tuning generalises to unseen dev personas
+  (+0.135 objective [0.015, 0.256] for the full space; +0.117 [0.038, 0.193], p=0.025,
+  for a 12-parameter trust region around the defaults), yet the full-space winner still
+  lost on test (2 wins, 4 losses, not significant). Two lessons: with 16 personas the
+  noise floor is around ±0.1 nDCG; and the space should be chosen the same way trials
+  are, by lower bound rather than mean.
+- **Two bugs found by the tuner:** MMR was O(n³) Python (10 s per trial, and slow feeds
+  whenever diversity was on): now vectorised, 25-50x faster, identical output, pinned by
+  a reference test. The search stage's dev/test split put whole role families on one
+  side (the sampler interleaves families round-robin), which made dev and test disagree
+  with p=0.02: now alternated within each family.
+- **Disclosure:** the rule "choose the space by lower bound" was adopted after seeing
+  round 3's test result. The test personas have now informed four ship decisions, so
+  treat their numbers as validation rather than a pristine test. A fresh test set means
+  new personas judged from scratch (see limitations).
+
 ## 6. Robustness built into the engine
 
 - Cold start: no resume and no history falls back to the freshest roles inside the
@@ -129,6 +183,10 @@ retrieval depths, fusion and reranking.
   in the repository for anyone to audit or re-judge.
 - 16 personas give wide confidence intervals. Differences smaller than the intervals are
   reported as such, not as wins.
+- The 6 test personas have informed four ship decisions. The next step for a clean
+  estimate is a fresh set of personas, judged from scratch and used once.
+- Judgements cover 508 (persona, role) pairs across four pooling rounds; roles a future
+  configuration surfaces will need judging again (judged@10 is reported for that).
 - Retrieval depth tuning uses pools built at the default depths, which biases
   candidate recall toward depths at or below them.
 - Offline metrics are a proxy. Once there is real traffic, feed impressions with
