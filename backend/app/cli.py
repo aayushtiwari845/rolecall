@@ -157,7 +157,11 @@ def run_eval(
     """Run offline evaluations and store the results."""
     from app.evals.run import run_suite
 
-    suites = ["extraction", "retrieval", "recsys", "recommendation", "agent"] if suite == "all" else [suite]
+    suites = (
+        ["extraction", "retrieval", "recsys", "recommendation", "agent"]
+        if suite == "all"
+        else [suite]
+    )
     for name in suites:
         res = run_suite(name, use_llm=not no_llm)
         typer.echo(f"\n== {name} ==")
@@ -178,12 +182,10 @@ def pool(
     """Pool unjudged (persona, role) pairs from many ranking variants for judging."""
     from pathlib import Path
 
-    from app.search.rank import Weights
-
     from app.db import session_scope
     from app.evals.judged import load_personas
     from app.evals.judged import pool as run_pool
-    from app.search.rank import load_config
+    from app.search.rank import Weights, load_config
 
     with session_scope() as s:
         personas = load_personas()

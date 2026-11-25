@@ -71,9 +71,23 @@ def _recsys(session) -> dict:
     from app.search.rank import Weights, load_config
 
     ev = Evaluator(session, load_personas("test"))
-    default, current = ev.evaluate(Weights(), latency=True), ev.evaluate(load_config(), latency=True)
-    keep = ("ndcg@10", "p@10", "map", "bpref", "success@5", "violations@10", "ild@10",
-            "companies@10", "stability_rbo", "judged@10", "latency_ms")
+    default, current = (
+        ev.evaluate(Weights(), latency=True),
+        ev.evaluate(load_config(), latency=True),
+    )
+    keep = (
+        "ndcg@10",
+        "p@10",
+        "map",
+        "bpref",
+        "success@5",
+        "violations@10",
+        "ild@10",
+        "companies@10",
+        "stability_rbo",
+        "judged@10",
+        "latency_ms",
+    )
 
     def row(r):
         out = {k: r.summary[k]["mean"] for k in keep if k in r.summary}

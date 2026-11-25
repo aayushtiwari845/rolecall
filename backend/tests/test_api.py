@@ -58,7 +58,10 @@ def seeded(client):
     with session_scope() as s:
         s.execute(text("TRUNCATE jobs, users CASCADE"))
         for i, (company, title, loc, desc) in enumerate(JOBS):
-            desc = desc + " You will join a small product team, own features end to end and ship every week."
+            desc = (
+                desc
+                + " You will join a small product team, own features end to end and ship every week."
+            )
             raw = RawJob(
                 "greenhouse",
                 f"t:{i}",
