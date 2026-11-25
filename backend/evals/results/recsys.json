@@ -1,0 +1,38 @@
+{
+  "suite": "recsys",
+  "run_at": "2026-11-25T15:13:18.487109+00:00",
+  "git_sha": "22abd16",
+  "results": {
+    "hand_set_v1": {
+      "ndcg@10": 0.6243,
+      "p@10": 0.4,
+      "map": 0.5646,
+      "bpref": 0.4571,
+      "success@5": 0.8333,
+      "violations@10": 0.0,
+      "ild@10": 0.2749,
+      "companies@10": 0.8167,
+      "stability_rbo": 0.8539,
+      "judged@10": 1.0,
+      "latency_ms": 241.1435,
+      "ndcg@10_95ci": "0.504-0.737",
+      "personas": 6
+    },
+    "released": {
+      "ndcg@10": 0.6243,
+      "p@10": 0.4,
+      "map": 0.5646,
+      "bpref": 0.4571,
+      "success@5": 0.8333,
+      "violations@10": 0.0,
+      "ild@10": 0.2749,
+      "companies@10": 0.8167,
+      "stability_rbo": 0.8539,
+      "judged@10": 1.0,
+      "latency_ms": 143.9375,
+      "ndcg@10_95ci": "0.504-0.737",
+      "personas": 6,
+      "p_value_vs_v1": 1.0
+    }
+  }
+}

@@ -1,53 +1,53 @@
 {
   "suite": "recommendation",
-  "run_at": "2026-11-25T06:21:02.142257+00:00",
-  "git_sha": "91bd2e4",
+  "run_at": "2026-11-25T15:00:07.756312+00:00",
+  "git_sha": "2b1b954",
   "results": {
     "dense_only": {
-      "ndcg@10": 0.7183,
-      "p@10": 0.9,
-      "company_diversity": 0.74,
-      "coverage": 0.0099,
-      "personas": 5,
-      "judge": "rules"
-    },
-    "lexical_only": {
-      "ndcg@10": 0.6611,
-      "p@10": 0.84,
-      "company_diversity": 0.76,
-      "coverage": 0.0092,
-      "personas": 5,
-      "judge": "rules"
-    },
-    "hybrid_rrf_only": {
-      "ndcg@10": 0.7511,
-      "p@10": 0.94,
-      "company_diversity": 0.76,
-      "coverage": 0.0093,
-      "personas": 5,
-      "judge": "rules"
-    },
-    "ranker_no_yoe_penalty": {
-      "ndcg@10": 0.7772,
-      "p@10": 0.86,
-      "company_diversity": 0.96,
-      "coverage": 0.0095,
-      "personas": 5,
-      "judge": "rules"
-    },
-    "ranker_no_diversity": {
-      "ndcg@10": 0.7514,
-      "p@10": 0.82,
-      "company_diversity": 0.92,
+      "ndcg@10": 0.7415,
+      "p@10": 0.88,
+      "company_diversity": 0.72,
       "coverage": 0.0094,
       "personas": 5,
       "judge": "rules"
     },
-    "full_ranker": {
-      "ndcg@10": 0.7514,
+    "lexical_only": {
+      "ndcg@10": 0.6616,
       "p@10": 0.82,
-      "company_diversity": 0.92,
-      "coverage": 0.0092,
+      "company_diversity": 0.78,
+      "coverage": 0.009,
+      "personas": 5,
+      "judge": "rules"
+    },
+    "hybrid_rrf_only": {
+      "ndcg@10": 0.7553,
+      "p@10": 0.94,
+      "company_diversity": 0.66,
+      "coverage": 0.009,
+      "personas": 5,
+      "judge": "rules"
+    },
+    "ranker_no_yoe_penalty": {
+      "ndcg@10": 0.8278,
+      "p@10": 0.9,
+      "company_diversity": 0.98,
+      "coverage": 0.0094,
+      "personas": 5,
+      "judge": "rules"
+    },
+    "ranker_no_diversity": {
+      "ndcg@10": 0.7956,
+      "p@10": 0.88,
+      "company_diversity": 0.9,
+      "coverage": 0.009,
+      "personas": 5,
+      "judge": "rules"
+    },
+    "full_ranker": {
+      "ndcg@10": 0.7956,
+      "p@10": 0.88,
+      "company_diversity": 0.9,
+      "coverage": 0.0087,
       "personas": 5,
       "judge": "rules"
     }
