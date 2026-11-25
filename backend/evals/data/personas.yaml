@@ -145,3 +145,115 @@
   levels: [intern, new_grad]
   families: [backend, ml, ai_llm, data_eng, infra, fullstack]
   cities: [Mumbai, Bengaluru]
+# ---------------------------------------------------------------------------------------
+# Fresh held-out set (split: fresh). Written after tuning round 4, judged from scratch,
+# never used for tuning or any ship decision. Evaluated once per candidate configuration
+# under the pre-registered comparison in docs/evaluation.md (section 5b).
+- id: java_intern_pune
+  split: fresh
+  groups: [intern, backend, india_city]
+  text: Third-year IT student in Pune. Strong in Java and OOP, built a library-management REST API with Spring Boot and MySQL, practises data structures and algorithms. Wants Java backend internships.
+  skills: [Java, Spring Boot, MySQL, REST APIs, OOP, Data Structures & Algorithms, SQL, Git]
+  years: 0
+  levels: [intern, new_grad]
+  families: [backend, swe]
+  cities: [Pune, Mumbai]
+- id: nlp_intern_remote
+  split: fresh
+  groups: [intern, ml, remote]
+  text: Master's student researching NLP. Fine-tuned transformer models with PyTorch and Hugging Face, evaluated LLMs on reasoning benchmarks, comfortable with NumPy and experiment tracking. Wants remote ML or NLP research internships.
+  skills: [Python, PyTorch, NLP, Hugging Face, Fine-tuning, LLMs, Deep Learning, NumPy, Machine Learning]
+  years: 0
+  levels: [intern]
+  families: [ml, ai_llm, data_science]
+  cities: []
+- id: analytics_newgrad_chennai
+  split: fresh
+  groups: [new_grad, data, india_city]
+  text: Recent commerce-and-statistics graduate turned data analyst. SQL, Python with pandas, dashboards in Power BI and Tableau, A/B test analysis. Wants data analyst or analytics roles in Chennai or Bengaluru.
+  skills: [SQL, Python, Pandas, Power BI, Tableau, Excel, Statistics]
+  years: 0
+  levels: [new_grad, junior]
+  families: [data_science, data_eng]
+  cities: [Chennai, Bengaluru]
+- id: cloud_intern_blr
+  split: fresh
+  groups: [intern, infra, india_city]
+  text: Final-year student with AWS Cloud Practitioner certification. Set up CI/CD with GitHub Actions, Docker containers on EC2, basic Terraform, Linux administration and Bash scripting. Wants cloud or DevOps internships in Bengaluru.
+  skills: [AWS, Linux, Docker, CI/CD, Bash, Terraform, Python, Networking]
+  years: 0
+  levels: [intern, new_grad]
+  families: [infra]
+  cities: [Bengaluru]
+- id: android_junior_mumbai
+  split: fresh
+  groups: [junior, mobile, india_city]
+  text: Android developer with a year and a half at a consumer app startup. Kotlin, Jetpack Compose, MVVM, Retrofit, Room, Firebase, unit testing. Wants Android roles in Mumbai or Pune.
+  skills: [Kotlin, Android, Java, REST APIs, Testing, Git]
+  years: 1.5
+  levels: [junior, mid]
+  families: [mobile]
+  cities: [Mumbai, Pune]
+- id: go_newgrad_blr
+  split: fresh
+  groups: [new_grad, backend, india_city]
+  text: New grad who built a distributed key-value store in Go with gRPC and Raft, and contributed to a Kubernetes operator. Comfortable with PostgreSQL, Redis and Linux. Wants backend or platform roles in Bengaluru or remote.
+  skills: [Go, gRPC, Distributed Systems, Kubernetes, Docker, PostgreSQL, Redis, Linux]
+  years: 0
+  levels: [new_grad, junior]
+  families: [backend, infra, swe]
+  cities: [Bengaluru]
+- id: mern_intern_noida
+  split: fresh
+  groups: [intern, fullstack, india_city]
+  text: Second-year B.Tech student who builds MERN projects. React frontends, Node.js and Express APIs, MongoDB, JWT auth, deployed on Vercel and Render. Wants full-stack or web development internships in Delhi NCR.
+  skills: [JavaScript, React, Node.js, Express, MongoDB, HTML/CSS, REST APIs, Git]
+  years: 0
+  levels: [intern]
+  families: [fullstack, frontend, backend]
+  cities: [Noida, Gurugram, Delhi]
+- id: mlops_3yr_blr
+  split: fresh
+  groups: [mid, ml, india_city]
+  text: ML platform engineer with three years running training and serving infrastructure. Kubernetes, Kubeflow and MLflow, feature pipelines in Spark and Airflow, model serving on AWS, Terraform.
+  skills: [MLOps, Kubernetes, Python, Docker, Apache Spark, Airflow, AWS, Terraform, Machine Learning]
+  years: 3
+  levels: [mid, senior]
+  families: [ml, infra, data_eng]
+  cities: [Bengaluru]
+- id: frontend_senior_remote
+  split: fresh
+  groups: [experienced, frontend, remote]
+  text: Senior frontend engineer, five years building design systems and large React and TypeScript apps with Next.js and GraphQL, performance and accessibility work. Wants remote senior frontend roles.
+  skills: [React, TypeScript, Next.js, GraphQL, JavaScript, HTML/CSS, Testing, Redux]
+  years: 5
+  levels: [senior, staff_plus]
+  families: [frontend, fullstack]
+  cities: []
+- id: cpp_newgrad_hyd
+  split: fresh
+  groups: [new_grad, systems, india_city]
+  text: New grad who loves systems programming. Modern C++ and C, multithreading, operating systems and networking coursework, competitive programming. Wants systems, low-latency or core software engineering roles in Hyderabad or Bengaluru.
+  skills: [C++, C, Linux, Concurrency, Data Structures & Algorithms, Networking, Python]
+  years: 0
+  levels: [new_grad, junior]
+  families: [swe, backend, embedded]
+  cities: [Hyderabad, Bengaluru]
+- id: appsec_junior_blr
+  split: fresh
+  groups: [junior, security, india_city]
+  text: Application security engineer with one year of experience. Web and API penetration testing, threat modelling, secure code review in Python and Java, cloud security on AWS, Burp Suite.
+  skills: [Security, Python, Linux, Networking, AWS, Bash, Java]
+  years: 1
+  levels: [junior, mid, new_grad]
+  families: [security]
+  cities: [Bengaluru, Hyderabad]
+- id: ds_newgrad_mumbai
+  split: fresh
+  groups: [new_grad, data, india_city]
+  text: New grad data scientist. Built a recommendation model and churn prediction with scikit-learn and XGBoost, strong statistics, SQL and pandas. Wants data scientist roles in Mumbai or remote.
+  skills: [Python, Machine Learning, XGBoost, Statistics, SQL, Pandas, scikit-learn, Recommender Systems]
+  years: 0
+  levels: [new_grad, junior]
+  families: [data_science, ml]
+  cities: [Mumbai]
