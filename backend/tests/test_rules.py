@@ -245,6 +245,9 @@ def test_junk_postings_are_dropped():
     assert not rules.looks_tech_title("Content Developer")
     assert not rules.looks_tech_title("Developer Engagement Representative - LATAM")
     assert not rules.looks_tech_title("QA Tester (Remote): Test Real Apps, Flexible Hours")
+    assert not rules.looks_tech_title("Developer Engagement Team (Contract)")
+    assert not rules.looks_tech_title("Specialist Seller, Enterprise Core (AI Products)")
+    assert not rules.looks_tech_title("2026/02: HW Developer for Electronic Control Unit")
     not_a_job = RawJob(
         "hn",
         "2",

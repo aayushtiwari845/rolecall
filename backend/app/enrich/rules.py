@@ -38,7 +38,8 @@ _NON_TECH = re.compile(
     r"solutions? (?:engineer|architect|consultant)|customer (?:engineer|architect)|pre-?sales|"
     r"technical account manager|implementation (?:consultant|specialist)|"
     r"hydraulic|valve|content developer|sales specialist|\bgtm\b|brand identity|designer\b|"
-    r"representative|crowd-?test|test real apps|partner strategy",
+    r"representative|crowd-?test|test real apps|partner strategy|developer engagement|"
+    r"\bseller\b|\bhw developer|hardware design",
     re.I,
 )
 
