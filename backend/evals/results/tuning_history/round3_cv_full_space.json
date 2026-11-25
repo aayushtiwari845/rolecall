@@ -1,0 +1,1062 @@
+{
+  "run_at": "2026-11-25T14:16:38.859453+00:00",
+  "git_sha": "79b8447",
+  "trials": 300,
+  "seed": 7,
+  "objective": "0.5*ndcg@10 + 0.5*ndcg@10_strict - 0.5*violations@10",
+  "retrieval_stage": {
+    "grid": [
+      {
+        "k_dense": 100,
+        "k_lex": 0,
+        "candidate_recall": 0.9657,
+        "p50_ms": 61.8
+      },
+      {
+        "k_dense": 100,
+        "k_lex": 50,
+        "candidate_recall": 0.9729,
+        "p50_ms": 104.1
+      },
+      {
+        "k_dense": 100,
+        "k_lex": 150,
+        "candidate_recall": 0.98,
+        "p50_ms": 85.7
+      },
+      {
+        "k_dense": 100,
+        "k_lex": 300,
+        "candidate_recall": 0.98,
+        "p50_ms": 89.5
+      },
+      {
+        "k_dense": 200,
+        "k_lex": 0,
+        "candidate_recall": 0.98,
+        "p50_ms": 68.8
+      },
+      {
+        "k_dense": 200,
+        "k_lex": 50,
+        "candidate_recall": 0.98,
+        "p50_ms": 112.6
+      },
+      {
+        "k_dense": 200,
+        "k_lex": 150,
+        "candidate_recall": 0.98,
+        "p50_ms": 115.8
+      },
+      {
+        "k_dense": 200,
+        "k_lex": 300,
+        "candidate_recall": 0.98,
+        "p50_ms": 111.1
+      },
+      {
+        "k_dense": 300,
+        "k_lex": 0,
+        "candidate_recall": 0.98,
+        "p50_ms": 65.8
+      },
+      {
+        "k_dense": 300,
+        "k_lex": 50,
+        "candidate_recall": 0.98,
+        "p50_ms": 107.7
+      },
+      {
+        "k_dense": 300,
+        "k_lex": 150,
+        "candidate_recall": 0.98,
+        "p50_ms": 185.6
+      },
+      {
+        "k_dense": 300,
+        "k_lex": 300,
+        "candidate_recall": 0.98,
+        "p50_ms": 180.0
+      },
+      {
+        "k_dense": 500,
+        "k_lex": 0,
+        "candidate_recall": 0.98,
+        "p50_ms": 52.7
+      },
+      {
+        "k_dense": 500,
+        "k_lex": 50,
+        "candidate_recall": 0.98,
+        "p50_ms": 176.6
+      },
+      {
+        "k_dense": 500,
+        "k_lex": 150,
+        "candidate_recall": 0.98,
+        "p50_ms": 183.3
+      },
+      {
+        "k_dense": 500,
+        "k_lex": 300,
+        "candidate_recall": 0.98,
+        "p50_ms": 178.0
+      }
+    ],
+    "choice": {
+      "k_dense": 500,
+      "k_lex": 0,
+      "candidate_recall": 0.98,
+      "p50_ms": 52.7
+    }
+  },
+  "cross_validation": {
+    "full": {
+      "space": "full",
+      "folds": 5,
+      "trials_per_fold": 150,
+      "heldout_delta": {
+        "mean": 0.1347,
+        "lo": 0.015,
+        "hi": 0.2562
+      },
+      "p_value": 0.075,
+      "wins": 8,
+      "losses": 2,
+      "per_persona": {
+        "backend_intern_mumbai": 0.2543,
+        "data_eng_junior_pune": -0.2029,
+        "ds_intern": -0.0855,
+        "embedded_newgrad": 0.1684,
+        "frontend_newgrad": 0.0699,
+        "fullstack_gurugram": 0.0249,
+        "generalist_sparse": 0.1338,
+        "ml_newgrad_blr": 0.1,
+        "security_intern": 0.4655,
+        "swe_resume_owner": 0.419
+      }
+    },
+    "trust_region": {
+      "space": "trust_region",
+      "folds": 5,
+      "trials_per_fold": 150,
+      "heldout_delta": {
+        "mean": 0.1166,
+        "lo": 0.0381,
+        "hi": 0.1929
+      },
+      "p_value": 0.0252,
+      "wins": 8,
+      "losses": 2,
+      "per_persona": {
+        "backend_intern_mumbai": 0.2384,
+        "data_eng_junior_pune": 0.0256,
+        "ds_intern": -0.009,
+        "embedded_newgrad": 0.0817,
+        "frontend_newgrad": 0.0245,
+        "fullstack_gurugram": -0.0838,
+        "generalist_sparse": 0.1149,
+        "ml_newgrad_blr": 0.1858,
+        "security_intern": 0.2908,
+        "swe_resume_owner": 0.2971
+      }
+    }
+  },
+  "space": "full",
+  "param_importance": {
+    "location": 0.142,
+    "recency": 0.14,
+    "yoe_slack": 0.09,
+    "skills": 0.066,
+    "level_adjacent": 0.062,
+    "role_other": 0.052,
+    "mmr_lambda": 0.051,
+    "yoe_step": 0.044,
+    "recency_tau_days": 0.043,
+    "level_unknown": 0.042,
+    "role": 0.039,
+    "level": 0.039,
+    "sim_floor": 0.034,
+    "role_adjacent": 0.034,
+    "semantic": 0.029,
+    "sim_span": 0.022,
+    "level_two_away": 0.021,
+    "skill_saturation": 0.017,
+    "affinity": 0.016,
+    "yoe_floor": 0.011,
+    "max_per_company": 0.005,
+    "diversity_window": 0.001
+  },
+  "best_trial": 276,
+  "best_objective_dev": 0.7894,
+  "selection": [
+    {
+      "trial": 276,
+      "robust": 0.7322
+    },
+    {
+      "trial": 204,
+      "robust": 0.731
+    },
+    {
+      "trial": 279,
+      "robust": 0.7296
+    },
+    {
+      "trial": 212,
+      "robust": 0.7283
+    },
+    {
+      "trial": 245,
+      "robust": 0.7275
+    },
+    {
+      "trial": 258,
+      "robust": 0.7274
+    },
+    {
+      "trial": 267,
+      "robust": 0.7273
+    },
+    {
+      "trial": 247,
+      "robust": 0.7266
+    },
+    {
+      "trial": 237,
+      "robust": 0.7265
+    },
+    {
+      "trial": 260,
+      "robust": 0.7233
+    }
+  ],
+  "chosen_trial": 276,
+  "top_configs": [
+    {
+      "semantic": 0.9216454174693905,
+      "lexical": 0.0,
+      "skills": 0.40722853306825985,
+      "level": 0.6431538627826174,
+      "role": 0.3811481130040437,
+      "location": 0.39216960015987506,
+      "recency": 0.036455520817971536,
+      "affinity": 0.19272823715853088,
+      "sim_floor": 0.30847617414895323,
+      "sim_span": 0.4156715065688372,
+      "skill_saturation": 5,
+      "level_adjacent": 0.047363081250218535,
+      "level_two_away": 0.15553965120968763,
+      "level_unknown": 0.3696322483012991,
+      "role_adjacent": 0.9643456738932014,
+      "role_other": 0.10031587456024899,
+      "recency_tau_days": 14.527633974474266,
+      "negative_weight": 0.7,
+      "yoe_penalty": true,
+      "yoe_slack": 1.2386701965298925,
+      "yoe_step": 0.1058646880594443,
+      "yoe_floor": 0.46057206307161513,
+      "diversify": true,
+      "max_per_company": 2,
+      "diversity_window": 10,
+      "mmr_lambda": 0.8921619350837255,
+      "k_dense": 500,
+      "k_lex": 0,
+      "rrf_k": 60,
+      "w_dense": 1.0,
+      "w_lex": 1.0,
+      "rerank_head": 40,
+      "rerank_blend": 0.65,
+      "min_results": 20
+    },
+    {
+      "semantic": 0.9603341249293992,
+      "lexical": 0.0,
+      "skills": 0.44025355123863036,
+      "level": 0.6971694369352812,
+      "role": 0.3971144828286071,
+      "location": 0.39773972015830783,
+      "recency": 0.05742421720819628,
+      "affinity": 0.168201184902004,
+      "sim_floor": 0.3109949332498278,
+      "sim_span": 0.4080282007169585,
+      "skill_saturation": 5,
+      "level_adjacent": 0.029414042568524874,
+      "level_two_away": 0.1502302102536983,
+      "level_unknown": 0.404634174018763,
+      "role_adjacent": 0.9294642513835774,
+      "role_other": 0.07378895485906808,
+      "recency_tau_days": 16.028327758332708,
+      "negative_weight": 0.7,
+      "yoe_penalty": true,
+      "yoe_slack": 1.1532702724892936,
+      "yoe_step": 0.10310793115006629,
+      "yoe_floor": 0.47553969428088194,
+      "diversify": true,
+      "max_per_company": 2,
+      "diversity_window": 10,
+      "mmr_lambda": 0.9101860486171551,
+      "k_dense": 500,
+      "k_lex": 0,
+      "rrf_k": 60,
+      "w_dense": 1.0,
+      "w_lex": 1.0,
+      "rerank_head": 40,
+      "rerank_blend": 0.65,
+      "min_results": 20
+    },
+    {
+      "semantic": 0.9402219243890358,
+      "lexical": 0.0,
+      "skills": 0.4226409972993664,
+      "level": 0.7443413862000371,
+      "role": 0.38828752653519716,
+      "location": 0.3997589668915682,
+      "recency": 0.040069526340578976,
+      "affinity": 0.16812284284490758,
+      "sim_floor": 0.32929858990965155,
+      "sim_span": 0.4094048536047398,
+      "skill_saturation": 5,
+      "level_adjacent": 0.061820941748734835,
+      "level_two_away": 0.11288357947052326,
+      "level_unknown": 0.43846353564328083,
+      "role_adjacent": 0.9244840156576216,
+      "role_other": 0.08834296232494167,
+      "recency_tau_days": 17.65282946348437,
+      "negative_weight": 0.7,
+      "yoe_penalty": true,
+      "yoe_slack": 1.1242117623541958,
+      "yoe_step": 0.09404701716021291,
+      "yoe_floor": 0.46466214775455045,
+      "diversify": true,
+      "max_per_company": 2,
+      "diversity_window": 10,
+      "mmr_lambda": 0.8911731544469849,
+      "k_dense": 500,
+      "k_lex": 0,
+      "rrf_k": 60,
+      "w_dense": 1.0,
+      "w_lex": 1.0,
+      "rerank_head": 40,
+      "rerank_blend": 0.65,
+      "min_results": 20
+    },
+    {
+      "semantic": 0.9463113066389259,
+      "lexical": 0.0,
+      "skills": 0.4075482521090281,
+      "level": 0.6870638060410059,
+      "role": 0.39876208833837806,
+      "location": 0.3839191188329073,
+      "recency": 0.053976556330789606,
+      "affinity": 0.17216025170276766,
+      "sim_floor": 0.31501864916494987,
+      "sim_span": 0.43501650062394,
+      "skill_saturation": 5,
+      "level_adjacent": 0.010583551387375729,
+      "level_two_away": 0.12090590117747041,
+      "level_unknown": 0.42317692226075526,
+      "role_adjacent": 0.9850424009204745,
+      "role_other": 0.09430113729758871,
+      "recency_tau_days": 14.299901212725276,
+      "negative_weight": 0.7,
+      "yoe_penalty": true,
+      "yoe_slack": 1.2486077272072171,
+      "yoe_step": 0.11022123713416333,
+      "yoe_floor": 0.46906219133075966,
+      "diversify": true,
+      "max_per_company": 2,
+      "diversity_window": 10,
+      "mmr_lambda": 0.9005549879325339,
+      "k_dense": 500,
+      "k_lex": 0,
+      "rrf_k": 60,
+      "w_dense": 1.0,
+      "w_lex": 1.0,
+      "rerank_head": 40,
+      "rerank_blend": 0.65,
+      "min_results": 20
+    },
+    {
+      "semantic": 0.9804158366372008,
+      "lexical": 0.0,
+      "skills": 0.4463335911714186,
+      "level": 0.6870943146994465,
+      "role": 0.3982479025327254,
+      "location": 0.38543749778489333,
+      "recency": 0.0712419564919478,
+      "affinity": 0.17605961745550827,
+      "sim_floor": 0.3145127773565461,
+      "sim_span": 0.4147061383472108,
+      "skill_saturation": 5,
+      "level_adjacent": 0.010380804351343306,
+      "level_two_away": 0.12529910435534802,
+      "level_unknown": 0.3947677209112105,
+      "role_adjacent": 0.9220616349261038,
+      "role_other": 0.08197293239224179,
+      "recency_tau_days": 16.799388100552353,
+      "negative_weight": 0.7,
+      "yoe_penalty": true,
+      "yoe_slack": 1.1308877267646151,
+      "yoe_step": 0.10146860327210011,
+      "yoe_floor": 0.4811055461273348,
+      "diversify": true,
+      "max_per_company": 2,
+      "diversity_window": 10,
+      "mmr_lambda": 0.8978045123674894,
+      "k_dense": 500,
+      "k_lex": 0,
+      "rrf_k": 60,
+      "w_dense": 1.0,
+      "w_lex": 1.0,
+      "rerank_head": 40,
+      "rerank_blend": 0.65,
+      "min_results": 20
+    }
+  ],
+  "dev": {
+    "default": {
+      "ndcg@5": {
+        "mean": 0.5217,
+        "lo": 0.3873,
+        "hi": 0.6711
+      },
+      "ndcg@10": {
+        "mean": 0.5838,
+        "lo": 0.4626,
+        "hi": 0.7097
+      },
+      "ndcg@20": {
+        "mean": 0.68,
+        "lo": 0.5754,
+        "hi": 0.7786
+      },
+      "ndcg@10_strict": {
+        "mean": 0.5838,
+        "lo": 0.4626,
+        "hi": 0.7097
+      },
+      "p@10": {
+        "mean": 0.35,
+        "lo": 0.26,
+        "hi": 0.45
+      },
+      "map": {
+        "mean": 0.5031,
+        "lo": 0.3898,
+        "hi": 0.6121
+      },
+      "mrr": {
+        "mean": 0.631,
+        "lo": 0.4428,
+        "hi": 0.8333
+      },
+      "bpref": {
+        "mean": 0.3986,
+        "lo": 0.2776,
+        "hi": 0.5122
+      },
+      "success@5": {
+        "mean": 0.6,
+        "lo": 0.3,
+        "hi": 0.9
+      },
+      "judged@10": {
+        "mean": 1.0,
+        "lo": 1.0,
+        "hi": 1.0
+      },
+      "ild@10": {
+        "mean": 0.2848,
+        "lo": 0.2781,
+        "hi": 0.2917
+      },
+      "companies@10": {
+        "mean": 0.85,
+        "lo": 0.79,
+        "hi": 0.9
+      },
+      "median_age_days": {
+        "mean": 34.1674,
+        "lo": 28.0139,
+        "hi": 41.4914
+      },
+      "violations@10": {
+        "mean": 0.01,
+        "lo": 0.0,
+        "hi": 0.03
+      },
+      "stability_rbo": {
+        "mean": 0.8522,
+        "lo": 0.7665,
+        "hi": 0.9304
+      },
+      "latency_ms": {
+        "mean": 230.7593,
+        "lo": 190.8079,
+        "hi": 271.0756
+      },
+      "exposure_gini": {
+        "mean": 0.47625,
+        "lo": 0,
+        "hi": 0
+      },
+      "coverage": {
+        "mean": 0.006486613987498526,
+        "lo": 0,
+        "hi": 0
+      }
+    },
+    "tuned": {
+      "ndcg@5": {
+        "mean": 0.7652,
+        "lo": 0.6464,
+        "hi": 0.8823
+      },
+      "ndcg@10": {
+        "mean": 0.7894,
+        "lo": 0.6721,
+        "hi": 0.8844
+      },
+      "ndcg@20": {
+        "mean": 0.7972,
+        "lo": 0.698,
+        "hi": 0.8758
+      },
+      "ndcg@10_strict": {
+        "mean": 0.7894,
+        "lo": 0.6721,
+        "hi": 0.8844
+      },
+      "p@10": {
+        "mean": 0.5,
+        "lo": 0.36,
+        "hi": 0.64
+      },
+      "map": {
+        "mean": 0.6608,
+        "lo": 0.5601,
+        "hi": 0.7647
+      },
+      "mrr": {
+        "mean": 0.95,
+        "lo": 0.85,
+        "hi": 1.0
+      },
+      "bpref": {
+        "mean": 0.5607,
+        "lo": 0.4399,
+        "hi": 0.6838
+      },
+      "success@5": {
+        "mean": 0.7,
+        "lo": 0.4,
+        "hi": 0.9
+      },
+      "judged@10": {
+        "mean": 0.99,
+        "lo": 0.97,
+        "hi": 1.0
+      },
+      "ild@10": {
+        "mean": 0.2868,
+        "lo": 0.2816,
+        "hi": 0.2921
+      },
+      "companies@10": {
+        "mean": 0.87,
+        "lo": 0.8,
+        "hi": 0.93
+      },
+      "median_age_days": {
+        "mean": 35.8815,
+        "lo": 27.4666,
+        "hi": 45.7988
+      },
+      "violations@10": {
+        "mean": 0.0,
+        "lo": 0.0,
+        "hi": 0.0
+      },
+      "stability_rbo": {
+        "mean": 0.8895,
+        "lo": 0.8167,
+        "hi": 0.9551
+      },
+      "latency_ms": {
+        "mean": 124.9418,
+        "lo": 113.0262,
+        "hi": 137.9139
+      },
+      "exposure_gini": {
+        "mean": 0.44733333333333336,
+        "lo": 0,
+        "hi": 0
+      },
+      "coverage": {
+        "mean": 0.005543106498407831,
+        "lo": 0,
+        "hi": 0
+      }
+    },
+    "compare": {
+      "ndcg@10": {
+        "a": 0.5838,
+        "b": 0.7894,
+        "delta": 0.2056,
+        "p_value": 0.002,
+        "wins": 10,
+        "losses": 0,
+        "n": 10
+      },
+      "p@10": {
+        "a": 0.35,
+        "b": 0.5,
+        "delta": 0.15,
+        "p_value": 0.0343,
+        "wins": 7,
+        "losses": 1,
+        "n": 10
+      },
+      "map": {
+        "a": 0.5031,
+        "b": 0.6608,
+        "delta": 0.1577,
+        "p_value": 0.0156,
+        "wins": 9,
+        "losses": 1,
+        "n": 10
+      },
+      "bpref": {
+        "a": 0.3986,
+        "b": 0.5607,
+        "delta": 0.162,
+        "p_value": 0.0278,
+        "wins": 8,
+        "losses": 1,
+        "n": 10
+      }
+    }
+  },
+  "test": {
+    "default": {
+      "ndcg@5": {
+        "mean": 0.5917,
+        "lo": 0.4374,
+        "hi": 0.746
+      },
+      "ndcg@10": {
+        "mean": 0.6243,
+        "lo": 0.5044,
+        "hi": 0.7366
+      },
+      "ndcg@20": {
+        "mean": 0.7322,
+        "lo": 0.6358,
+        "hi": 0.7981
+      },
+      "ndcg@10_strict": {
+        "mean": 0.6243,
+        "lo": 0.5044,
+        "hi": 0.7366
+      },
+      "p@10": {
+        "mean": 0.4,
+        "lo": 0.3167,
+        "hi": 0.4667
+      },
+      "map": {
+        "mean": 0.5646,
+        "lo": 0.4737,
+        "hi": 0.6807
+      },
+      "mrr": {
+        "mean": 0.9167,
+        "lo": 0.75,
+        "hi": 1.0
+      },
+      "bpref": {
+        "mean": 0.4571,
+        "lo": 0.3298,
+        "hi": 0.5967
+      },
+      "success@5": {
+        "mean": 0.8333,
+        "lo": 0.5,
+        "hi": 1.0
+      },
+      "judged@10": {
+        "mean": 1.0,
+        "lo": 1.0,
+        "hi": 1.0
+      },
+      "ild@10": {
+        "mean": 0.2749,
+        "lo": 0.2603,
+        "hi": 0.2901
+      },
+      "companies@10": {
+        "mean": 0.8167,
+        "lo": 0.75,
+        "hi": 0.8833
+      },
+      "median_age_days": {
+        "mean": 24.7287,
+        "lo": 20.7755,
+        "hi": 28.3267
+      },
+      "violations@10": {
+        "mean": 0.0,
+        "lo": 0.0,
+        "hi": 0.0
+      },
+      "stability_rbo": {
+        "mean": 0.8539,
+        "lo": 0.7515,
+        "hi": 0.9383
+      },
+      "latency_ms": {
+        "mean": 320.1627,
+        "lo": 254.3193,
+        "hi": 379.1382
+      },
+      "exposure_gini": {
+        "mean": 0.36236559139784946,
+        "lo": 0,
+        "hi": 0
+      },
+      "coverage": {
+        "mean": 0.006132798679089516,
+        "lo": 0,
+        "hi": 0
+      }
+    },
+    "tuned": {
+      "ndcg@5": {
+        "mean": 0.4668,
+        "lo": 0.3591,
+        "hi": 0.5629
+      },
+      "ndcg@10": {
+        "mean": 0.559,
+        "lo": 0.4969,
+        "hi": 0.621
+      },
+      "ndcg@20": {
+        "mean": 0.6395,
+        "lo": 0.5864,
+        "hi": 0.6941
+      },
+      "ndcg@10_strict": {
+        "mean": 0.559,
+        "lo": 0.4969,
+        "hi": 0.621
+      },
+      "p@10": {
+        "mean": 0.4667,
+        "lo": 0.3667,
+        "hi": 0.5667
+      },
+      "map": {
+        "mean": 0.514,
+        "lo": 0.4222,
+        "hi": 0.5822
+      },
+      "mrr": {
+        "mean": 0.8056,
+        "lo": 0.5833,
+        "hi": 1.0
+      },
+      "bpref": {
+        "mean": 0.4139,
+        "lo": 0.2832,
+        "hi": 0.5351
+      },
+      "success@5": {
+        "mean": 0.5,
+        "lo": 0.1667,
+        "hi": 0.8333
+      },
+      "judged@10": {
+        "mean": 1.0,
+        "lo": 1.0,
+        "hi": 1.0
+      },
+      "ild@10": {
+        "mean": 0.2846,
+        "lo": 0.2691,
+        "hi": 0.2977
+      },
+      "companies@10": {
+        "mean": 0.9333,
+        "lo": 0.8667,
+        "hi": 0.9833
+      },
+      "median_age_days": {
+        "mean": 31.4896,
+        "lo": 26.4184,
+        "hi": 36.7385
+      },
+      "violations@10": {
+        "mean": 0.0,
+        "lo": 0.0,
+        "hi": 0.0
+      },
+      "stability_rbo": {
+        "mean": 0.797,
+        "lo": 0.5434,
+        "hi": 0.9467
+      },
+      "latency_ms": {
+        "mean": 153.7277,
+        "lo": 134.1872,
+        "hi": 174.9201
+      },
+      "exposure_gini": {
+        "mean": 0.32450980392156864,
+        "lo": 0,
+        "hi": 0
+      },
+      "coverage": {
+        "mean": 0.005778983370680505,
+        "lo": 0,
+        "hi": 0
+      }
+    },
+    "compare": {
+      "ndcg@10": {
+        "a": 0.6243,
+        "b": 0.559,
+        "delta": -0.0654,
+        "p_value": 0.3429,
+        "wins": 2,
+        "losses": 4,
+        "n": 6
+      },
+      "p@10": {
+        "a": 0.4,
+        "b": 0.4667,
+        "delta": 0.0667,
+        "p_value": 0.3656,
+        "wins": 3,
+        "losses": 1,
+        "n": 6
+      },
+      "map": {
+        "a": 0.5646,
+        "b": 0.514,
+        "delta": -0.0506,
+        "p_value": 0.5019,
+        "wins": 3,
+        "losses": 3,
+        "n": 6
+      },
+      "bpref": {
+        "a": 0.4571,
+        "b": 0.4139,
+        "delta": -0.0431,
+        "p_value": 0.6883,
+        "wins": 3,
+        "losses": 3,
+        "n": 6
+      }
+    },
+    "segments_default": {
+      "ai": {
+        "n": 1,
+        "ndcg@10": 0.6324,
+        "p@10": 0.4,
+        "violations@10": 0.0
+      },
+      "backend": {
+        "n": 2,
+        "ndcg@10": 0.4668,
+        "p@10": 0.45,
+        "violations@10": 0.0
+      },
+      "experienced": {
+        "n": 1,
+        "ndcg@10": 0.3681,
+        "p@10": 0.5,
+        "violations@10": 0.0
+      },
+      "india_city": {
+        "n": 4,
+        "ndcg@10": 0.6864,
+        "p@10": 0.375,
+        "violations@10": 0.0
+      },
+      "infra": {
+        "n": 1,
+        "ndcg@10": 0.7638,
+        "p@10": 0.5,
+        "violations@10": 0.0
+      },
+      "junior": {
+        "n": 2,
+        "ndcg@10": 0.6647,
+        "p@10": 0.45,
+        "violations@10": 0.0
+      },
+      "mobile": {
+        "n": 1,
+        "ndcg@10": 0.8234,
+        "p@10": 0.4,
+        "violations@10": 0.0
+      },
+      "new_grad": {
+        "n": 3,
+        "ndcg@10": 0.6828,
+        "p@10": 0.3333,
+        "violations@10": 0.0
+      },
+      "qa": {
+        "n": 1,
+        "ndcg@10": 0.5928,
+        "p@10": 0.2,
+        "violations@10": 0.0
+      },
+      "remote": {
+        "n": 2,
+        "ndcg@10": 0.5003,
+        "p@10": 0.45,
+        "violations@10": 0.0
+      }
+    },
+    "segments_tuned": {
+      "ai": {
+        "n": 1,
+        "ndcg@10": 0.5465,
+        "p@10": 0.6,
+        "violations@10": 0.0
+      },
+      "backend": {
+        "n": 2,
+        "ndcg@10": 0.5895,
+        "p@10": 0.55,
+        "violations@10": 0.0
+      },
+      "experienced": {
+        "n": 1,
+        "ndcg@10": 0.4985,
+        "p@10": 0.5,
+        "violations@10": 0.0
+      },
+      "india_city": {
+        "n": 4,
+        "ndcg@10": 0.5772,
+        "p@10": 0.425,
+        "violations@10": 0.0
+      },
+      "infra": {
+        "n": 1,
+        "ndcg@10": 0.5523,
+        "p@10": 0.5,
+        "violations@10": 0.0
+      },
+      "junior": {
+        "n": 2,
+        "ndcg@10": 0.6164,
+        "p@10": 0.55,
+        "violations@10": 0.0
+      },
+      "mobile": {
+        "n": 1,
+        "ndcg@10": 0.6331,
+        "p@10": 0.3,
+        "violations@10": 0.0
+      },
+      "new_grad": {
+        "n": 3,
+        "ndcg@10": 0.5408,
+        "p@10": 0.4,
+        "violations@10": 0.0
+      },
+      "qa": {
+        "n": 1,
+        "ndcg@10": 0.4429,
+        "p@10": 0.3,
+        "violations@10": 0.0
+      },
+      "remote": {
+        "n": 2,
+        "ndcg@10": 0.5225,
+        "p@10": 0.55,
+        "violations@10": 0.0
+      }
+    }
+  },
+  "search_stage": {
+    "queries": 160,
+    "per_doc_rerank_ms": 57.08,
+    "latency_budget_ms": 250.0,
+    "best": {
+      "rrf_k": 10,
+      "w_lex": 2.0,
+      "rerank_head": 0,
+      "rerank_blend": 0.0,
+      "dev_mrr@10": 0.2396,
+      "dev_recall@10": 0.3875,
+      "rerank_ms_est": 0.0
+    },
+    "default": {
+      "rrf_k": 60,
+      "w_lex": 1.0,
+      "rerank_head": 40,
+      "rerank_blend": 0.65,
+      "dev_mrr@10": 0.1647,
+      "dev_recall@10": 0.3375,
+      "rerank_ms_est": 2283.4
+    },
+    "test_mrr@10": {
+      "default": [
+        0.17254960317460316,
+        0.10209610615079365,
+        0.2500033482142857
+      ],
+      "best": [
+        0.11813988095238095,
+        0.06302269345238094,
+        0.1834691220238095
+      ],
+      "p_value": 0.0225977402259774
+    }
+  },
+  "shipped": false,
+  "config": {
+    "semantic": 0.9216454174693905,
+    "lexical": 0.0,
+    "skills": 0.40722853306825985,
+    "level": 0.6431538627826174,
+    "role": 0.3811481130040437,
+    "location": 0.39216960015987506,
+    "recency": 0.036455520817971536,
+    "affinity": 0.19272823715853088,
+    "sim_floor": 0.30847617414895323,
+    "sim_span": 0.4156715065688372,
+    "skill_saturation": 5,
+    "level_adjacent": 0.047363081250218535,
+    "level_two_away": 0.15553965120968763,
+    "level_unknown": 0.3696322483012991,
+    "role_adjacent": 0.9643456738932014,
+    "role_other": 0.10031587456024899,
+    "recency_tau_days": 14.527633974474266,
+    "negative_weight": 0.7,
+    "yoe_penalty": true,
+    "yoe_slack": 1.2386701965298925,
+    "yoe_step": 0.1058646880594443,
+    "yoe_floor": 0.46057206307161513,
+    "diversify": true,
+    "max_per_company": 2,
+    "diversity_window": 10,
+    "mmr_lambda": 0.8921619350837255,
+    "k_dense": 500,
+    "k_lex": 0,
+    "rrf_k": 60,
+    "w_dense": 1.0,
+    "w_lex": 1.0,
+    "rerank_head": 40,
+    "rerank_blend": 0.65,
+    "min_results": 20
+  }
+}

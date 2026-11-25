@@ -283,7 +283,9 @@ def run(
     # Which search space generalises? Nested CV inside dev decides, before test is used.
     dev_ev = Evaluator(session, load_personas("dev"), retrieval=base)
     cv = {sp: cross_validate(dev_ev, base, sp, trials=cv_trials, seed=seed) for sp in SPACES}
-    space = max(cv, key=lambda sp: cv[sp]["heldout_delta"]["mean"])
+    # Same principle as trial selection: the space whose held-out gain has the higher
+    # lower bound, not the higher mean.
+    space = max(cv, key=lambda sp: cv[sp]["heldout_delta"]["lo"])
     best, study, dev = tune_ranking(session, base, trials=trials, seed=seed, space=space)
 
     test = Evaluator(session, load_personas("test"), retrieval=base)
@@ -377,7 +379,12 @@ def tune_search(session: Session, n_queries: int = 160, seed: int = 11) -> dict:
     rng = random.Random(seed)
     jobs = sample_jobs(session, n_queries, seed)
     cases = []
-    for i, j in enumerate(jobs):
+    # sample_jobs interleaves role families round-robin, so a plain i % 2 split would put
+    # whole families on one side. Alternate within each family instead.
+    seen_family: dict[str, int] = {}
+    for j in jobs:
+        fam = j.role_family or "swe"
+        nth = seen_family[fam] = seen_family.get(fam, -1) + 1
         q = template_query(j, rng)
         dupes = {str(x) for x in session.scalars(select(Job.id).where(Job.duplicate_of == j.id))}
         d = dense(session, embed_query(q), JobFilters(), 150)
@@ -388,7 +395,7 @@ def tune_search(session: Session, n_queries: int = 160, seed: int = 11) -> dict:
                 "rel": {str(j.id)} | dupes,
                 "d": d,
                 "lx": lx,
-                "split": "dev" if i % 2 == 0 else "test",
+                "split": "dev" if nth % 2 == 0 else "test",
                 "rr": {},
             }
         )
