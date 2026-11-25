@@ -86,10 +86,22 @@ retrieval depths, fusion and reranking.
    against latency. The smallest pool within 1% of the best recall wins.
 2. **Ranking** (Optuna TPE, multivariate, seeded, 300 trials, trial 0 = current
    defaults): 22 parameters, on dev personas only, objective
-   `nDCG@10 - 0.5 * violations@10 - 0.5 * max(0, 0.6 - judged@10)`. Candidates are cached
-   per persona, so each trial costs milliseconds. Parameter importances are recorded.
+   `0.5 * nDCG@10 + 0.5 * strict nDCG@10 - 0.5 * violations@10`. Condensed nDCG rewards
+   ordering the judged roles well; strict nDCG counts unjudged roles as not relevant,
+   so a configuration cannot win by surfacing roles nobody graded. Candidates are
+   cached per persona, so each trial costs milliseconds. Parameter importances are
+   recorded.
+   - **Selection against the winner's curse:** the best of 300 trials on ten personas is
+     an optimistic estimate. The ten best trials are re-scored per persona and the one
+     with the highest lower bound (mean minus standard error) is chosen, preferring a
+     gain that holds across personas over a larger one carried by two of them.
+   - **Iterative pooling:** the five best configurations' top 10s are pooled, judged and
+     added to the qrels, then tuning is rerun, until the chosen configuration's results
+     are almost fully judged.
 3. **Search** (grid with cached hits and reranker scores): RRF constant, lexical weight,
-   rerank head size and blend, under a 250 ms reranking budget measured on the machine.
+   rerank head size and blend, under a 250 ms reranking budget. The cross-encoder's
+   per-document cost is measured on real documents after a warm-up call (an early
+   version timed the model load and wrongly ruled reranking out).
 4. **Validation**: the winner is compared with the defaults on the 6 held-out test
    personas with the paired test. It ships (`backend/app/search/tuned_config.json`,
    loaded by `load_config()`) only if it is not worse on test and does not add
