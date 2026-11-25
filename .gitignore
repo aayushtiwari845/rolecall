@@ -39,3 +39,5 @@ Thumbs.db
 .impeccable/config.local.json
 .impeccable/review/
 .impeccable/build/
+data/*.log
+infra/backups/
