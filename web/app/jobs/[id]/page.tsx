@@ -37,8 +37,8 @@ function Breakdown({ m }: { m: JobItem }) {
           <span className="text-ink-2">{r.label}</span>
           <span className="h-2 overflow-hidden rounded-full bg-panel-2">
             <span
-              className={`block h-full rounded-full ${r.v >= 0.75 ? "bg-green" : r.v >= 0.45 ? "bg-amber" : "bg-red"}`}
-              style={{ width: `${Math.round(r.v * 100)}%`, transition: "width 700ms cubic-bezier(0.16,1,0.3,1)" }}
+              className={`block h-full origin-left rounded-full ${r.v >= 0.75 ? "bg-green" : r.v >= 0.45 ? "bg-amber" : "bg-red"}`}
+              style={{ transform: `scaleX(${r.v})`, transition: "transform 700ms cubic-bezier(0.16,1,0.3,1)" }}
             />
           </span>
           <span className="text-right tabular-nums text-ink-2">{Math.round(r.v * 100)}</span>
