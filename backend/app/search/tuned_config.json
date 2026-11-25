@@ -1,0 +1,1126 @@
+{
+  "run_at": "2026-11-25T14:54:06.606381+00:00",
+  "git_sha": "414d72b",
+  "trials": 300,
+  "seed": 7,
+  "objective": "0.5*ndcg@10 + 0.5*ndcg@10_strict - 0.5*violations@10",
+  "retrieval_stage": {
+    "grid": [
+      {
+        "k_dense": 100,
+        "k_lex": 0,
+        "candidate_recall": 0.9657,
+        "p50_ms": 68.7
+      },
+      {
+        "k_dense": 100,
+        "k_lex": 50,
+        "candidate_recall": 0.9729,
+        "p50_ms": 113.4
+      },
+      {
+        "k_dense": 100,
+        "k_lex": 150,
+        "candidate_recall": 0.98,
+        "p50_ms": 90.3
+      },
+      {
+        "k_dense": 100,
+        "k_lex": 300,
+        "candidate_recall": 0.98,
+        "p50_ms": 95.7
+      },
+      {
+        "k_dense": 200,
+        "k_lex": 0,
+        "candidate_recall": 0.98,
+        "p50_ms": 68.6
+      },
+      {
+        "k_dense": 200,
+        "k_lex": 50,
+        "candidate_recall": 0.98,
+        "p50_ms": 118.6
+      },
+      {
+        "k_dense": 200,
+        "k_lex": 150,
+        "candidate_recall": 0.98,
+        "p50_ms": 112.2
+      },
+      {
+        "k_dense": 200,
+        "k_lex": 300,
+        "candidate_recall": 0.98,
+        "p50_ms": 120.2
+      },
+      {
+        "k_dense": 300,
+        "k_lex": 0,
+        "candidate_recall": 0.98,
+        "p50_ms": 71.5
+      },
+      {
+        "k_dense": 300,
+        "k_lex": 50,
+        "candidate_recall": 0.98,
+        "p50_ms": 107.0
+      },
+      {
+        "k_dense": 300,
+        "k_lex": 150,
+        "candidate_recall": 0.98,
+        "p50_ms": 182.5
+      },
+      {
+        "k_dense": 300,
+        "k_lex": 300,
+        "candidate_recall": 0.98,
+        "p50_ms": 190.1
+      },
+      {
+        "k_dense": 500,
+        "k_lex": 0,
+        "candidate_recall": 0.98,
+        "p50_ms": 73.6
+      },
+      {
+        "k_dense": 500,
+        "k_lex": 50,
+        "candidate_recall": 0.98,
+        "p50_ms": 182.1
+      },
+      {
+        "k_dense": 500,
+        "k_lex": 150,
+        "candidate_recall": 0.98,
+        "p50_ms": 180.9
+      },
+      {
+        "k_dense": 500,
+        "k_lex": 300,
+        "candidate_recall": 0.98,
+        "p50_ms": 179.0
+      }
+    ],
+    "choice": {
+      "k_dense": 200,
+      "k_lex": 0,
+      "candidate_recall": 0.98,
+      "p50_ms": 68.6
+    }
+  },
+  "cross_validation": {
+    "full": {
+      "space": "full",
+      "folds": 5,
+      "trials_per_fold": 150,
+      "heldout_delta": {
+        "mean": 0.1282,
+        "lo": 0.0125,
+        "hi": 0.2505
+      },
+      "p_value": 0.0872,
+      "wins": 8,
+      "losses": 2,
+      "per_persona": {
+        "backend_intern_mumbai": 0.2379,
+        "data_eng_junior_pune": -0.2029,
+        "ds_intern": -0.0855,
+        "embedded_newgrad": 0.1684,
+        "frontend_newgrad": 0.0034,
+        "fullstack_gurugram": 0.0494,
+        "generalist_sparse": 0.1338,
+        "ml_newgrad_blr": 0.1,
+        "security_intern": 0.4655,
+        "swe_resume_owner": 0.4116
+      }
+    },
+    "trust_region": {
+      "space": "trust_region",
+      "folds": 5,
+      "trials_per_fold": 150,
+      "heldout_delta": {
+        "mean": 0.1204,
+        "lo": 0.0385,
+        "hi": 0.2021
+      },
+      "p_value": 0.0306,
+      "wins": 8,
+      "losses": 2,
+      "per_persona": {
+        "backend_intern_mumbai": 0.2408,
+        "data_eng_junior_pune": 0.0496,
+        "ds_intern": -0.0345,
+        "embedded_newgrad": 0.0817,
+        "frontend_newgrad": 0.018,
+        "fullstack_gurugram": -0.0838,
+        "generalist_sparse": 0.1139,
+        "ml_newgrad_blr": 0.1858,
+        "security_intern": 0.2908,
+        "swe_resume_owner": 0.3416
+      }
+    }
+  },
+  "space": "trust_region",
+  "param_importance": {
+    "semantic": 0.296,
+    "recency": 0.145,
+    "mmr_lambda": 0.099,
+    "level": 0.095,
+    "yoe_step": 0.078,
+    "level_unknown": 0.072,
+    "location": 0.064,
+    "skills": 0.053,
+    "sim_floor": 0.038,
+    "role": 0.036,
+    "affinity": 0.023,
+    "max_per_company": 0.001
+  },
+  "best_trial": 286,
+  "best_objective_dev": 0.7475,
+  "selection": [
+    {
+      "trial": 286,
+      "robust": 0.6894
+    },
+    {
+      "trial": 295,
+      "robust": 0.6894
+    },
+    {
+      "trial": 255,
+      "robust": 0.6893
+    },
+    {
+      "trial": 273,
+      "robust": 0.6893
+    },
+    {
+      "trial": 260,
+      "robust": 0.6884
+    },
+    {
+      "trial": 282,
+      "robust": 0.6884
+    },
+    {
+      "trial": 292,
+      "robust": 0.688
+    },
+    {
+      "trial": 227,
+      "robust": 0.6875
+    },
+    {
+      "trial": 202,
+      "robust": 0.6873
+    },
+    {
+      "trial": 225,
+      "robust": 0.6869
+    }
+  ],
+  "chosen_trial": 286,
+  "top_configs": [
+    {
+      "semantic": 0.31897602049049617,
+      "lexical": 0.0,
+      "skills": 0.14052695014472222,
+      "level": 0.22434254375069632,
+      "role": 0.09360127692865866,
+      "location": 0.06819752013997395,
+      "recency": 0.027401902198699698,
+      "affinity": 0.02689769726883453,
+      "sim_floor": 0.49101319245633446,
+      "sim_span": 0.35,
+      "skill_saturation": 6,
+      "level_adjacent": 0.5,
+      "level_two_away": 0.15,
+      "level_unknown": 0.40337889587512576,
+      "role_adjacent": 0.75,
+      "role_other": 0.3,
+      "recency_tau_days": 21.0,
+      "negative_weight": 0.7,
+      "yoe_penalty": true,
+      "yoe_slack": 1.0,
+      "yoe_step": 0.11774471933261388,
+      "yoe_floor": 0.3,
+      "diversify": true,
+      "max_per_company": 3,
+      "diversity_window": 20,
+      "mmr_lambda": 0.9708802399106459,
+      "k_dense": 200,
+      "k_lex": 0,
+      "rrf_k": 60,
+      "w_dense": 1.0,
+      "w_lex": 1.0,
+      "rerank_head": 40,
+      "rerank_blend": 0.65,
+      "min_results": 20
+    },
+    {
+      "semantic": 0.3000425978521691,
+      "lexical": 0.0,
+      "skills": 0.13652146995925765,
+      "level": 0.21984444846995743,
+      "role": 0.0946092515642263,
+      "location": 0.06483158362975011,
+      "recency": 0.02505376531278466,
+      "affinity": 0.02875311517747127,
+      "sim_floor": 0.504524517554708,
+      "sim_span": 0.35,
+      "skill_saturation": 6,
+      "level_adjacent": 0.5,
+      "level_two_away": 0.15,
+      "level_unknown": 0.41827643904884104,
+      "role_adjacent": 0.75,
+      "role_other": 0.3,
+      "recency_tau_days": 21.0,
+      "negative_weight": 0.7,
+      "yoe_penalty": true,
+      "yoe_slack": 1.0,
+      "yoe_step": 0.11771485999230853,
+      "yoe_floor": 0.3,
+      "diversify": true,
+      "max_per_company": 3,
+      "diversity_window": 20,
+      "mmr_lambda": 0.9736257736443488,
+      "k_dense": 200,
+      "k_lex": 0,
+      "rrf_k": 60,
+      "w_dense": 1.0,
+      "w_lex": 1.0,
+      "rerank_head": 40,
+      "rerank_blend": 0.65,
+      "min_results": 20
+    },
+    {
+      "semantic": 0.3024370765370638,
+      "lexical": 0.0,
+      "skills": 0.14029906117455404,
+      "level": 0.22414447618815522,
+      "role": 0.09627246872914848,
+      "location": 0.06726852863203604,
+      "recency": 0.025131936345805177,
+      "affinity": 0.027094937183783016,
+      "sim_floor": 0.5018676822549208,
+      "sim_span": 0.35,
+      "skill_saturation": 6,
+      "level_adjacent": 0.5,
+      "level_two_away": 0.15,
+      "level_unknown": 0.40745994130911795,
+      "role_adjacent": 0.75,
+      "role_other": 0.3,
+      "recency_tau_days": 21.0,
+      "negative_weight": 0.7,
+      "yoe_penalty": true,
+      "yoe_slack": 1.0,
+      "yoe_step": 0.12514328143087874,
+      "yoe_floor": 0.3,
+      "diversify": true,
+      "max_per_company": 3,
+      "diversity_window": 20,
+      "mmr_lambda": 0.9713749658382475,
+      "k_dense": 200,
+      "k_lex": 0,
+      "rrf_k": 60,
+      "w_dense": 1.0,
+      "w_lex": 1.0,
+      "rerank_head": 40,
+      "rerank_blend": 0.65,
+      "min_results": 20
+    },
+    {
+      "semantic": 0.3052149686934856,
+      "lexical": 0.0,
+      "skills": 0.14180847465755442,
+      "level": 0.22459941303578398,
+      "role": 0.09802509634316683,
+      "location": 0.06562352065355256,
+      "recency": 0.02631827115392916,
+      "affinity": 0.025513968466133637,
+      "sim_floor": 0.497214858811639,
+      "sim_span": 0.35,
+      "skill_saturation": 6,
+      "level_adjacent": 0.5,
+      "level_two_away": 0.15,
+      "level_unknown": 0.40354621443697763,
+      "role_adjacent": 0.75,
+      "role_other": 0.3,
+      "recency_tau_days": 21.0,
+      "negative_weight": 0.7,
+      "yoe_penalty": true,
+      "yoe_slack": 1.0,
+      "yoe_step": 0.12394086570824353,
+      "yoe_floor": 0.3,
+      "diversify": true,
+      "max_per_company": 3,
+      "diversity_window": 20,
+      "mmr_lambda": 0.9751267244721611,
+      "k_dense": 200,
+      "k_lex": 0,
+      "rrf_k": 60,
+      "w_dense": 1.0,
+      "w_lex": 1.0,
+      "rerank_head": 40,
+      "rerank_blend": 0.65,
+      "min_results": 20
+    },
+    {
+      "semantic": 0.3128634401041691,
+      "lexical": 0.0,
+      "skills": 0.13683788106206313,
+      "level": 0.22447083890885958,
+      "role": 0.09550024515481201,
+      "location": 0.06732524672102438,
+      "recency": 0.025836777907837706,
+      "affinity": 0.025980927444081012,
+      "sim_floor": 0.4974003923718431,
+      "sim_span": 0.35,
+      "skill_saturation": 6,
+      "level_adjacent": 0.5,
+      "level_two_away": 0.15,
+      "level_unknown": 0.4145898262555623,
+      "role_adjacent": 0.75,
+      "role_other": 0.3,
+      "recency_tau_days": 21.0,
+      "negative_weight": 0.7,
+      "yoe_penalty": true,
+      "yoe_slack": 1.0,
+      "yoe_step": 0.12072556134218111,
+      "yoe_floor": 0.3,
+      "diversify": true,
+      "max_per_company": 3,
+      "diversity_window": 20,
+      "mmr_lambda": 0.964724347715557,
+      "k_dense": 200,
+      "k_lex": 0,
+      "rrf_k": 60,
+      "w_dense": 1.0,
+      "w_lex": 1.0,
+      "rerank_head": 40,
+      "rerank_blend": 0.65,
+      "min_results": 20
+    }
+  ],
+  "dev": {
+    "default": {
+      "ndcg@5": {
+        "mean": 0.5217,
+        "lo": 0.3873,
+        "hi": 0.6711
+      },
+      "ndcg@10": {
+        "mean": 0.5838,
+        "lo": 0.4626,
+        "hi": 0.7097
+      },
+      "ndcg@20": {
+        "mean": 0.68,
+        "lo": 0.5754,
+        "hi": 0.7786
+      },
+      "ndcg@10_strict": {
+        "mean": 0.5838,
+        "lo": 0.4626,
+        "hi": 0.7097
+      },
+      "p@10": {
+        "mean": 0.35,
+        "lo": 0.26,
+        "hi": 0.45
+      },
+      "map": {
+        "mean": 0.5031,
+        "lo": 0.3898,
+        "hi": 0.6121
+      },
+      "mrr": {
+        "mean": 0.631,
+        "lo": 0.4428,
+        "hi": 0.8333
+      },
+      "bpref": {
+        "mean": 0.3986,
+        "lo": 0.2776,
+        "hi": 0.5122
+      },
+      "success@5": {
+        "mean": 0.6,
+        "lo": 0.3,
+        "hi": 0.9
+      },
+      "judged@10": {
+        "mean": 1.0,
+        "lo": 1.0,
+        "hi": 1.0
+      },
+      "ild@10": {
+        "mean": 0.2848,
+        "lo": 0.2781,
+        "hi": 0.2917
+      },
+      "companies@10": {
+        "mean": 0.85,
+        "lo": 0.79,
+        "hi": 0.9
+      },
+      "median_age_days": {
+        "mean": 34.1922,
+        "lo": 28.0387,
+        "hi": 41.5163
+      },
+      "violations@10": {
+        "mean": 0.01,
+        "lo": 0.0,
+        "hi": 0.03
+      },
+      "stability_rbo": {
+        "mean": 0.8522,
+        "lo": 0.7665,
+        "hi": 0.9304
+      },
+      "latency_ms": {
+        "mean": 224.7176,
+        "lo": 195.0939,
+        "hi": 256.0218
+      },
+      "exposure_gini": {
+        "mean": 0.47625,
+        "lo": 0,
+        "hi": 0
+      },
+      "coverage": {
+        "mean": 0.006486613987498526,
+        "lo": 0,
+        "hi": 0
+      }
+    },
+    "tuned": {
+      "ndcg@5": {
+        "mean": 0.6982,
+        "lo": 0.5859,
+        "hi": 0.8161
+      },
+      "ndcg@10": {
+        "mean": 0.7525,
+        "lo": 0.6453,
+        "hi": 0.8517
+      },
+      "ndcg@20": {
+        "mean": 0.7848,
+        "lo": 0.6893,
+        "hi": 0.8693
+      },
+      "ndcg@10_strict": {
+        "mean": 0.7525,
+        "lo": 0.6453,
+        "hi": 0.8517
+      },
+      "p@10": {
+        "mean": 0.49,
+        "lo": 0.36,
+        "hi": 0.62
+      },
+      "map": {
+        "mean": 0.6345,
+        "lo": 0.5355,
+        "hi": 0.7432
+      },
+      "mrr": {
+        "mean": 0.8833,
+        "lo": 0.7167,
+        "hi": 1.0
+      },
+      "bpref": {
+        "mean": 0.553,
+        "lo": 0.4181,
+        "hi": 0.689
+      },
+      "success@5": {
+        "mean": 0.7,
+        "lo": 0.4,
+        "hi": 0.9
+      },
+      "judged@10": {
+        "mean": 1.0,
+        "lo": 1.0,
+        "hi": 1.0
+      },
+      "ild@10": {
+        "mean": 0.2796,
+        "lo": 0.2733,
+        "hi": 0.2857
+      },
+      "companies@10": {
+        "mean": 0.8,
+        "lo": 0.7,
+        "hi": 0.9
+      },
+      "median_age_days": {
+        "mean": 35.8053,
+        "lo": 28.6809,
+        "hi": 44.3059
+      },
+      "violations@10": {
+        "mean": 0.01,
+        "lo": 0.0,
+        "hi": 0.03
+      },
+      "stability_rbo": {
+        "mean": 0.9196,
+        "lo": 0.872,
+        "hi": 0.9648
+      },
+      "latency_ms": {
+        "mean": 138.5707,
+        "lo": 122.9877,
+        "hi": 155.2299
+      },
+      "exposure_gini": {
+        "mean": 0.48857142857142855,
+        "lo": 0,
+        "hi": 0
+      },
+      "coverage": {
+        "mean": 0.005661044934544168,
+        "lo": 0,
+        "hi": 0
+      }
+    },
+    "compare": {
+      "ndcg@10": {
+        "a": 0.5838,
+        "b": 0.7525,
+        "delta": 0.1687,
+        "p_value": 0.002,
+        "wins": 10,
+        "losses": 0,
+        "n": 10
+      },
+      "p@10": {
+        "a": 0.35,
+        "b": 0.49,
+        "delta": 0.14,
+        "p_value": 0.0263,
+        "wins": 7,
+        "losses": 1,
+        "n": 10
+      },
+      "map": {
+        "a": 0.5031,
+        "b": 0.6345,
+        "delta": 0.1314,
+        "p_value": 0.0269,
+        "wins": 7,
+        "losses": 3,
+        "n": 10
+      },
+      "bpref": {
+        "a": 0.3986,
+        "b": 0.553,
+        "delta": 0.1543,
+        "p_value": 0.0278,
+        "wins": 8,
+        "losses": 1,
+        "n": 10
+      }
+    }
+  },
+  "test": {
+    "default": {
+      "ndcg@5": {
+        "mean": 0.5917,
+        "lo": 0.4374,
+        "hi": 0.746
+      },
+      "ndcg@10": {
+        "mean": 0.6243,
+        "lo": 0.5044,
+        "hi": 0.7366
+      },
+      "ndcg@20": {
+        "mean": 0.7322,
+        "lo": 0.6358,
+        "hi": 0.7981
+      },
+      "ndcg@10_strict": {
+        "mean": 0.6243,
+        "lo": 0.5044,
+        "hi": 0.7366
+      },
+      "p@10": {
+        "mean": 0.4,
+        "lo": 0.3167,
+        "hi": 0.4667
+      },
+      "map": {
+        "mean": 0.5646,
+        "lo": 0.4737,
+        "hi": 0.6807
+      },
+      "mrr": {
+        "mean": 0.9167,
+        "lo": 0.75,
+        "hi": 1.0
+      },
+      "bpref": {
+        "mean": 0.4571,
+        "lo": 0.3298,
+        "hi": 0.5967
+      },
+      "success@5": {
+        "mean": 0.8333,
+        "lo": 0.5,
+        "hi": 1.0
+      },
+      "judged@10": {
+        "mean": 1.0,
+        "lo": 1.0,
+        "hi": 1.0
+      },
+      "ild@10": {
+        "mean": 0.2749,
+        "lo": 0.2603,
+        "hi": 0.2901
+      },
+      "companies@10": {
+        "mean": 0.8167,
+        "lo": 0.75,
+        "hi": 0.8833
+      },
+      "median_age_days": {
+        "mean": 24.7535,
+        "lo": 20.8004,
+        "hi": 28.3515
+      },
+      "violations@10": {
+        "mean": 0.0,
+        "lo": 0.0,
+        "hi": 0.0
+      },
+      "stability_rbo": {
+        "mean": 0.8539,
+        "lo": 0.7515,
+        "hi": 0.9383
+      },
+      "latency_ms": {
+        "mean": 300.0796,
+        "lo": 236.6678,
+        "hi": 357.624
+      },
+      "exposure_gini": {
+        "mean": 0.36236559139784946,
+        "lo": 0,
+        "hi": 0
+      },
+      "coverage": {
+        "mean": 0.006132798679089516,
+        "lo": 0,
+        "hi": 0
+      }
+    },
+    "tuned": {
+      "ndcg@5": {
+        "mean": 0.5052,
+        "lo": 0.3938,
+        "hi": 0.5841
+      },
+      "ndcg@10": {
+        "mean": 0.6022,
+        "lo": 0.5266,
+        "hi": 0.6712
+      },
+      "ndcg@20": {
+        "mean": 0.6903,
+        "lo": 0.6345,
+        "hi": 0.7307
+      },
+      "ndcg@10_strict": {
+        "mean": 0.6022,
+        "lo": 0.5266,
+        "hi": 0.6712
+      },
+      "p@10": {
+        "mean": 0.4667,
+        "lo": 0.3833,
+        "hi": 0.5667
+      },
+      "map": {
+        "mean": 0.5606,
+        "lo": 0.437,
+        "hi": 0.6512
+      },
+      "mrr": {
+        "mean": 0.7833,
+        "lo": 0.5167,
+        "hi": 1.0
+      },
+      "bpref": {
+        "mean": 0.4638,
+        "lo": 0.2796,
+        "hi": 0.6012
+      },
+      "success@5": {
+        "mean": 0.6667,
+        "lo": 0.3333,
+        "hi": 1.0
+      },
+      "judged@10": {
+        "mean": 1.0,
+        "lo": 1.0,
+        "hi": 1.0
+      },
+      "ild@10": {
+        "mean": 0.2774,
+        "lo": 0.2627,
+        "hi": 0.2899
+      },
+      "companies@10": {
+        "mean": 0.8667,
+        "lo": 0.8167,
+        "hi": 0.9333
+      },
+      "median_age_days": {
+        "mean": 27.0514,
+        "lo": 22.9645,
+        "hi": 33.0255
+      },
+      "violations@10": {
+        "mean": 0.0,
+        "lo": 0.0,
+        "hi": 0.0
+      },
+      "stability_rbo": {
+        "mean": 0.881,
+        "lo": 0.7873,
+        "hi": 0.9399
+      },
+      "latency_ms": {
+        "mean": 138.9258,
+        "lo": 116.3262,
+        "hi": 171.0418
+      },
+      "exposure_gini": {
+        "mean": 0.3434343434343434,
+        "lo": 0,
+        "hi": 0
+      },
+      "coverage": {
+        "mean": 0.005896921806816842,
+        "lo": 0,
+        "hi": 0
+      }
+    },
+    "compare": {
+      "ndcg@10": {
+        "a": 0.6243,
+        "b": 0.6022,
+        "delta": -0.0222,
+        "p_value": 0.7487,
+        "wins": 2,
+        "losses": 4,
+        "n": 6
+      },
+      "p@10": {
+        "a": 0.4,
+        "b": 0.4667,
+        "delta": 0.0667,
+        "p_value": 0.3156,
+        "wins": 4,
+        "losses": 1,
+        "n": 6
+      },
+      "map": {
+        "a": 0.5646,
+        "b": 0.5606,
+        "delta": -0.004,
+        "p_value": 0.9071,
+        "wins": 3,
+        "losses": 3,
+        "n": 6
+      },
+      "bpref": {
+        "a": 0.4571,
+        "b": 0.4638,
+        "delta": 0.0067,
+        "p_value": 0.9093,
+        "wins": 4,
+        "losses": 2,
+        "n": 6
+      }
+    },
+    "segments_default": {
+      "ai": {
+        "n": 1,
+        "ndcg@10": 0.6324,
+        "p@10": 0.4,
+        "violations@10": 0.0
+      },
+      "backend": {
+        "n": 2,
+        "ndcg@10": 0.4668,
+        "p@10": 0.45,
+        "violations@10": 0.0
+      },
+      "experienced": {
+        "n": 1,
+        "ndcg@10": 0.3681,
+        "p@10": 0.5,
+        "violations@10": 0.0
+      },
+      "india_city": {
+        "n": 4,
+        "ndcg@10": 0.6864,
+        "p@10": 0.375,
+        "violations@10": 0.0
+      },
+      "infra": {
+        "n": 1,
+        "ndcg@10": 0.7638,
+        "p@10": 0.5,
+        "violations@10": 0.0
+      },
+      "junior": {
+        "n": 2,
+        "ndcg@10": 0.6647,
+        "p@10": 0.45,
+        "violations@10": 0.0
+      },
+      "mobile": {
+        "n": 1,
+        "ndcg@10": 0.8234,
+        "p@10": 0.4,
+        "violations@10": 0.0
+      },
+      "new_grad": {
+        "n": 3,
+        "ndcg@10": 0.6828,
+        "p@10": 0.3333,
+        "violations@10": 0.0
+      },
+      "qa": {
+        "n": 1,
+        "ndcg@10": 0.5928,
+        "p@10": 0.2,
+        "violations@10": 0.0
+      },
+      "remote": {
+        "n": 2,
+        "ndcg@10": 0.5003,
+        "p@10": 0.45,
+        "violations@10": 0.0
+      }
+    },
+    "segments_tuned": {
+      "ai": {
+        "n": 1,
+        "ndcg@10": 0.5847,
+        "p@10": 0.5,
+        "violations@10": 0.0
+      },
+      "backend": {
+        "n": 2,
+        "ndcg@10": 0.6255,
+        "p@10": 0.6,
+        "violations@10": 0.0
+      },
+      "experienced": {
+        "n": 1,
+        "ndcg@10": 0.5773,
+        "p@10": 0.7,
+        "violations@10": 0.0
+      },
+      "india_city": {
+        "n": 4,
+        "ndcg@10": 0.6127,
+        "p@10": 0.4,
+        "violations@10": 0.0
+      },
+      "infra": {
+        "n": 1,
+        "ndcg@10": 0.6197,
+        "p@10": 0.4,
+        "violations@10": 0.0
+      },
+      "junior": {
+        "n": 2,
+        "ndcg@10": 0.6467,
+        "p@10": 0.45,
+        "violations@10": 0.0
+      },
+      "mobile": {
+        "n": 1,
+        "ndcg@10": 0.728,
+        "p@10": 0.4,
+        "violations@10": 0.0
+      },
+      "new_grad": {
+        "n": 3,
+        "ndcg@10": 0.5807,
+        "p@10": 0.4,
+        "violations@10": 0.0
+      },
+      "qa": {
+        "n": 1,
+        "ndcg@10": 0.4295,
+        "p@10": 0.3,
+        "violations@10": 0.0
+      },
+      "remote": {
+        "n": 2,
+        "ndcg@10": 0.581,
+        "p@10": 0.6,
+        "violations@10": 0.0
+      }
+    }
+  },
+  "search_stage": {
+    "queries": 160,
+    "per_doc_rerank_ms": 54.83,
+    "latency_budget_ms": 250.0,
+    "best": {
+      "rrf_k": 30,
+      "w_lex": 2.0,
+      "rerank_head": 0,
+      "rerank_blend": 0.0,
+      "dev_mrr@10": 0.1567,
+      "dev_recall@10": 0.2529,
+      "rerank_ms_est": 0.0
+    },
+    "default": {
+      "rrf_k": 60,
+      "w_lex": 1.0,
+      "rerank_head": 40,
+      "rerank_blend": 0.65,
+      "dev_mrr@10": 0.132,
+      "dev_recall@10": 0.2546,
+      "rerank_ms_est": 2193.1
+    },
+    "test_mrr@10": {
+      "default": [
+        0.21003703703703705,
+        0.14113518518518517,
+        0.28592685185185185
+      ],
+      "best": [
+        0.19990476190476192,
+        0.1282293650793651,
+        0.27768531746031744
+      ],
+      "p_value": 0.7204279572042795
+    }
+  },
+  "shipped": true,
+  "config": {
+    "semantic": 0.33,
+    "lexical": 0.0,
+    "skills": 0.27,
+    "level": 0.15,
+    "role": 0.07,
+    "location": 0.05,
+    "recency": 0.05,
+    "affinity": 0.05,
+    "sim_floor": 0.5,
+    "sim_span": 0.35,
+    "skill_saturation": 6,
+    "level_adjacent": 0.5,
+    "level_two_away": 0.15,
+    "level_unknown": 0.55,
+    "role_adjacent": 0.75,
+    "role_other": 0.3,
+    "recency_tau_days": 21.0,
+    "negative_weight": 0.7,
+    "yoe_penalty": true,
+    "yoe_slack": 1.0,
+    "yoe_step": 0.2,
+    "yoe_floor": 0.3,
+    "diversify": true,
+    "max_per_company": 2,
+    "diversity_window": 20,
+    "mmr_lambda": 1.0,
+    "k_dense": 200,
+    "k_lex": 0,
+    "rrf_k": 30,
+    "w_dense": 1.0,
+    "w_lex": 2.0,
+    "rerank_head": 0,
+    "rerank_blend": 0.0,
+    "min_results": 20
+  },
+  "decisions": {
+    "retrieval": {
+      "ships": true,
+      "k_dense": 200,
+      "k_lex": 0,
+      "test_ndcg@10": [
+        0.6243,
+        0.6243
+      ],
+      "p_value": 1.0,
+      "latency_ms": [
+        230.5,
+        152.2
+      ]
+    },
+    "ranking": {
+      "ships": false,
+      "space": "trust_region",
+      "cv_heldout_delta": 0.1204,
+      "test_ndcg@10_delta": -0.0222,
+      "p_value": 0.7487
+    },
+    "search": {
+      "ships": true,
+      "current_over_budget": true,
+      "test_mrr@10": [
+        0.21,
+        0.1999
+      ],
+      "p_value": 0.7204279572042795,
+      "setting": {
+        "rrf_k": 30,
+        "w_lex": 2.0,
+        "rerank_head": 0,
+        "rerank_blend": 0.0
+      }
+    }
+  },
+  "released_config": {
+    "semantic": 0.33,
+    "lexical": 0.0,
+    "skills": 0.27,
+    "level": 0.15,
+    "role": 0.07,
+    "location": 0.05,
+    "recency": 0.05,
+    "affinity": 0.05,
+    "sim_floor": 0.5,
+    "sim_span": 0.35,
+    "skill_saturation": 6,
+    "level_adjacent": 0.5,
+    "level_two_away": 0.15,
+    "level_unknown": 0.55,
+    "role_adjacent": 0.75,
+    "role_other": 0.3,
+    "recency_tau_days": 21.0,
+    "negative_weight": 0.7,
+    "yoe_penalty": true,
+    "yoe_slack": 1.0,
+    "yoe_step": 0.2,
+    "yoe_floor": 0.3,
+    "diversify": true,
+    "max_per_company": 2,
+    "diversity_window": 20,
+    "mmr_lambda": 1.0,
+    "k_dense": 200,
+    "k_lex": 0,
+    "rrf_k": 30,
+    "w_dense": 1.0,
+    "w_lex": 2.0,
+    "rerank_head": 0,
+    "rerank_blend": 0.0,
+    "min_results": 20
+  }
+}
