@@ -15,7 +15,7 @@ from app.enrich.locations import parse_location
 from app.enrich.skills import extract_skills
 from app.ingest.types import RawJob
 
-RULES_VERSION = 5
+RULES_VERSION = 6
 
 # ---------------------------------------------------------------- tech filter
 _TECH_TITLE = re.compile(
@@ -34,7 +34,9 @@ _NON_TECH = re.compile(
     r"product designer|graphic designer|ux designer|ui/ux designer|copywriter|content writer|"
     r"business development|\bbdr\b|\bsdr\b|partnerships|procurement|supply chain|warehouse|"
     r"executive assistant|community manager|social media|\bpr\b|data entry|"
-    r"product manager|program manager|project manager|product owner|scrum master",
+    r"product manager|program manager|project manager|product owner|scrum master|"
+    r"solutions? (?:engineer|architect|consultant)|customer (?:engineer|architect)|pre-?sales|"
+    r"technical account manager|implementation (?:consultant|specialist)",
     re.I,
 )
 
@@ -214,16 +216,19 @@ _YOE_ALT = re.compile(
 
 
 def years_of_experience(text: str) -> tuple[float | None, float | None]:
-    pairs: list[tuple[float, float | None]] = []
+    """The first stated requirement wins: postings lead with the core ask
+    ("5+ years of software engineering") before narrower ones ("2+ years of React")."""
+    found: list[tuple[int, float, float | None]] = []
     for m in list(_YOE.finditer(text)) + list(_YOE_ALT.finditer(text)):
         lo = float(m.group(1))
         hi = float(m.group(2)) if m.group(2) else None
         if lo > 15 or (hi is not None and (hi < lo or hi > 20)):
             continue
-        pairs.append((lo, hi))
-    if not pairs:
+        # "1+ years ... 5+ years preferred": a later "preferred" does not override.
+        found.append((m.start(), lo, hi))
+    if not found:
         return None, None
-    lo, hi = min(pairs, key=lambda p: p[0])
+    _, lo, hi = min(found)
     return lo, hi
 
 

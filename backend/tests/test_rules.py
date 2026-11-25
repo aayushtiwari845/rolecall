@@ -120,7 +120,9 @@ def test_locations():
 
 
 def test_skills_disambiguation():
-    skills = extract_skills("Python, Go and PostgreSQL. The rest of the team will excel at node graphs.")
+    skills = extract_skills(
+        "Python, Go and PostgreSQL. The rest of the team will excel at node graphs."
+    )
     assert skills == ["Python", "Go", "PostgreSQL"]
     assert "Java" not in extract_skills("JavaScript and TypeScript")
     assert extract_skills("C/C++ programming")[:2] == ["C", "C++"]
@@ -144,7 +146,9 @@ def test_enrich_end_to_end():
 
 
 def test_enrich_remote_worldwide_flag():
-    job = RawJob("remotive", "1", "Acme", "ML Engineer", "u", location_raw="Worldwide", remote_hint="remote")
+    job = RawJob(
+        "remotive", "1", "Acme", "ML Engineer", "u", location_raw="Worldwide", remote_hint="remote"
+    )
     e = rules.enrich(job)
     assert "WW" in e.countries and e.remote_type == "remote"
 
@@ -154,7 +158,11 @@ def test_enrich_remote_worldwide_flag():
     [
         ("Simulation Engineer", "CAD, FEA and ANSYS for vehicle structures.", False),
         ("Hardware Engineer", "PCB layout and analog circuits.", False),
-        ("Engineer, Payments", "We build services in Python and Go on AWS with PostgreSQL and Kafka.", True),
+        (
+            "Engineer, Payments",
+            "We build services in Python and Go on AWS with PostgreSQL and Kafka.",
+            True,
+        ),
         ("Backend Developer", "", True),
     ],
 )
@@ -170,3 +178,14 @@ def test_language_filter():
     assert not rules.is_english("Softwareentwickler (m/w/d)", de)
     assert rules.is_english("Software Engineer", en)
     assert not rules.is_english("Praktikum Softwareentwicklung", "")
+
+
+def test_first_stated_years_requirement_wins():
+    text = "5+ years of software engineering experience in Java. 2+ years of experience with React."
+    assert rules.years_of_experience(text) == (5, None)
+
+
+def test_presales_roles_are_not_tech():
+    assert not rules.looks_tech_title("Solutions Engineer, Okta")
+    assert not rules.looks_tech_title("Senior Solutions Architect")
+    assert rules.looks_tech_title("Forward Deployed Engineer")
