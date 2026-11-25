@@ -69,8 +69,9 @@ def ingest(
 def reenrich(
     all_jobs: bool = typer.Option(False, "--all", help="Also re-check closed jobs"),
 ) -> None:
-    """Re-run the enrichment rules over stored jobs (after a rules change)."""
+    """Re-run the enrichment rules over stored jobs (after a rules change), in batches."""
     from sqlalchemy import select
+    from sqlalchemy.orm import defer
 
     from app.db import session_scope
     from app.enrich.rules import RULES_VERSION, enrich
@@ -78,43 +79,49 @@ def reenrich(
     from app.models import Job
 
     changed = dropped = 0
-    with session_scope() as s:
-        q = select(Job) if all_jobs else select(Job).where(Job.status == "open")
-        for j in s.scalars(q.where(Job.enrichment_version < RULES_VERSION)):
-            e = enrich(
-                RawJob(
-                    source_kind=j.source_kind,
-                    source_job_id=j.source_job_id,
-                    company_name=j.company_name,
-                    title=j.title,
-                    url=j.url,
-                    description_text=j.description_text,
-                    location_raw=j.location_raw,
-                    department=j.department,
-                    salary_min=j.salary_min,
-                    salary_max=j.salary_max,
-                    salary_currency=j.salary_currency,
-                    salary_period=j.salary_period,
-                )
+    while True:
+        with session_scope() as s:
+            q = (
+                select(Job)
+                .options(defer(Job.embedding))
+                .where(Job.enrichment_version < RULES_VERSION)
             )
-            if not e.is_tech:
-                dropped += j.is_tech
-                j.is_tech = False
-            else:
-                j.seniority, j.role_family, j.employment_type = (
-                    e.seniority,
-                    e.role_family,
-                    e.employment_type,
+            if not all_jobs:
+                q = q.where(Job.status == "open")
+            batch = list(s.scalars(q.limit(500)))
+            if not batch:
+                break
+            for j in batch:
+                e = enrich(
+                    RawJob(
+                        source_kind=j.source_kind,
+                        source_job_id=j.source_job_id,
+                        company_name=j.company_name,
+                        title=j.title,
+                        url=j.url,
+                        description_text=j.description_text,
+                        location_raw=j.location_raw,
+                        department=j.department,
+                        salary_min=j.salary_min,
+                        salary_max=j.salary_max,
+                        salary_currency=j.salary_currency,
+                        salary_period=j.salary_period,
+                    )
                 )
-                j.remote_type, j.cities, j.countries, j.skills = (
-                    e.remote_type,
-                    e.cities,
-                    e.countries,
-                    e.skills,
-                )
-                j.min_yoe, j.max_yoe = e.min_yoe, e.max_yoe
-            j.enrichment_version = RULES_VERSION
-            changed += 1
+                if not e.is_tech:
+                    dropped += j.is_tech
+                    j.is_tech = False
+                else:
+                    j.seniority, j.role_family, j.employment_type = (
+                        e.seniority,
+                        e.role_family,
+                        e.employment_type,
+                    )
+                    j.remote_type, j.cities, j.countries = e.remote_type, e.cities, e.countries
+                    j.skills, j.min_yoe, j.max_yoe = e.skills, e.min_yoe, e.max_yoe
+                j.enrichment_version = RULES_VERSION
+                changed += 1
+        typer.echo(f"  {changed} done")
     typer.echo(f"re-enriched {changed} jobs, {dropped} no longer count as tech roles")
 
 
