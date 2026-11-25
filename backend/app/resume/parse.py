@@ -42,7 +42,7 @@ _EDU = re.compile(
 )
 _INTERN = re.compile(r"\bintern(ship)?\b|trainee", re.I)
 _EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
-_PHONE = re.compile(r"(?:\+?\d{1,3}[\s-]?)?(?:\(?\d{3,5}\)?[\s-]?)\d{3,5}[\s-]?\d{3,5}")
+_PHONE = re.compile(r"\+?\d[\d\s().-]{7,16}\d")
 _TITLE_LINE = re.compile(
     r"(engineer|developer|intern|scientist|analyst|architect|lead|manager|researcher|consultant)",
     re.I,
