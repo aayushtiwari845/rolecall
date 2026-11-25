@@ -132,7 +132,7 @@ export const JobRow = forwardRef<HTMLElement, Props>(function JobRow(
         <span
           aria-hidden
           className="pointer-events-none absolute left-0 right-0 top-1/2 h-[2px] origin-left bg-red"
-          style={{ animation: "strike 380ms cubic-bezier(0.16,1,0.3,1) both" }}
+          style={{ animation: "strike 380ms cubic-bezier(0.16,1,0.3,1)" }}
         />
       )}
     </article>

@@ -184,7 +184,7 @@ export function PenRing({ className }: { className?: string }) {
         strokeWidth="2.6"
         strokeLinecap="round"
         strokeDasharray="260"
-        style={{ animation: "ring 650ms cubic-bezier(0.16,1,0.3,1) both" }}
+        style={{ animation: "ring 650ms cubic-bezier(0.16,1,0.3,1)" }}
       />
     </svg>
   );
