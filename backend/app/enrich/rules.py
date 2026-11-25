@@ -15,7 +15,7 @@ from app.enrich.locations import parse_location
 from app.enrich.skills import extract_skills
 from app.ingest.types import RawJob
 
-RULES_VERSION = 6
+RULES_VERSION = 7
 
 # ---------------------------------------------------------------- tech filter
 _TECH_TITLE = re.compile(
@@ -275,6 +275,21 @@ def employment_type(title: str, hint: str | None, level: str, text: str) -> str:
     return "full_time"
 
 
+_LI_TAG = re.compile(r"#LI[-_ ]?(remote|hybrid|onsite|on-site)\b", re.I)
+_HYBRID_TEXT = re.compile(
+    r"hybrid (?:work|working|model|schedule|role based|position|arrangement|setup|policy)|"
+    r"\d\s*(?:days?|x)\s*(?:a|per|/)\s*week(?:\s*(?:in|at|from)\s*(?:the|our)?\s*office)?|"
+    r"(?:in|from) (?:the|our) office \d\s*days|onsite (?:on )?(?:monday|tuesday|wednesday|thursday|friday)|"
+    r"in[- ]office (?:on )?(?:monday|tuesday|wednesday|thursday)|this is a hybrid \(",
+    re.I,
+)
+_REMOTE_TEXT = re.compile(
+    r"fully remote|100% remote|remote[- ](?:first|only)|work from anywhere|"
+    r"this (?:role|position) is (?:fully )?remote|(?:role|position|job) (?:is|can be) (?:performed|done) remotely",
+    re.I,
+)
+
+
 def remote_type(hint: str | None, location: str, title: str, text: str) -> str:
     if hint:
         return hint
@@ -283,15 +298,16 @@ def remote_type(hint: str | None, location: str, title: str, text: str) -> str:
         return "hybrid"
     if re.search(r"\bremote\b|work from home|\bwfh\b|anywhere", loc, re.I):
         return "remote"
-    head = text[:3000]
-    if re.search(
-        r"fully remote|100% remote|remote[- ]first|work from anywhere|this (?:role|position) is remote",
-        head,
-        re.I,
-    ):
-        return "remote"
-    if re.search(r"\bhybrid\b", head, re.I):
+    # Recruiters' LinkedIn tags state the work mode explicitly.
+    tag = _LI_TAG.search(text)
+    if tag:
+        return {"remote": "remote", "hybrid": "hybrid"}.get(tag.group(1).lower(), "onsite")
+    # "Hybrid" alone is ambiguous ("a hybrid role between data and engineering"), so
+    # only phrases about where and when people work count.
+    if _HYBRID_TEXT.search(text):
         return "hybrid"
+    if _REMOTE_TEXT.search(text[:4000]):
+        return "remote"
     return "onsite"
 
 

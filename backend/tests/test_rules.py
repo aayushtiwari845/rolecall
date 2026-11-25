@@ -189,3 +189,18 @@ def test_presales_roles_are_not_tech():
     assert not rules.looks_tech_title("Solutions Engineer, Okta")
     assert not rules.looks_tech_title("Senior Solutions Architect")
     assert rules.looks_tech_title("Forward Deployed Engineer")
+
+
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        ("Great team. #LI-Hybrid #LI-SM4", "hybrid"),
+        ("Roles that are based in an office are onsite Tuesday, Wednesday, and Thursday.", "hybrid"),
+        ("We use a hybrid work model of 3 days in the office per week.", "hybrid"),
+        ("This is a hybrid role at the intersection of engineering and data science.", "onsite"),
+        ("Benefits for remote employees. #LI-Remote", "remote"),
+        ("#LI-onsite", "onsite"),
+    ],
+)
+def test_work_mode_from_text(text, expected):
+    assert rules.remote_type(None, "Bengaluru", "Engineer", text) == expected
