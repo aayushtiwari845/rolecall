@@ -157,7 +157,7 @@ def run_eval(
     """Run offline evaluations and store the results."""
     from app.evals.run import run_suite
 
-    suites = ["extraction", "retrieval", "recommendation", "agent"] if suite == "all" else [suite]
+    suites = ["extraction", "retrieval", "recsys", "recommendation", "agent"] if suite == "all" else [suite]
     for name in suites:
         res = run_suite(name, use_llm=not no_llm)
         typer.echo(f"\n== {name} ==")

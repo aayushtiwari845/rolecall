@@ -21,8 +21,14 @@ const SUITES: { id: string; title: string; how: string; best: string[] }[] = [
     best: ["recall@10", "mrr@10", "ndcg@10"],
   },
   {
+    id: "recsys",
+    title: "Scorecard quality",
+    how: "Sixteen realistic personas, split into tuning (dev) and held-out (test) sets. Roles pooled from eight different rankers were each graded 0–3 against a written rubric. Reported on the held-out personas only: graded nDCG@10 with a 95% bootstrap interval, precision, MAP, bpref (robust to unjudged roles), share of top-10 results breaking a persona's hard expectations (level, experience, location), diversity, stability when one skill is removed, and latency.",
+    best: ["ndcg@10", "p@10", "map", "bpref", "success@5"],
+  },
+  {
     id: "recommendation",
-    title: "Recommendations",
+    title: "Recommendations (quick check)",
     how: "Sample profiles (backend new grad, ML intern, data engineer, frontend, SRE). Each ranking variant’s top results are pooled and judged once on a 0–3 scale, by an LLM judge when available or by transparent rules otherwise. Also tracks company diversity and catalogue coverage.",
     best: ["ndcg@10", "p@10", "company_diversity"],
   },

@@ -34,6 +34,8 @@ def run_suite(suite: str, use_llm: bool = True, **kw) -> dict:
             res = extraction.run(use_llm=use_llm)
         elif suite == "agent":
             res = agent.run(s)
+        elif suite == "recsys":
+            res = _recsys(s)
         else:
             raise ValueError(f"unknown suite {suite}")
         sha = _git_sha()
@@ -59,4 +61,28 @@ def run_suite(suite: str, use_llm: bool = True, **kw) -> dict:
         ),
         encoding="utf-8",
     )
+    return res
+
+
+def _recsys(session) -> dict:
+    """Judged feed evaluation on held-out test personas: default vs shipped config."""
+    from app.evals.judged import load_personas
+    from app.evals.recsys import Evaluator, compare
+    from app.search.rank import Weights, load_config
+
+    ev = Evaluator(session, load_personas("test"))
+    default, current = ev.evaluate(Weights(), latency=True), ev.evaluate(load_config(), latency=True)
+    keep = ("ndcg@10", "p@10", "map", "bpref", "success@5", "violations@10", "ild@10",
+            "companies@10", "stability_rbo", "judged@10", "latency_ms")
+
+    def row(r):
+        out = {k: r.summary[k]["mean"] for k in keep if k in r.summary}
+        out["ndcg@10_95ci"] = f"{r.summary['ndcg@10']['lo']:.3f}-{r.summary['ndcg@10']['hi']:.3f}"
+        out["personas"] = len(r.per_persona)
+        return out
+
+    res = {"hand_set_defaults": row(default)}
+    if current.config != default.config:
+        res["tuned"] = row(current)
+        res["tuned"]["p_value_vs_defaults"] = compare(default, current)["ndcg@10"]["p_value"]
     return res
