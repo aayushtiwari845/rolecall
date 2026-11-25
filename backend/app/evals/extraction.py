@@ -79,12 +79,12 @@ def _predict_llm(case: dict, base: dict) -> dict | None:
 
 
 def _match(field: str, pred, gold) -> bool:
+    if isinstance(gold, list):  # genuinely ambiguous postings accept any listed answer
+        return any(_match(field, pred, g) for g in gold)
     if field == "min_yoe":
         if gold is None or pred is None:
             return gold is pred
         return abs(float(pred) - float(gold)) <= 0.5
-    if field == "role_family" and isinstance(gold, list):
-        return pred in gold  # some postings legitimately fit two families
     return pred == gold
 
 

@@ -23,8 +23,8 @@ next-env.d.ts
 *.pem
 
 # Local data (resumes, model caches, dumps)
-data/private/
-data/cache/
+/data/private/
+/data/cache/
 *.dump
 *.sqlite
 
@@ -39,5 +39,5 @@ Thumbs.db
 .impeccable/config.local.json
 .impeccable/review/
 .impeccable/build/
-data/
+/data/
 infra/backups/
