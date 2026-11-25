@@ -34,3 +34,8 @@ data/cache/
 .DS_Store
 Thumbs.db
 
+
+# Design tooling local state
+.impeccable/config.local.json
+.impeccable/review/
+.impeccable/build/

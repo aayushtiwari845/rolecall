@@ -1,0 +1,123 @@
+{
+  "title": "Choose Rolecall's visual world",
+  "question": "The roll assigned Scorecard: your job hunt read like a live cricket scorecard. Keep it, take an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Scorecard",
+      "kicker": "THE ROLL",
+      "lineage": "Stadium scoreboards, the scorer's book and live ball-by-ball commentary",
+      "thesis": "Your hunt as a live innings: every role a batting row of hard numbers, every new posting a ball called out in the commentary.",
+      "palette": ["#0E2A1F", "#F4F6F2", "#F2C230", "#D7263D", "#2FBF71"],
+      "materials": ["stadium scoreboard panels", "ruled scorebook grid", "tabular numerals"],
+      "viewport": "Landing opens on a giant scoreboard: today's new roles and India roles as hand-hung numerals, beside a live commentary column calling out fresh postings; one primary action, 'Get my scorecard'. In the app, the feed is a scorecard table: match % as the big number, skills matched, level, posted, with ball-by-ball notes as the reasons.",
+      "risk": "Puns can drown the product: labels must stay plain English, the cricket lives in layout, numerals and rhythm, not in jokes.",
+      "raised": [
+        {"from": "challenger-type-specimen", "raise": "Hierarchy by scale contrast alone: scoreboard-size numerals against tiny tabular labels, no boxes doing the work."},
+        {"from": "challenger-timetable-rack", "raise": "State is a mark in a fixed cell: saved, applied, OA, interview, offer and rejected each get one scorebook mark in the same column of every row."},
+        {"from": "challenger-doujin-catalog", "raise": "Marked by hand: a saved role gets a pen ring around its number, a dismissed one is struck through, so the list remembers your triage."},
+        {"from": "challenger-botanical-folio", "raise": "Fixed anatomy: every role row shares one baseline and column order, so comparing two roles is a glance, not a read."},
+        {"from": "challenger-transit-diagram", "raise": "The focused row burns brightest while the rest recede, keeping context without competing."}
+      ]
+    },
+    {
+      "id": "model-pick",
+      "label": "Reservation Chart",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "Indian Railways reservation charts and PNR status",
+      "thesis": "Every role carries a status you already read by heart: CNF for strong fits, RAC for stretch roles, WL for long shots.",
+      "palette": ["#FFFFFF", "#1C2B5A", "#FFCE1F", "#C8102E", "#0F7B3F"],
+      "materials": ["dot-matrix chart print", "stamped status codes", "coach-number plates"],
+      "viewport": "Landing shows today's chart pasted on the coach: your name row with CNF/RAC/WL against fresh roles; the app feed is the chart, sorted by status.",
+      "risk": "Strong identification, but status codes invite confusion with application status and the print look can tip into nostalgia."
+    },
+    {
+      "id": "challenger-japanese-density",
+      "label": "Dense Board",
+      "verdict": "competitive",
+      "lineage": "Japanese high-density commerce sites",
+      "thesis": "Pack far more roles per screen than any Western job board: ruled modules, tiny gothic type, red tabs for new.",
+      "palette": ["#FFFFFF", "#111111", "#E60012", "#D9D9D9"],
+      "materials": ["hairline module grid", "red header tabs", "badges"],
+      "viewport": "A mosaic of ruled role modules edge to edge, with a persistent filter rail and red NEW tabs.",
+      "case": "Fuses cleanly and wins on scan speed for triage; loses on audience identification, it says efficient tool, not 'made for us'.",
+      "risk": "Tiny type hurts on low-end phones; density must relax on mobile."
+    },
+    {
+      "id": "challenger-transit-diagram",
+      "label": "Metro Map",
+      "verdict": "declined",
+      "lineage": "Metropolitan rail diagrams",
+      "thesis": "Each application is a journey along a line: saved, applied, OA, interview, offer.",
+      "palette": ["#0B1B3F", "#F7F7F2", "#E63946", "#1D4ED8", "#F59E0B", "#16A34A"],
+      "materials": ["enamel", "45-degree lines", "interchange rings"],
+      "viewport": "The tracker as a line diagram; the feed as departures on a branch.",
+      "case": "Great for the tracker, weak for the feed; both axes lose to the scorecard.",
+      "risk": "Becomes decoration outside the tracker.",
+      "kept": "The focused row burns brightest while the rest recede."
+    },
+    {
+      "id": "challenger-type-specimen",
+      "label": "Type Specimen",
+      "verdict": "declined",
+      "lineage": "Variable font specimens",
+      "thesis": "Match strength as type weight.",
+      "palette": ["#FAFAFA", "#0A0A0A", "#3B5BDB"],
+      "materials": ["giant letterforms", "axis sliders"],
+      "viewport": "One huge number per role.",
+      "case": "Students don't identify with it and it hides the reasons; loses both axes.",
+      "risk": "Pure form, no product.",
+      "kept": "Hierarchy by scale contrast alone."
+    },
+    {
+      "id": "challenger-timetable-rack",
+      "label": "Timetable Rack",
+      "verdict": "declined",
+      "lineage": "1970s pocket airline timetables",
+      "thesis": "One type size; rank by weight, case and reversal.",
+      "palette": ["#DAA520", "#1F2933", "#F5F0E1", "#D2381E", "#1E5631"],
+      "materials": ["tinted glass slides", "goldenrod bed"],
+      "viewport": "Raked slides of roles.",
+      "case": "The rake fights reading; loses both axes.",
+      "risk": "Hard to read on phones.",
+      "kept": "State as a mark in a fixed cell."
+    },
+    {
+      "id": "challenger-doujin-catalog",
+      "label": "Circle Catalog",
+      "verdict": "declined",
+      "lineage": "Convention circle catalogs",
+      "thesis": "Thousands of postage-stamp cells, circled in biro.",
+      "palette": ["#EDEDE6", "#111111", "#E4007F"],
+      "materials": ["newsprint", "biro marks"],
+      "viewport": "A packed numbered grid of roles.",
+      "case": "Foreign to the audience; thumbnails don't exist for jobs.",
+      "risk": "No images to carry it.",
+      "kept": "Marked by hand: rings for saved, strikes for dismissed."
+    },
+    {
+      "id": "challenger-botanical-folio",
+      "label": "Botanical Folio",
+      "verdict": "declined",
+      "lineage": "Botanical life-cycle plates",
+      "thesis": "Each role as a plate at fixed scale.",
+      "palette": ["#F3EBD9", "#5B4636", "#2F6B3B", "#B23A2B"],
+      "materials": ["engraving", "sepia rules"],
+      "viewport": "Plates of roles on one baseline.",
+      "case": "Wrong world for a job hunt; loses both axes.",
+      "risk": "Cream-and-serif default.",
+      "kept": "Fixed anatomy on one shared baseline."
+    }
+  ],
+  "reroll": {"registers": ["safer", "bolder"]},
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "A clean modern job board: white cards, one blue accent, rounded chips, a search bar up top.",
+    "palette": ["#FFFFFF", "#0F172A", "#2563EB", "#E2E8F0"],
+    "materials": ["clean card grid", "pill chips", "soft shadows"],
+    "viewport": "Search bar hero with a grid of job cards and logo tiles below.",
+    "risk": "Indistinguishable from every other job board by design."
+  },
+  "steer": true
+}
