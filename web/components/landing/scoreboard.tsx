@@ -35,18 +35,19 @@ export function Scoreboard() {
         </span>
         <span className="label text-chalk-2">{stats ? `${num(stats.companies)} companies` : ""}</span>
       </div>
+      {/* One time window per row: the plates are the whole open index, the strip below is fresh arrivals. */}
       <div className="grid grid-cols-2 md:grid-cols-[1.4fr_1fr_1fr]">
         <div className="col-span-2 md:col-span-1">
-          <Plate value={stats?.new_today} label="New roles in the last 24 hours" big />
+          <Plate value={stats?.open_jobs} label="Open tech roles right now" big />
         </div>
-        <Plate value={stats?.india_jobs} label="In India or remote-India" />
-        <Plate value={stats?.early_career_jobs} label="Internship & new grad" />
+        <Plate value={stats?.india_jobs} label="Open in India or remote-India" />
+        <Plate value={stats?.early_career_jobs} label="Open internship & new grad" />
       </div>
       <div className="grid grid-cols-2 border-t border-board-rule md:grid-cols-[1.4fr_1fr_1fr]">
         <div className="col-span-2 flex items-center px-4 py-4 md:col-span-1 md:px-6">
           <p className="text-sm text-chalk-2">
-            <span className="score text-2xl font-bold text-chalk">{stats ? num(stats.open_jobs) : "–"}</span> open tech roles,
-            checked every few hours
+            <span className="score text-2xl font-bold text-chalk">{stats ? num(stats.new_today) : "–"}</span> posted in the
+            last 24 hours
           </p>
         </div>
         <div className="border-board-rule px-4 py-4 md:border-l md:px-6">
@@ -56,7 +57,7 @@ export function Scoreboard() {
         </div>
         <div className="border-l border-board-rule px-4 py-4 md:px-6">
           <p className="text-sm text-chalk-2">
-            <span className="score text-2xl font-bold text-chalk">{stats ? num(stats.sources) : "–"}</span> live boards
+            <span className="score text-2xl font-bold text-chalk">{stats ? num(stats.sources) : "–"}</span> boards checked
           </p>
         </div>
       </div>

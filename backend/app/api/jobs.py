@@ -340,6 +340,13 @@ def commentary(
             or_(Job.countries.any("WW"), Job.countries.any("R:APAC"), Job.countries == []),
         )
         where.append(or_(Job.countries.any("IN"), open_remote))
+        # No gig-marketplace listings or contract piecework on the front page.
+        where.append(Job.employment_type.in_(["full_time", "intern"]))
+        where.append(
+            ~Job.title.op("~*")(
+                r"flexible hours|earn |\bgig\b|freelance|per task|side (?:hustle|income)|test real apps"
+            )
+        )
         where.append(
             or_(Job.seniority.in_(["intern", "new_grad", "junior"]), Job.seniority.is_(None))
         )

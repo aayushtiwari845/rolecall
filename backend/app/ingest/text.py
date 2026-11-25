@@ -111,4 +111,8 @@ def display_title(title: str) -> str:
     t = _GENDER_TAG.sub("", title)
     if " | " in t:
         t = t.split(" | ")[0]
+    if "_" in t and " " not in t.strip("_ ") or t.count("_") >= 2:
+        # Internal requisition codes like "IN_RBAI_Software Automation expert_IN".
+        parts = [p for p in t.split("_") if p and not re.fullmatch(r"[A-Z]{2,5}", p)]
+        t = " ".join(parts) or t
     return re.sub(r"\s{2,}", " ", t).strip(" -–|,") or title
