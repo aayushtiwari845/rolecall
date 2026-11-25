@@ -162,6 +162,33 @@ What each round taught:
   treat their numbers as validation rather than a pristine test. A fresh test set means
   new personas judged from scratch (see limitations).
 
+## 5b. Fresh held-out personas (pre-registered)
+
+The 6 test personas informed four ship decisions, so their numbers are validation, not a
+clean test. Twelve new personas (`split: fresh` in `personas.yaml`) were written after
+round 4, before any of their roles were pooled or judged: a Java intern in Pune, a remote
+NLP research intern, a data analyst in Chennai, a cloud intern, a junior Android developer,
+a Go new grad, a MERN intern in Delhi NCR, a 3-year MLOps engineer, a senior remote
+frontend engineer, a C++ systems new grad, a junior application-security engineer and a
+data-science new grad. None of them is ever used for tuning.
+
+Plan, fixed before pooling and committed with the personas:
+
+- **Pool:** the eight standard rankers, the released configuration, the tuned
+  configurations of rounds 2, 3 and 4 and round 4's five best trials, depth 10, so every
+  compared configuration's top 10 is fully judged. Each persona's sheet is shuffled, so the
+  judge cannot tell which ranker found a role, and is graded against the same rubric.
+- **Primary comparison:** released configuration (hand-set ranking weights) vs round 4's
+  tuned ranking weights, nDCG@10 on the 12 fresh personas, paired randomisation test.
+- **Secondary:** rounds 2 and 3's tuned weights; strict nDCG@10, P@10, bpref,
+  violations@10.
+- **Decision rule:** the same as `release()` stage 2. Round 4's weights ship if fresh
+  nDCG@10 is not worse (delta >= -0.005) and violations@10 do not rise. Otherwise the
+  hand-set weights stay.
+- **One look:** each configuration is evaluated on the fresh set once (`rolecall
+  eval-fresh`). The result is reported whatever it is, and the fresh set then becomes
+  validation data like the test set.
+
 ## 6. Robustness built into the engine
 
 - Cold start: no resume and no history falls back to the freshest roles inside the
