@@ -6,6 +6,9 @@ Schedule (UTC):
 - LLM refinement within the daily free-tier budget ...... every 30 min
 - email digests (each user picks an IST hour) ........... hourly
 - retrieval evals ....................................... daily
+- prune closed roles, old logs and caches ............... daily
+- health check, emailing admins if crawling stalled ..... daily
+- discover new and moved company boards ................. weekly
 
 Each job takes a Postgres advisory lock, so running two workers is safe.
 """
@@ -89,6 +92,42 @@ def job_evals():
     return run_suite("retrieval")
 
 
+@locked("prune")
+def job_prune():
+    from app.ingest.maintenance import prune
+
+    with session_scope() as s:
+        return prune(s)
+
+
+@locked("discover")
+def job_discover():
+    from app.ingest.maintenance import rediscover
+
+    with session_scope() as s:
+        return rediscover(s)
+
+
+@locked("health")
+def job_health():
+    """Email the admins when crawling has quietly stopped working."""
+    from app.alerts.digest import mail_configured, send_email
+    from app.config import get_settings
+    from app.ingest.maintenance import health
+
+    with session_scope() as s:
+        report = health(s)
+    if report["ok"]:
+        return report
+    log.warning("index unhealthy: %s", report)
+    admins = get_settings().admin_emails
+    if mail_configured() and admins:
+        body = "\n".join(f"{k}: {v}" for k, v in report.items())
+        for to in admins:
+            send_email(to, "Rolecall: index needs attention", f"<pre>{body}</pre>", body)
+    return report
+
+
 def main() -> None:
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
@@ -109,6 +148,9 @@ def main() -> None:
     sched.add_job(job_enrich, "interval", minutes=30, id="enrich", next_run_time=_soon(120))
     sched.add_job(job_digests, "cron", minute=5, id="digests")
     sched.add_job(job_evals, "cron", hour=21, minute=30, id="evals")  # 03:00 IST
+    sched.add_job(job_prune, "cron", hour=22, minute=15, id="prune")  # 03:45 IST
+    sched.add_job(job_health, "cron", hour=3, minute=0, id="health")  # 08:30 IST
+    sched.add_job(job_discover, "cron", day_of_week="sun", hour=20, id="discover")
     log.info("worker started")
     sched.start()
 
