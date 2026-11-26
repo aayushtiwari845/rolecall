@@ -23,6 +23,8 @@ jobs:
         working-directory: backend
     env:
       DATABASE_URL: postgresql+psycopg://rolecall:rolecall@localhost:5432/rolecall
+      # Without this the DB tests look for the local compose port and silently skip.
+      TEST_DATABASE_URL: postgresql+psycopg://rolecall:rolecall@localhost:5432/rolecall
       ENV: test
     steps:
       - uses: actions/checkout@v4
