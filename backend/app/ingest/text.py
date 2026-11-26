@@ -18,7 +18,7 @@ _WS = re.compile(r"[ \t ]+")
 _NL = re.compile(r"\n{3,}")
 
 
-def html_to_text(raw: str | None, unescape: bool = False) -> str:
+def html_to_text(raw: str | None, unescape: bool = False, _depth: int = 0) -> str:
     """Convert an HTML fragment to plain text that keeps paragraph and bullet breaks."""
     if not raw:
         return ""
@@ -37,7 +37,16 @@ def html_to_text(raw: str | None, unescape: bool = False) -> str:
             node.insert_after("\n")
     root = tree.body or tree.root
     text = root.text(separator="", deep=True) if root else ""
+    if _depth < 2 and _LEFTOVER_TAG.search(text):
+        # Double-escaped HTML ("&lt;p&gt;" inside the HTML): the first pass only
+        # unescaped it into tags, so strip once more.
+        return html_to_text(text, _depth=_depth + 1)
     return clean_text(text)
+
+
+_LEFTOVER_TAG = re.compile(
+    r"</?(?:p|div|br|li|ul|ol|strong|em|b|i|span|a|h[1-6])(?:\s[^>]*)?/?>", re.I
+)
 
 
 def clean_text(text: str) -> str:
