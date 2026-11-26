@@ -80,7 +80,42 @@ CITIES: dict[str, tuple[str, list[str]]] = {
 
 COUNTRIES: dict[str, list[str]] = {
     "IN": ["india", "bharat"],
-    "US": ["united states", "usa", "u.s.", "us-based", "america"],
+    "US": [
+        "united states",
+        "usa",
+        "u.s.",
+        "us-based",
+        "america",
+        # States, regions and metros that remote postings name instead of the country.
+        "california",
+        "texas",
+        "florida",
+        "oregon",
+        "new jersey",
+        "arizona",
+        "colorado",
+        "illinois",
+        "massachusetts",
+        "michigan",
+        "minnesota",
+        "north carolina",
+        "ohio",
+        "pennsylvania",
+        "utah",
+        "virginia",
+        "washington state",
+        "wisconsin",
+        "dallas",
+        "houston",
+        "detroit",
+        "philadelphia",
+        "san diego",
+        "phoenix",
+        "west coast",
+        "east coast",
+        "washington d.c",
+        "washington, d.c",
+    ],
     "GB": ["united kingdom", "uk", "england", "scotland", "great britain"],
     "IE": ["ireland"],
     "DE": ["germany", "deutschland"],
@@ -96,18 +131,54 @@ COUNTRIES: dict[str, list[str]] = {
     "SG": ["singapore"],
     "JP": ["japan"],
     "AU": ["australia"],
-    "CA": ["canada"],
+    "CA": ["canada", "ontario", "british columbia", "quebec", "alberta"],
     "BR": ["brazil"],
     "MX": ["mexico"],
     "ID": ["indonesia"],
     "PH": ["philippines"],
     "VN": ["vietnam"],
+    "AR": ["argentina"],
+    "BE": ["belgium"],
+    "FI": ["finland"],
+    "EE": ["estonia"],
+    "NZ": ["new zealand"],
+    "SA": ["saudi arabia", "ksa"],
+    "TW": ["taiwan"],
+    "GR": ["greece"],
+    "BG": ["bulgaria"],
+    "CR": ["costa rica"],
+    "IT": ["italy"],
+    "AT": ["austria"],
+    "DK": ["denmark"],
+    "NO": ["norway"],
+    "CZ": ["czech republic", "czechia"],
+    "RO": ["romania"],
+    "HU": ["hungary"],
+    "UA": ["ukraine"],
+    "TR": ["turkey", "türkiye"],
+    "ZA": ["south africa"],
+    "NG": ["nigeria"],
+    "KE": ["kenya"],
+    "EG": ["egypt"],
+    "PK": ["pakistan"],
+    "BD": ["bangladesh"],
+    "LK": ["sri lanka"],
+    "NP": ["nepal"],
+    "MY": ["malaysia"],
+    "TH": ["thailand"],
+    "KR": ["south korea", "korea"],
+    "CN": ["china"],
+    "HK": ["hong kong"],
+    "CL": ["chile"],
+    "CO": ["colombia"],
+    "PE": ["peru"],
+    "UY": ["uruguay"],
 }
 
 # Regions that remote postings commonly restrict to.
 REGIONS: dict[str, list[str]] = {
     "EU": ["europe", "emea", "eu only", "european union", "cet", "cest"],
-    "AMER": ["north america", "americas", "latam", "latin america"],
+    "AMER": ["north america", "americas", "latam", "latin america", "amer", "namer", "noram"],
     "APAC": ["apac", "asia", "asia pacific"],
 }
 
@@ -129,6 +200,9 @@ _REGION_RE = [
     (r, re.compile(r"\b(" + "|".join(re.escape(a) for a in names) + r")\b", re.I))
     for r, names in REGIONS.items()
 ]
+# "Remote US", "US - Remote", "US-TX-Remote": the bare upper-case code, which the
+# case-insensitive country names can't match without also matching the word "us".
+_BARE_US = re.compile(r"(?<![A-Za-z])US(?![A-Za-z])")
 # Bare ISO codes / US state codes at the end of "City, XX"
 _TRAILING_CODE = re.compile(r",\s*([A-Z]{2})\b")
 _US_STATES = set(
@@ -209,6 +283,8 @@ def parse_location(raw: str | None, country_hints: list[str] | None = None) -> P
     for cc, pat in _COUNTRY_RE:
         if pat.search(text) and cc not in out.countries:
             out.countries.append(cc)
+    if _BARE_US.search(text) and "US" not in out.countries:
+        out.countries.append("US")
     for m in _TRAILING_CODE.finditer(text):
         code = m.group(1)
         cc = "US" if code in _US_STATES and code != "IN" else code
