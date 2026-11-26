@@ -32,7 +32,7 @@ measure one of those.
 - **Pooling:** for each persona, the top 10 of eight deliberately different rankers
   (dense only, lexical only, fusion only, hand-set defaults, skills-heavy,
   semantic-heavy, level-heavy, MMR-diversified) are unioned: 408 pairs, plus 100 more from two rounds of
-  pooling the tuned configurations, plus 318 for the fresh personas (826 in all).
+  pooling the tuned configurations, plus 318 for the fresh personas and 63 after the extraction fixes (889 in all).
 - **Judging:** every pair graded 0-3 against a rubric written before judging (in
   `backend/app/evals/judged.py`), reading the posting's title, company, location and
   eligibility, level, required experience, skills and description, without seeing any
@@ -219,12 +219,37 @@ What judging the fresh pools revealed (beyond the ranking weights):
   remote NLP intern had at most two roles graded 2 or higher in their entire pools: the
   catalogue barely has them. Condensed nDCG normalises per persona, so such personas can
   score high (the MERN intern scores 1.0) while being badly served; read P@10 alongside.
-- **Location gaps.** Postings located "Remote US", "US - Remote", "Remote, KSA",
-  "Argentina" or "Ontario - Remote" get no country, pass the remote filter and are not
-  counted as violations. They were graded 0 where ineligible, which nDCG reflects, but
-  violations@10 is blind to them.
-- **Experience gaps.** Phrases such as "at least 8 years" in a requirements list are
-  missed by the experience extractor, so some senior roles reach intern feeds.
+- **Location gaps (fixed in rules v11).** Postings located "Remote US", "US - Remote",
+  "Remote, KSA", "Argentina" or "Ontario - Remote" got no country, so they passed the
+  remote filter into Indian feeds and violations@10 could not see them. 26 of the 180
+  distinct roles in the fresh pools were such leaks.
+- **Experience gaps (fixed in rules v11-v12).** "Experience: 6+ years", "7+ years in
+  support", "Minimum 8-year experience", "(at least 8 years)" and "3 to 6 years" next to
+  the word experience were all missed. The same pass found two regexes whose `\b` word
+  boundaries had been saved as control characters, one of which silently disabled the
+  "unpaid post" filter.
+
+### 5c. After the extraction fixes
+
+The location parser now knows the bare code "US", US states and metros, Canadian
+provinces and about 40 more countries. Re-enriching the 10,617 open roles gave a country
+to 138 of the 149 remote roles that had none (all of them foreign-only) and an experience
+requirement to 761 roles. Boilerplate such as "a 25+ year track record" or "the next 2+
+years of growth" is ignored. On the 30 hand-labelled postings, experience accuracy went
+from 0.87 to 1.00 (macro 0.953 to 0.980). The roles the fixed index newly surfaced for
+held-out personas (63 pairs) were pooled and judged before re-measuring:
+
+| Held-out set, config | nDCG@10 before → after | P@10 before → after |
+|---|---|---|
+| test, hand-set | 0.624 → 0.633 | 0.40 → 0.43 |
+| test, released | 0.603 → 0.614 | 0.47 → 0.50 |
+| fresh, hand-set | 0.635 → 0.676 | 0.20 → 0.22 |
+| fresh, released | 0.707 → 0.763 | 0.27 → 0.30 |
+
+Both configurations improve on both sets: the fix removes ineligible roles rather than
+favouring one ranker. On the fixed index the released weights beat hand-set on fresh
+personas with p=0.03. That is a second look at the fresh set on a changed index, so it
+is supporting evidence, not the pre-registered test.
 
 ## 6. Robustness built into the engine
 
@@ -252,7 +277,7 @@ What judging the fresh pools revealed (beyond the ranking weights):
   usage.
 - 18 held-out personas still cannot separate configurations whose nDCG@10 differs by
   less than about 0.1.
-- Judgements cover 826 (persona, role) pairs across five pooling rounds; roles a future
+- Judgements cover 889 (persona, role) pairs across six pooling rounds; roles a future
   configuration surfaces will need judging again (judged@10 is reported for that).
 - Retrieval depth tuning uses pools built at the default depths, which biases
   candidate recall toward depths at or below them.
