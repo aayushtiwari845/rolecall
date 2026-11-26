@@ -23,6 +23,16 @@ CITIES: dict[str, tuple[str, list[str]]] = {
     "Chandigarh": ("IN", ["chandigarh", "mohali"]),
     "Indore": ("IN", ["indore"]),
     "Coimbatore": ("IN", ["coimbatore"]),
+    "Lucknow": ("IN", ["lucknow"]),
+    "Bhubaneswar": ("IN", ["bhubaneswar"]),
+    "Nagpur": ("IN", ["nagpur"]),
+    "Mysuru": ("IN", ["mysuru", "mysore"]),
+    "Vadodara": ("IN", ["vadodara", "baroda"]),
+    "Visakhapatnam": ("IN", ["visakhapatnam", "vizag"]),
+    "Mangaluru": ("IN", ["mangaluru", "mangalore"]),
+    "Goa": ("IN", ["goa", "panaji"]),
+    "Bhopal": ("IN", ["bhopal"]),
+    "Dehradun": ("IN", ["dehradun"]),
     "San Francisco": (
         "US",
         [
@@ -173,6 +183,116 @@ COUNTRIES: dict[str, list[str]] = {
     "CO": ["colombia"],
     "PE": ["peru"],
     "UY": ["uruguay"],
+    "RS": ["serbia"],
+    "HR": ["croatia", "hrv"],
+    "SI": ["slovenia"],
+    "SK": ["slovakia"],
+    "LT": ["lithuania"],
+    "LV": ["latvia"],
+    "CY": ["cyprus"],
+    "IS": ["iceland"],
+    "LU": ["luxembourg"],
+    "QA": ["qatar"],
+    "KW": ["kuwait"],
+    "BH": ["bahrain"],
+    "OM": ["oman"],
+    "MA": ["morocco"],
+}
+
+# Foreign cities that name no country ("Bangkok based", "Belgrade", "SF Office"). They
+# map to a country only, so an on-site role abroad stops passing as location-unknown.
+FOREIGN_CITIES: dict[str, list[str]] = {
+    "US": [
+        "sf",
+        "sf office",
+        "pleasanton",
+        "maryland",
+        "san diego",
+        "philadelphia",
+        "pittsburgh",
+        "salt lake city",
+        "raleigh",
+        "nashville",
+        "minneapolis",
+        "portland",
+        "detroit",
+    ],
+    "GB": [
+        "edinburgh",
+        "manchester",
+        "solihull",
+        "milton keynes",
+        "bristol",
+        "leeds",
+        "glasgow",
+        "oxford",
+    ],
+    "DE": [
+        "hamburg",
+        "cologne",
+        "köln",
+        "frankfurt",
+        "heidelberg",
+        "kempten",
+        "nürnberg",
+        "nuremberg",
+        "parsdorf",
+        "stuttgart",
+        "düsseldorf",
+        "dusseldorf",
+        "leipzig",
+        "dresden",
+    ],
+    "FR": ["bordeaux", "toulouse", "lyon", "nantes", "lille", "marseille", "grenoble"],
+    "CH": ["geneva", "genève", "lausanne", "neuchâtel", "basel", "bern"],
+    "NL": ["utrecht", "rotterdam", "eindhoven", "the hague", "woerden", "delft"],
+    "IT": ["milan", "milano", "rome", "roma", "turin", "torino"],
+    "IE": ["cork", "galway", "limerick"],
+    "ES": ["valencia", "seville", "malaga", "málaga"],
+    "IL": ["ramat gan", "haifa", "jerusalem", "herzliya", "petah tikva"],
+    "TH": ["bangkok", "chiang mai"],
+    "VN": ["hanoi", "ho chi minh", "da nang"],
+    "CN": ["beijing", "shanghai", "shenzhen", "hangzhou", "guangzhou"],
+    "TW": ["taipei", "hsinchu"],
+    "KR": ["seoul", "busan"],
+    "JP": ["osaka", "kyoto", "fukuoka"],
+    "MX": ["ciudad de méxico", "mexico city", "guadalajara", "monterrey"],
+    "AR": ["buenos aires"],
+    "UY": ["montevideo"],
+    "CR": ["escazu", "escazú", "san josé, costa rica"],
+    "RS": ["belgrade", "novi sad"],
+    "HU": ["budapest"],
+    "RO": ["bucharest", "cluj"],
+    "HR": ["zagreb"],
+    "SI": ["ljubljana"],
+    "IS": ["reykjavík", "reykjavik"],
+    "KW": ["kuwait city"],
+    "QA": ["doha"],
+    "NZ": ["auckland", "wellington"],
+    "PL": ["krakow", "kraków", "wroclaw", "wrocław", "gdansk", "gdańsk"],
+    "CZ": ["prague", "brno"],
+    "AT": ["vienna", "wien"],
+    "DK": ["copenhagen"],
+    "NO": ["oslo"],
+    "FI": ["helsinki"],
+    "BE": ["brussels", "antwerp", "ghent"],
+    "PT": ["oporto", "porto, portugal"],
+    "GR": ["athens"],
+    "TR": ["istanbul", "ankara"],
+    "EG": ["cairo"],
+    "KE": ["nairobi"],
+    "NG": ["lagos"],
+    "ZA": ["cape town", "johannesburg"],
+    "PH": ["manila", "cebu"],
+    "MY": ["kuala lumpur", "penang"],
+    "ID": ["bandung", "bali"],
+    "AU": ["brisbane", "perth", "adelaide", "canberra"],
+    "CA": ["ottawa", "calgary", "waterloo", "edmonton"],
+    "BR": ["rio de janeiro", "belo horizonte", "florianópolis", "curitiba"],
+    "CO": ["bogotá", "bogota", "medellín", "medellin"],
+    "CL": ["santiago, chile"],
+    "AE": ["abu dhabi"],
+    "SA": ["riyadh", "jeddah"],
 }
 
 # Regions that remote postings commonly restrict to.
@@ -195,6 +315,10 @@ _CITY_RE = [
 _COUNTRY_RE = [
     (cc, re.compile(r"(?<![\w.])(" + "|".join(re.escape(a) for a in names) + r")(?![\w])", re.I))
     for cc, names in COUNTRIES.items()
+]
+_FOREIGN_CITY_RE = [
+    (cc, re.compile(r"(?<![\w])(" + "|".join(re.escape(a) for a in names) + r")(?![\w])", re.I))
+    for cc, names in FOREIGN_CITIES.items()
 ]
 _REGION_RE = [
     (r, re.compile(r"\b(" + "|".join(re.escape(a) for a in names) + r")\b", re.I))
@@ -281,6 +405,9 @@ def parse_location(raw: str | None, country_hints: list[str] | None = None) -> P
             if cc not in out.countries:
                 out.countries.append(cc)
     for cc, pat in _COUNTRY_RE:
+        if pat.search(text) and cc not in out.countries:
+            out.countries.append(cc)
+    for cc, pat in _FOREIGN_CITY_RE:
         if pat.search(text) and cc not in out.countries:
             out.countries.append(cc)
     if _BARE_US.search(text) and "US" not in out.countries:

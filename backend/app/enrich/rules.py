@@ -15,7 +15,7 @@ from app.enrich.locations import parse_location
 from app.enrich.skills import extract_skills
 from app.ingest.types import RawJob
 
-RULES_VERSION = 14
+RULES_VERSION = 15
 
 # ---------------------------------------------------------------- tech filter
 _TECH_TITLE = re.compile(
