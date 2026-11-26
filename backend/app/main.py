@@ -72,3 +72,16 @@ def health():
     with session_scope() as s:
         s.execute(text("select 1"))
     return {"ok": True}
+
+
+@app.get("/api/health/index")
+def index_health():
+    """Is crawling working? 503 when not, so a free uptime monitor can alert on it."""
+    from fastapi.responses import JSONResponse
+
+    from app.db import session_scope
+    from app.ingest.maintenance import health as index_health_report
+
+    with session_scope() as s:
+        report = index_health_report(s)
+    return JSONResponse(report, status_code=200 if report["ok"] else 503)
