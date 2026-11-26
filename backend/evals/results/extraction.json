@@ -1,7 +1,7 @@
 {
   "suite": "extraction",
-  "run_at": "2026-11-26T01:22:07.703896+00:00",
-  "git_sha": "ac56db3",
+  "run_at": "2026-11-26T15:56:18.554295+00:00",
+  "git_sha": "f69bd0e",
   "results": {
     "rules": {
       "seniority_acc": 1.0,
