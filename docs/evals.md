@@ -16,14 +16,14 @@ Run 2026-11-26 18:16 UTC at commit `dfe3498`.
 
 Known-item search over the live index: queries written for a stratified sample of roles; the role (or a duplicate of it) should come back near the top.
 
-Run 2026-11-25 15:12 UTC at commit `22abd16`.
+Run 2026-11-26 19:19 UTC at commit `b83469a`.
 
 | variant | recall@10 | recall@50 | mrr@10 | ndcg@10 | p50_ms | p95_ms | queries | query_source |
 |---|---|---|---|---|---|---|---|---|
-| lexical | 0.288 | 0.368 | 0.1968 | 0.2154 | 136.7 | 302.9 | 150 | template |
-| dense | 0.29 | 0.4267 | 0.1546 | 0.187 | 282.6 | 322.4 | 150 | template |
-| hybrid_rrf | 0.3847 | 0.5647 | 0.2511 | 0.2805 | 306.7 | 382.1 | 150 | template |
-| hybrid_rerank | 0.433 | 0.6497 | 0.2435 | 0.2872 | 3592.4 | 7179.8 | 150 | template |
+| lexical | 0.3006 | 0.4139 | 0.201 | 0.2178 | 158.2 | 299.8 | 150 | template |
+| dense | 0.2267 | 0.4706 | 0.1425 | 0.1608 | 297.7 | 378.8 | 150 | template |
+| hybrid_rrf | 0.3872 | 0.5939 | 0.2306 | 0.2624 | 344.6 | 431.7 | 150 | template |
+| hybrid_rerank | 0.4122 | 0.6472 | 0.2451 | 0.2812 | 3620.2 | 6626.9 | 150 | template |
 
 ## Recommendation
 
