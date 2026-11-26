@@ -32,7 +32,7 @@ measure one of those.
 - **Pooling:** for each persona, the top 10 of eight deliberately different rankers
   (dense only, lexical only, fusion only, hand-set defaults, skills-heavy,
   semantic-heavy, level-heavy, MMR-diversified) are unioned: 408 pairs, plus 100 more from two rounds of
-  pooling the tuned configurations, plus 318 for the fresh personas and 63 after the extraction fixes (889 in all).
+  pooling the tuned configurations, plus 318 for the fresh personas, 63 after the extraction fixes and 13 after the seniority fixes (902 in all).
 - **Judging:** every pair graded 0-3 against a rubric written before judging (in
   `backend/app/evals/judged.py`), reading the posting's title, company, location and
   eligibility, level, required experience, skills and description, without seeing any
@@ -251,6 +251,43 @@ favouring one ranker. On the fixed index the released weights beat hand-set on f
 personas with p=0.03. That is a second look at the fresh set on a changed index, so it
 is supporting evidence, not the pre-registered test.
 
+### 5d. Seniority fixes (rules v13)
+
+The feed still showed an "SAP Business Data Cloud Architect" (Executive level, "Overall,
+10-14 years") to an ML intern, tagged new grad. It had three causes, each shared by other
+roles:
+
+- The first experience ask won, and here that was a per-skill "Min 1-2 yrs of hands on
+  Exp". A stated overall or total now takes priority; "Min 4 yrs" without a dot and
+  fractional years ("1.5 to 3 years") are read too.
+- Seniority words in titles were missed: "Architect", "Leader", "Expert", ladder numbers
+  written "Engineer- II", "Engineer-I", "Scientist II" or with Roman numerals, the Dutch
+  "Medior", and "Associate SDE". Titles joined with underscores
+  ("Software_Architect_EBH_10+Years") hid every word from the patterns, and years stated
+  in a title are now used.
+- The board's own "Experience level:" field was ignored. Executive and Director now mean
+  senior and staff; "Mid-Senior level" lifts a role out of new grad and junior; "Entry
+  level" and "Internship" fill in when nothing else is known. "Associate" is left out,
+  because Bosch uses it for everyone from interns to 10-year architects.
+
+Across 8,476 open tech roles, 128 seniority tags changed: 87 previously unknown roles got
+a level, 40 moved up (16 of them out of new grad or junior) and one moved down:
+"Software Engineer-1" now reads as ladder level one (its "2 years" ask still triggers the
+experience penalty for freshers). The 13 pairs this surfaced were
+judged before re-measuring:
+
+| Held-out set, config | nDCG@10 v12 → v13 | P@10 v12 → v13 |
+|---|---|---|
+| test, hand-set | 0.633 → 0.707 | 0.43 → 0.50 |
+| test, released | 0.614 → 0.652 | 0.50 → 0.53 |
+| fresh, hand-set | 0.676 → 0.679 | 0.22 → 0.23 |
+| fresh, released | 0.763 → 0.774 | 0.30 → 0.31 |
+
+All four improve. Released weights stay ahead on fresh personas (p=0.016, again a later
+look, not pre-registered) and behind on test (0.652 vs 0.707, p=0.53, not significant).
+The test gap widened because hand-set weights gained more there, so on 18 held-out
+personas the two configurations are still not distinguishable.
+
 ## 6. Robustness built into the engine
 
 - Cold start: no resume and no history falls back to the freshest roles inside the
@@ -277,7 +314,7 @@ is supporting evidence, not the pre-registered test.
   usage.
 - 18 held-out personas still cannot separate configurations whose nDCG@10 differs by
   less than about 0.1.
-- Judgements cover 889 (persona, role) pairs across six pooling rounds; roles a future
+- Judgements cover 902 (persona, role) pairs across seven pooling rounds; roles a future
   configuration surfaces will need judging again (judged@10 is reported for that).
 - Retrieval depth tuning uses pools built at the default depths, which biases
   candidate recall toward depths at or below them.
