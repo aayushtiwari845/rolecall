@@ -205,6 +205,16 @@ class LLMRouter:
                 )
                 if e.status_code in (401, 403):
                     self._cooldown[p.name] = time.monotonic() + 3600
+                elif model_retired(e.status_code, str(e)):
+                    # Free tiers retire model names often; stop paying the round trip on
+                    # every call and say exactly what to change.
+                    self._cooldown[p.name] = time.monotonic() + 6 * 3600
+                    log.warning(
+                        "%s no longer serves %r; set LLM_MODELS to a current model. "
+                        "Falling back to the next provider for 6h.",
+                        p.name,
+                        model,
+                    )
                 continue
             choice = resp.choices[0].message
             calls = [
@@ -354,6 +364,18 @@ class LLMRouter:
 
 
 _FENCE = re.compile(r"^```(?:json)?\s*|\s*```$", re.M)
+
+
+_RETIRED = re.compile(
+    r"decommission|deprecat|no longer (?:supported|available)|model[_ ]not[_ ]found|"
+    r"does not exist|not found|unknown model|invalid model|no endpoints found",
+    re.I,
+)
+
+
+def model_retired(status: int, message: str) -> bool:
+    """A provider saying this model name is gone (as opposed to a bad request)."""
+    return status in (400, 404, 410) and bool(_RETIRED.search(message))
 
 
 def parse_json(text: str) -> Any:
