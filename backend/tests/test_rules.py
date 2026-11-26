@@ -431,3 +431,24 @@ def test_hiring_thread_department_lists_are_not_roles(title):
 )
 def test_cohort_years_are_new_grad_in_any_year(title):
     assert rules.seniority(title, None, None) == "new_grad"
+
+
+@pytest.mark.parametrize(
+    "raw,country",
+    [
+        ("Bangkok based", "TH"),
+        ("Belgrade, Serbia", "RS"),
+        ("Strava SF", "US"),
+        ("Hanoi OR Ho Chi Minh City", "VN"),
+        ("Geneva", "CH"),
+        ("Doha, Qatar", "QA"),
+        ("Lucknow", "IN"),
+    ],
+)
+def test_bare_city_names_give_a_country(raw, country):
+    assert country in parse_location(raw).countries
+
+
+def test_common_words_are_not_cities():
+    for raw in ["Hybrid", "In-Office", "Reading the docs", "Go developer"]:
+        assert parse_location(raw).countries == []
