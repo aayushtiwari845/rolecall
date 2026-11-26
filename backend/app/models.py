@@ -96,6 +96,8 @@ class Company(Base):
     logo_url: Mapped[str | None] = mapped_column(Text)
     tags: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # When discovery last probed the ATS APIs for this company's own boards.
+    probed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     sources: Mapped[list[CompanySource]] = relationship(back_populates="company")
 
