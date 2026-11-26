@@ -28,11 +28,11 @@ jobs:
       ENV: production
       MODEL_CACHE_DIR: /tmp/models
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
         with:
           version: "0.12.6"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: /tmp/models
           key: models-bge-small-v1
