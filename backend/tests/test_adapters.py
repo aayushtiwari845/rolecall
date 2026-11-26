@@ -222,3 +222,11 @@ def test_polite_client_respects_robots():
             await client.aclose()
 
     assert asyncio.run(run()) == (False, True)
+
+
+def test_double_escaped_html_is_fully_stripped():
+    from app.ingest.text import html_to_text
+
+    raw = "<div>&lt;p&gt;&lt;strong&gt;AI Engineer&lt;/strong&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Python&lt;/li&gt;&lt;/ul&gt;</div>"
+    out = html_to_text(raw)
+    assert "<" not in out and "AI Engineer" in out and "• Python" in out
