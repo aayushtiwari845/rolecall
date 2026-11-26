@@ -380,3 +380,54 @@ def test_unpaid_posts_are_not_jobs():
 )
 def test_company_boilerplate_is_not_an_experience_requirement(text):
     assert rules.years_of_experience(text) == (None, None)
+
+
+def test_a_bare_years_line_is_the_experience_field():
+    text = "Expected skill set: Linux internals, C.\n\nAdditional Information\n5 to 8 years\n"
+    assert rules.years_of_experience(text) == (5, 8)
+
+
+def _remote_job(location_raw, body):
+    return RawJob(
+        source_kind="greenhouse",
+        source_job_id="1",
+        company_name="Canonical",
+        title="Software Engineer - Python - Container Images",
+        url="https://example.com/1",
+        remote_hint="remote",
+        location_raw=location_raw,
+        description_text="Build and maintain container images with Python. " * 5 + body,
+    )
+
+
+def test_body_location_narrows_a_multi_region_board_listing():
+    raw = "Home Based - Americas; Home Based - APAC; Home based - EMEA"
+    assert rules.enrich(_remote_job(raw, "\n**Location**: EMEA\n")).countries == ["R:EU"]
+    # Without a narrower line the board's list stands.
+    assert set(rules.enrich(_remote_job(raw, "")).countries) == {"R:EU", "R:AMER", "R:APAC"}
+
+
+@pytest.mark.parametrize("title", ["engineering, GTM, product, sales", "Multiple roles"])
+def test_hiring_thread_department_lists_are_not_roles(title):
+    job = RawJob(
+        source_kind="hn",
+        source_job_id="1",
+        company_name="Rootly",
+        title=title,
+        url="https://example.com/1",
+        description_text=f"Rootly | {title} | Remote\nOn-call and incident response. " * 4,
+    )
+    assert not rules.enrich(job).is_tech
+
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "Software Engineer, 2031 Start",
+        "SDE - 2026 Batch",
+        "Backend Developer (2027 passouts)",
+        "Graduate Engineer - Class of 2034",
+    ],
+)
+def test_cohort_years_are_new_grad_in_any_year(title):
+    assert rules.seniority(title, None, None) == "new_grad"
