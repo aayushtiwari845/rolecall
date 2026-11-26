@@ -15,7 +15,7 @@ from app.enrich.locations import parse_location
 from app.enrich.skills import extract_skills
 from app.ingest.types import RawJob
 
-RULES_VERSION = 12
+RULES_VERSION = 13
 
 # ---------------------------------------------------------------- tech filter
 _TECH_TITLE = re.compile(
@@ -193,24 +193,40 @@ _INTERN = re.compile(
     re.I,
 )
 _NEW_GRAD = re.compile(
-    r"new grad|graduate|entry[- ]level|fresher|university|campus|early career|associate (?:software|engineer|developer|data)|\bsde[- ]?(?:i|1)\b|\b(?:engineer|developer) (?:i|1)\b|\blevel (?:i|1)\b|\bl1\b|\bjunior\b|\bjr\.?\b|20(?:2[5-9]) start",
+    r"new grad|graduate|entry[- ]level|fresher|university|campus|early career|associate (?:software|engineer|developer|data|sde)|\bsde[- ]?(?:i|1)\b|\b(?:engineer|developer) (?:i|1)\b|\blevel (?:i|1)\b|\bl1\b|\bjunior\b|\bjr\.?\b|20(?:2[5-9]) start",
     re.I,
 )
 _STAFF = re.compile(
     r"\bstaff\b|principal|distinguished|\bfellow\b|director|head of|\bvp\b|vice president|chief|\bcto\b|engineering manager|manager,|\bmanager\b",
     re.I,
 )
+# A ladder number after the job noun: "Engineer II", "Site Reliability Engineer- II",
+# "Software Engineer-I", "Applied Scientist II", "Software Engineer Ⅰ".
+_LADDER = r"\b(?:engineer|developer|scientist|analyst)\s*[-–]?\s*"
 _SENIOR = re.compile(
-    r"\bsenior\b|\bsr\.?\b|\blead\b|\bsde[- ]?(?:iii|3)\b|\b(?:engineer|developer) (?:iii|iv|3|4)\b|\bl[4-6]\b",
+    r"\bsenior\b|\bsr\.?\b|\blead\b|\bleader\b|\barchitect\b|\bexpert\b|\bsde[- ]?(?:iii|3)\b|"
+    + _LADDER
+    + r"(?:iii|iv|3|4|Ⅲ|Ⅳ)(?![\w.-])|\bl[4-6]\b",
     re.I,
 )
 _MID = re.compile(
-    r"\bsde[- ]?(?:ii|2)\b|\b(?:engineer|developer) (?:ii|2)\b|\bmid[- ]level\b|\bintermediate\b",
+    r"\bsde[- ]?(?:ii|2)\b|" + _LADDER + r"(?:ii|2|Ⅱ)(?![\w.-])|\bmid[- ]level\b|\bintermediate\b|\bmedior\b",
     re.I,
 )
+_LADDER_ONE = re.compile(_LADDER + r"(?:i|1|Ⅰ)(?![\w.-])", re.I)
+# A board's own level field, e.g. LinkedIn-style "Experience level: Mid-Senior level".
+# "Associate" is left out: boards use it for everything from interns to architects.
+_LISTED_LEVEL = re.compile(
+    r"(?:experience|seniority|career|job) level\s*[:\-–]\s*"
+    r"(mid[- ]senior|executive|director|entry|internship)",
+    re.I,
+)
+# Several asks: "Overall, 10-14 years of experience" is the requirement, a later
+# "Min 1-2 yrs of hands on Exp in this skill" is not.
+_OVERALL = re.compile(r"(?:overall|total|in total)\W{0,3}(?:\w+\W+){0,3}$", re.I)
 
 _YOE = re.compile(
-    r"(?:(?:minimum|min\.?|at least|over)\s+(?:of\s+)?)?(\d{1,2})(?:\.\d)?\s*(?:\+|plus)?\s*(?:(?:-|–|to)\s*(\d{1,2})\s*\+?\s*)?"
+    r"(?:(?:minimum|min\.?|at least|over)\s+(?:of\s+)?)?(\d{1,2}(?:\.\d)?)\s*(?:\+|plus)?\s*(?:(?:-|–|to)\s*(\d{1,2})\s*\+?\s*)?"
     r"(?:years?|yrs?)(?:'s)?(?:\s+of)?(?:\s+[\w/+#.-]+){0,5}?\s+(?:experience|exp\b|industry|professional|work)",
     re.I,
 )
@@ -226,7 +242,7 @@ _YOE_MORE = [
         re.I,
     ),
     # "Minimum 8-year experience", "(at least 8 years)", "4 years' minimum"
-    re.compile(r"(?:minimum|at least|min\.)\s+(?:of\s+)?(\d{1,2})\s*\+?\s*[- ]?" + _YR, re.I),
+    re.compile(r"(?:minimum|at least|\bmin\b\.?)\s+(?:of\s+)?(\d{1,2})\s*\+?\s*[- ]?" + _YR, re.I),
     re.compile(r"(\d{1,2})\s*\+?\s*" + _YR + r"\s+minimum", re.I),
     # "7+ years in technical support", "5+ years building backend services", "with 4+ yrs"
     re.compile(
@@ -235,7 +251,7 @@ _YOE_MORE = [
     ),
 ]
 # A bare range ("3 to 6 years", "8 - 12 years") counts only next to the word experience.
-_YOE_RANGE = re.compile(r"(\d{1,2})\s*(?:-|–|to)\s*(\d{1,2})\s*\+?\s*" + _YR, re.I)
+_YOE_RANGE = re.compile(r"(?<![\d.])(\d{1,2}(?:\.\d)?)\s*(?:-|–|to)\s*(\d{1,2})\s*\+?\s*" + _YR, re.I)
 _EXPERIENCE_NEAR = re.compile(r"experien|\bexp\b", re.I)
 # Company boilerplate, not a requirement: "a 25+ year track record", "the next 2+ years
 # of growth", "founded 10+ years ago".
@@ -267,42 +283,61 @@ def years_of_experience(text: str) -> tuple[float | None, float | None]:
         hi = float(m.group(2)) if m.lastindex and m.lastindex >= 2 and m.group(2) else None
         if lo > 25 or (hi is not None and (hi < lo or hi > 30)):
             continue
-        # "1+ years ... 5+ years preferred": a later "preferred" does not override.
-        found.append((m.start(), lo, hi))
+        # "1+ years ... 5+ years preferred": a later "preferred" does not override,
+        # but a stated overall total does.
+        overall = bool(_OVERALL.search(text[max(0, m.start() - 40) : m.start()]))
+        found.append((not overall, m.start(), lo, hi))
     if not found:
         return None, None
-    _, lo, hi = min(found)
+    _, _, lo, hi = min(found)
     return lo, hi
 
 
 def seniority(
     title: str, min_yoe: float | None, employment_hint: str | None, text: str = ""
 ) -> str | None:
+    # Some boards join title words with underscores ("Software_Architect_EBH_10+Years"),
+    # which would hide them from every \b pattern below.
+    title = re.sub(r"[_|]+", " ", title)
     if employment_hint == "intern" or _INTERN.search(title):
         return "intern"
     if _STAFF.search(title):
         return "staff_plus"
     if _SENIOR.search(title):
         return "senior"
-    if _NEW_GRAD.search(title):
+    if _NEW_GRAD.search(title) or _LADDER_ONE.search(title):
         return "new_grad" if not re.search(r"junior|jr", title, re.I) else "junior"
     if _MID.search(title):
         return "mid"
+    listed = _LISTED_LEVEL.search(text[:3000])
+    listed = listed.group(1).lower().replace(" ", "-") if listed else None
+    if listed == "director":
+        return "staff_plus"
+    if listed == "executive":
+        return "senior"
+    level = None
     if min_yoe is not None:
         if min_yoe <= 1:
-            return "new_grad"
-        if min_yoe <= 2:
-            return "junior"
-        if min_yoe <= 5:
-            return "mid"
-        return "senior"
-    if re.search(
+            level = "new_grad"
+        elif min_yoe <= 2:
+            level = "junior"
+        elif min_yoe <= 5:
+            level = "mid"
+        else:
+            level = "senior"
+    elif re.search(
         r"new grad|recent graduates?|freshers? (?:welcome|can apply)|0-1 years?|no experience required",
         text[:4000],
         re.I,
     ):
+        level = "new_grad"
+    if listed == "mid-senior" and level in (None, "new_grad", "junior"):
+        return "mid"  # the board says experienced hire; a narrow "1+ years of X" does not
+    if level is None and listed == "entry":
         return "new_grad"
-    return None  # no signal: unknown, the LLM pass or ranking handles it
+    if level is None and listed == "internship":
+        return "intern"
+    return level  # None: no signal, the LLM pass or ranking handles it
 
 
 # ---------------------------------------------------------------- employment / remote
@@ -539,6 +574,9 @@ def enrich(job: RawJob) -> Enrichment:
     if _NOT_A_JOB.search(text[:1500]):
         tech = False  # unpaid, equity-only or "looking for contributors" posts
     lo, hi = years_of_experience(text)
+    t_lo, t_hi = years_of_experience(re.sub(r"[_|]+", " ", title))
+    if t_lo is not None:  # "Software_Architect_EBH_10+Years": the title states it
+        lo, hi = t_lo, t_hi
     level = seniority(title, lo, job.employment_hint, text)
     loc = parse_location(job.location_raw, job.countries_hint)
     remote = remote_type(job.remote_hint, job.location_raw or "", title, text)
