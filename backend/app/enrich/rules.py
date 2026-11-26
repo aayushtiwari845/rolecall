@@ -15,7 +15,7 @@ from app.enrich.locations import parse_location
 from app.enrich.skills import extract_skills
 from app.ingest.types import RawJob
 
-RULES_VERSION = 10
+RULES_VERSION = 11
 
 # ---------------------------------------------------------------- tech filter
 _TECH_TITLE = re.compile(
@@ -217,16 +217,44 @@ _YOE = re.compile(
 _YOE_ALT = re.compile(
     r"experience\s*(?:of|:)?\s*(\d{1,2})\s*(?:-|–|to)\s*(\d{1,2})\s*(?:years|yrs)", re.I
 )
+_YR = r"(?:years?|yrs?)(?:'s?|’s?)?"
+_YOE_MORE = [
+    # "Experience: 6+ years in ...", "Experience level: 6-8 yrs", "Experience : 18+ years"
+    re.compile(
+        r"experience(?:\s+level)?\s*[:\-–]\s*(?:minimum\s+(?:of\s+)?|min\.?\s+|at least\s+)?"
+        r"(\d{1,2})\s*\+?\s*(?:(?:-|–|to)\s*(\d{1,2})\s*\+?\s*)?" + _YR,
+        re.I,
+    ),
+    # "Minimum 8-year experience", "(at least 8 years)", "4 years' minimum"
+    re.compile(r"(?:minimum|at least|min\.)\s+(?:of\s+)?(\d{1,2})\s*\+?\s*[- ]?" + _YR, re.I),
+    re.compile(r"(\d{1,2})\s*\+?\s*" + _YR + r"\s+minimum", re.I),
+    # "7+ years in technical support", "5+ years building backend services", "with 4+ yrs"
+    re.compile(
+        r"(\d{1,2})\s*(?:\+|plus)\s*" + _YR + r"(?![a-z])(?!\s+(?:ago|old|of history|in business))",
+        re.I,
+    ),
+]
+# A bare range ("3 to 6 years", "8 - 12 years") counts only next to the word experience.
+_YOE_RANGE = re.compile(r"(\d{1,2})\s*(?:-|–|to)\s*(\d{1,2})\s*\+?\s*" + _YR, re.I)
+_EXPERIENCE_NEAR = re.compile(r"experien|\bexp\b", re.I)
 
 
 def years_of_experience(text: str) -> tuple[float | None, float | None]:
     """The first stated requirement wins: postings lead with the core ask
     ("5+ years of software engineering") before narrower ones ("2+ years of React")."""
     found: list[tuple[int, float, float | None]] = []
-    for m in list(_YOE.finditer(text)) + list(_YOE_ALT.finditer(text)):
+    matches = list(_YOE.finditer(text)) + list(_YOE_ALT.finditer(text))
+    for pat in _YOE_MORE:
+        matches += pat.finditer(text)
+    matches += [
+        m
+        for m in _YOE_RANGE.finditer(text)
+        if _EXPERIENCE_NEAR.search(text[max(0, m.start() - 120) : m.end() + 60])
+    ]
+    for m in matches:
         lo = float(m.group(1))
-        hi = float(m.group(2)) if m.group(2) else None
-        if lo > 15 or (hi is not None and (hi < lo or hi > 20)):
+        hi = float(m.group(2)) if m.lastindex and m.lastindex >= 2 and m.group(2) else None
+        if lo > 25 or (hi is not None and (hi < lo or hi > 30)):
             continue
         # "1+ years ... 5+ years preferred": a later "preferred" does not override.
         found.append((m.start(), lo, hi))
@@ -474,7 +502,7 @@ _HN_ROLE = re.compile(
 
 
 _NOT_A_JOB = re.compile(
-    r"looking for (?:contributors|co-?founders)|revenue[- ]share|equity[- ]only|unpaid",
+    r"looking for (?:contributors|co-?founders)|revenue[- ]share|equity[- ]only|\bunpaid\b",
     re.I,
 )
 
