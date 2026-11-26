@@ -115,7 +115,7 @@ The methodology (pooling, rubric, metrics, statistics, tuning and its full log) 
 
 | Suite | What it measures |
 |---|---|
-| **recsys** | The main one. 28 personas (10 dev for tuning, 6 test, 12 fresh personas written after tuning and judged blind), 826 (persona, role) pairs pooled from eight rankers plus the tuned configs and graded 0–3 against a written rubric. Graded nDCG@5/10/20, P@10, MAP, MRR, bpref, Success@5, violations of hard expectations (level, experience, location), diversity, exposure Gini, stability under profile edits, latency; 95% bootstrap CIs, paired randomisation tests, per-segment breakdowns. |
+| **recsys** | The main one. 28 personas (10 dev for tuning, 6 test, 12 fresh personas written after tuning and judged blind), 889 (persona, role) pairs pooled from eight rankers plus the tuned configs and graded 0–3 against a written rubric. Graded nDCG@5/10/20, P@10, MAP, MRR, bpref, Success@5, violations of hard expectations (level, experience, location), diversity, exposure Gini, stability under profile edits, latency; 95% bootstrap CIs, paired randomisation tests, per-segment breakdowns. |
 | **retrieval** | Known-item search: for a stratified sample of live roles, generate the query a student would type (LLM or templates), measure Recall@10/50, MRR@10, nDCG@10 and latency for lexical, dense, hybrid RRF and hybrid + reranker. |
 | **recommendation** | Persona feeds (backend new grad, ML intern, data engineer, frontend, SRE). Each variant's top-k is pooled and judged once on a 0–3 scale (LLM judge or transparent rule judge); nDCG@10, P@10, company diversity, coverage. Ablations: dense only, lexical only, RRF only, no experience penalty, no diversity, full ranker. |
 | **extraction** | Field accuracy (level, role, work mode, employment type, min years) on hand-labelled real postings: rules vs rules + LLM. |
@@ -136,8 +136,11 @@ all 18 held-out personas the difference is +0.04 and not significant. Retrieval 
 (feed latency ~245 → ~150 ms, same quality) and search fusion without the CPU cross-encoder
 (~3 s saved, no significant quality loss) shipped too. Tuning found two bugs (an O(n³) MMR,
 now vectorised and 25–50× faster; a dev/test split that separated role families), and
-judging the fresh pools found location and experience extraction gaps (see
-[docs/evaluation.md](docs/evaluation.md#5b-fresh-held-out-personas-pre-registered)).
+judging the fresh pools found location and experience extraction gaps. Fixing those
+("Remote US" roles leaking into Indian feeds; "7+ years in support" read as no
+requirement) lifted fresh-persona nDCG@10 to 0.76 and P@10 to 0.30, and experience
+accuracy on hand-labelled postings from 0.87 to 1.00 (see
+[docs/evaluation.md](docs/evaluation.md#5c-after-the-extraction-fixes)).
 
 Latest numbers: see [`backend/evals/results/`](backend/evals/results) and [docs/evals.md](docs/evals.md).
 
