@@ -32,7 +32,7 @@ measure one of those.
 - **Pooling:** for each persona, the top 10 of eight deliberately different rankers
   (dense only, lexical only, fusion only, hand-set defaults, skills-heavy,
   semantic-heavy, level-heavy, MMR-diversified) are unioned: 408 pairs, plus 100 more from two rounds of
-  pooling the tuned configurations, plus 318 for the fresh personas, 63 after the extraction fixes and 13 after the seniority fixes (902 in all).
+  pooling the tuned configurations, plus 318 for the fresh personas, 63 after the extraction fixes, 13 after the seniority fixes and 7 after rules v14 (909 in all).
 - **Judging:** every pair graded 0-3 against a rubric written before judging (in
   `backend/app/evals/judged.py`), reading the posting's title, company, location and
   eligibility, level, required experience, skills and description, without seeing any
@@ -288,6 +288,24 @@ look, not pre-registered) and behind on test (0.652 vs 0.707, p=0.53, not signif
 The test gap widened because hand-set weights gained more there, so on 18 held-out
 personas the two configurations are still not distinguishable.
 
+### 5e. Last extraction gaps from judging (rules v14)
+
+Judging the v13 pools turned up three more patterns, each fixed with a test:
+
+- A posting whose only experience statement is a bare line, "5 to 8 years", under
+  "Additional Information".
+- A board listing "Home Based - Americas; APAC; EMEA" whose body says "**Location**:
+  EMEA". The body's narrower line now wins, so the role no longer reaches Indian feeds.
+- A hiring-thread post whose header only lists departments ("engineering, GTM,
+  product, sales"): there is no role to match, so it is dropped.
+
+The same pass replaced a hard-coded "2025-2029 start" with cohort years in any decade
+("2031 start", "2026 batch", "2027 passouts"). On the index, 26 experience asks and 17
+levels were filled in, two remote roles were narrowed and one post dropped. After
+judging the 7 pairs this surfaced, held-out scores barely moved (fresh released 0.774 →
+0.778, test released 0.652 → 0.652, both hand-set within ±0.015), as expected for fixes
+that touch a handful of roles.
+
 ## 6. Robustness built into the engine
 
 - Cold start: no resume and no history falls back to the freshest roles inside the
@@ -314,7 +332,7 @@ personas the two configurations are still not distinguishable.
   usage.
 - 18 held-out personas still cannot separate configurations whose nDCG@10 differs by
   less than about 0.1.
-- Judgements cover 902 (persona, role) pairs across seven pooling rounds; roles a future
+- Judgements cover 909 (persona, role) pairs across eight pooling rounds; roles a future
   configuration surfaces will need judging again (judged@10 is reported for that).
 - Retrieval depth tuning uses pools built at the default depths, which biases
   candidate recall toward depths at or below them.
