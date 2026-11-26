@@ -61,10 +61,69 @@ def test_role_family(title, family):
         ("Backend Engineer", 0, "new_grad"),
         ("Backend Engineer", 3, "mid"),
         ("Backend Engineer", 8, "senior"),
+        ("Site Reliability Engineer- II", None, "mid"),
+        ("Applied Scientist II - Recommendation", 2, "mid"),
+        ("Software Engineer-I", None, "new_grad"),
+        ("Associate SDE", None, "new_grad"),
+        ("Software Engineer Ⅰ", None, "new_grad"),
+        ("Medior Fullstack Developer", 1, "mid"),
+        ("DevOps Team Leader", 2, "senior"),
+        ("SAP Business Data Cloud Architect with AI", 1, "senior"),
+        ("Software_Architect_EBH", None, "senior"),
+        ("IN_RBAI_Software Automation expert_IN", 1, "senior"),
+        ("Embedded Test Engineer (1-year contract)", None, None),
     ],
 )
 def test_seniority(title, yoe, expected):
     assert rules.seniority(title, yoe, None) == expected
+
+
+@pytest.mark.parametrize(
+    "text,yoe,expected",
+    [
+        ("Experience level: Executive\nDesign SAP architectures.", None, "senior"),
+        ("Experience level: Director", 3, "staff_plus"),
+        # The board says experienced hire; a narrow skill ask does not make it new-grad.
+        ("Experience level: Mid-Senior level\n1+ years of SQL experience", 1, "mid"),
+        ("Experience level: Mid-Senior level", 8, "senior"),
+        ("Experience level: Entry level", None, "new_grad"),
+        ("Experience level: Entry level", 3, "mid"),
+        ("Experience level: Associate", None, None),
+    ],
+)
+def test_board_level_field(text, yoe, expected):
+    assert rules.seniority("Data Engineer", yoe, None, text) == expected
+
+
+def test_board_level_field_does_not_override_the_title():
+    text = "Experience level: Mid-Senior level"
+    assert rules.seniority("Junior Backend Developer", None, None, text) == "junior"
+
+
+def test_overall_experience_beats_a_narrower_skill_ask():
+    text = (
+        "SAP HANA Cloud Mandatory Min 2 yrs. of hands on Exp in this skill\n"
+        "SAP AI Preferred Min 1-2 yrs. of hands on Exp in this skill\n"
+        "Experience : Overall, 10-14 years of experience in implementation of SAP Analytics."
+    )
+    assert rules.years_of_experience(text) == (10, 14)
+
+
+def test_fractional_years():
+    assert rules.years_of_experience("1.5 to 3 years of hands-on experience in Data") == (1.5, 3)
+
+
+def test_title_states_the_experience():
+    job = RawJob(
+        source_kind="workday",
+        source_job_id="1",
+        company_name="Bosch",
+        title="Software_Architect_EBH_10+Years",
+        url="https://example.com/1",
+        description_text="Design embedded software for braking systems. " * 5,
+    )
+    e = rules.enrich(job)
+    assert e.min_yoe == 10 and e.seniority == "senior"
 
 
 @pytest.mark.parametrize(
