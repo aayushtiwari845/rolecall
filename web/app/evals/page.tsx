@@ -46,8 +46,12 @@ const SUITES: { id: string; title: string; how: string; best: string[] }[] = [
   },
 ];
 
-function fmt(v: unknown): string {
-  if (typeof v === "number") return v <= 1 && v >= 0 && !Number.isInteger(v) ? v.toFixed(3) : String(v);
+function fmt(v: unknown, col = ""): string {
+  if (typeof v === "number") {
+    if (Number.isInteger(v)) return v.toLocaleString("en-IN");
+    if (/(^|_)ms$|latency/.test(col)) return Math.round(v).toLocaleString("en-IN");
+    return Math.abs(v) < 10 ? v.toFixed(3) : v.toFixed(1);
+  }
   if (v == null) return "–";
   if (typeof v === "object") return "…";
   return String(v);
@@ -88,7 +92,7 @@ export default function EvalsPage() {
                   <p className="mt-3 text-sm leading-relaxed text-ink-2">{s.how}</p>
                   <p className="mt-3 text-xs text-ink-3">Last run {ago(rows[0].created_at)}</p>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="min-w-0 overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-rule-strong text-left">
@@ -109,7 +113,7 @@ export default function EvalsPage() {
                             const best = s.best.includes(c) && typeof v === "number" && v === bestOf(c) && rows.length > 1;
                             return (
                               <td key={c} className={`px-2 py-3 text-right tabular-nums ${best ? "font-bold text-green" : "text-ink-2"}`}>
-                                {fmt(v)}
+                                {fmt(v, c)}
                               </td>
                             );
                           })}
