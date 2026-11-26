@@ -45,6 +45,8 @@ SOURCE_PRIORITY = {
 }
 PARTIAL_STALE_DAYS = 7
 AUTO_DISABLE_AFTER = 5
+# A complete board listing under this share of its open roles is not trusted for closing.
+SUSPICIOUS_DROP_RATIO = 0.2
 
 
 @dataclass
@@ -54,6 +56,7 @@ class RunStats:
     updated: int = 0
     closed: int = 0
     skipped_non_tech: int = 0
+    suspect: bool = False
 
 
 def seed_sources(session: Session) -> int:
@@ -121,6 +124,7 @@ def upsert_jobs(session: Session, source: CompanySource, result: FetchResult) ->
             select(Job).where(Job.source_kind == source.kind, Job.source_id == source.id)
         )
     }
+    was_open = sum(1 for j in existing.values() if j.status == "open")
 
     for raw in result.jobs:
         if not raw.title or not raw.url:
@@ -191,8 +195,27 @@ def upsert_jobs(session: Session, source: CompanySource, result: FetchResult) ->
 
     session.flush()
     if result.complete:
-        stats.closed += _close_missing(session, source, seen_ids, now)
+        if suspicious_drop(was_open, len(seen_ids)):
+            # A board that suddenly lists nothing, or a fraction of what it had, has
+            # usually changed its API or is failing, not filled every role overnight.
+            stats.suspect = True
+            log.warning(
+                "%s:%s listed %d jobs (had %d open); not closing any",
+                source.kind,
+                source.key,
+                len(seen_ids),
+                was_open,
+            )
+        else:
+            stats.closed += _close_missing(session, source, seen_ids, now)
     return stats
+
+
+def suspicious_drop(was_open: int, listed: int) -> bool:
+    """True when a complete board's listing shrank too much to trust for closing jobs."""
+    if was_open < 5:
+        return False
+    return listed == 0 or listed < was_open * SUSPICIOUS_DROP_RATIO
 
 
 def _close_missing(session: Session, source: CompanySource, seen: set[str], now: datetime) -> int:
@@ -299,7 +322,7 @@ async def run_ingest(
         source_ids = [s.id for s in session.scalars(q)]
 
     totals = RunStats()
-    failures = 0
+    failures = suspects = 0
     client = PoliteClient()
 
     async def one(sid: int) -> tuple[int, FetchResult | Exception]:
@@ -342,6 +365,11 @@ async def run_ingest(
                     run.fetched, run.created, run.updated = st.fetched, st.created, st.updated
                     run.closed, run.skipped_non_tech = st.closed, st.skipped_non_tech
                     src.last_status, src.last_error, src.consecutive_failures = "ok", None, 0
+                    if st.suspect:
+                        suspects += 1
+                        src.last_status = "suspect"
+                        src.last_error = f"listed {st.fetched} jobs, far fewer than before"
+                        run.error = src.last_error
                     for k in ("fetched", "created", "updated", "closed", "skipped_non_tech"):
                         setattr(totals, k, getattr(totals, k) + getattr(st, k))
                 run.finished_at = datetime.now(UTC)
@@ -365,7 +393,8 @@ async def run_ingest(
     return {
         "sources": len(source_ids),
         "failures": failures,
-        **totals.__dict__,
+        "suspect_sources": suspects,
+        **{k: v for k, v in totals.__dict__.items() if k != "suspect"},
         "closed_stale": stale,
         "dedupe_updates": dupes,
     }
