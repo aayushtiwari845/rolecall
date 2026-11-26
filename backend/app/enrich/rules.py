@@ -15,7 +15,7 @@ from app.enrich.locations import parse_location
 from app.enrich.skills import extract_skills
 from app.ingest.types import RawJob
 
-RULES_VERSION = 11
+RULES_VERSION = 12
 
 # ---------------------------------------------------------------- tech filter
 _TECH_TITLE = re.compile(
@@ -237,6 +237,13 @@ _YOE_MORE = [
 # A bare range ("3 to 6 years", "8 - 12 years") counts only next to the word experience.
 _YOE_RANGE = re.compile(r"(\d{1,2})\s*(?:-|–|to)\s*(\d{1,2})\s*\+?\s*" + _YR, re.I)
 _EXPERIENCE_NEAR = re.compile(r"experien|\bexp\b", re.I)
+# Company boilerplate, not a requirement: "a 25+ year track record", "the next 2+ years
+# of growth", "founded 10+ years ago".
+_NOT_YOE_AFTER = re.compile(
+    r"\s*(?:track record|of (?:growth|history|innovation|heritage|legacy)|ago\b|old\b|in business)",
+    re.I,
+)
+_NOT_YOE_BEFORE = re.compile(r"(?:\bnext|\bpast|\ba|\bour|\bover the|\bfor over)\s+$", re.I)
 
 
 def years_of_experience(text: str) -> tuple[float | None, float | None]:
@@ -252,6 +259,10 @@ def years_of_experience(text: str) -> tuple[float | None, float | None]:
         if _EXPERIENCE_NEAR.search(text[max(0, m.start() - 120) : m.end() + 60])
     ]
     for m in matches:
+        if _NOT_YOE_AFTER.match(text, m.end()) or _NOT_YOE_BEFORE.search(
+            text[max(0, m.start() - 12) : m.start()]
+        ):
+            continue
         lo = float(m.group(1))
         hi = float(m.group(2)) if m.lastindex and m.lastindex >= 2 and m.group(2) else None
         if lo > 25 or (hi is not None and (hi < lo or hi > 30)):

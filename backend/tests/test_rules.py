@@ -310,3 +310,14 @@ def test_years_of_experience_phrasings(text, expected):
 
 def test_unpaid_posts_are_not_jobs():
     assert rules._NOT_A_JOB.search("This is an unpaid role for now")
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "We have a 25+ year track record of innovation and profitability.",
+        "Help evolve it for the next 2+ years of growth.",
+    ],
+)
+def test_company_boilerplate_is_not_an_experience_requirement(text):
+    assert rules.years_of_experience(text) == (None, None)
