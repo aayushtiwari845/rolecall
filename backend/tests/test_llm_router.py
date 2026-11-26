@@ -49,3 +49,28 @@ def test_tool_calls_are_returned_in_openai_format():
 
 def test_parse_json_tolerates_prose():
     assert parse_json('Sure! {"a": 1} hope that helps') == {"a": 1}
+
+
+def test_a_retired_model_cools_its_provider_down():
+    import httpx
+    import openai
+
+    req = httpx.Request("POST", "https://x/chat/completions")
+    gone = openai.BadRequestError(
+        "The model `llama-3.1-8b-instant` has been decommissioned",
+        response=httpx.Response(400, request=req),
+        body=None,
+    )
+    router, (a, b) = fake_router([gone], ["from b", "again b"])
+    assert router.chat([{"role": "user", "content": "hi"}]).content == "from b"
+    assert router.chat([{"role": "user", "content": "hi"}]).provider == "p1"
+    assert len(a.requests) == 1  # not retried while cooling down
+
+
+def test_model_retired_needs_a_gone_message():
+    from app.llm.router import model_retired
+
+    assert model_retired(404, "model_not_found: no such model")
+    assert model_retired(400, "This model is deprecated")
+    assert not model_retired(400, "max_tokens must be positive")
+    assert not model_retired(500, "model not found")
