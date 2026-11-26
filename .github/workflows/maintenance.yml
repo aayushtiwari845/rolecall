@@ -1,0 +1,40 @@
+# Card-free hosting option: the upkeep the VM worker does on its own schedule.
+# Prunes old data daily, discovers new and moved company boards weekly, and fails
+# (so GitHub emails you) when crawling has stalled. Needs the DATABASE_URL secret.
+name: Maintenance
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "45 22 * * *" # daily, 04:15 IST
+
+concurrency:
+  group: maintenance
+  cancel-in-progress: false
+
+jobs:
+  maintain:
+    if: ${{ vars.INGEST_ON_ACTIONS == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      ENV: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.12.6"
+      - run: uv sync --frozen --no-dev
+      - run: uv run alembic upgrade head
+      - run: uv run rolecall prune
+      - name: Discover boards (Sundays, or when run by hand)
+        run: |
+          if [ "$(date -u +%u)" = "7" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            uv run rolecall rediscover --limit 120
+          fi
+      - name: Health
+        run: uv run rolecall health
