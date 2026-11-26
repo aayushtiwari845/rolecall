@@ -15,7 +15,7 @@ from app.enrich.locations import parse_location
 from app.enrich.skills import extract_skills
 from app.ingest.types import RawJob
 
-RULES_VERSION = 13
+RULES_VERSION = 14
 
 # ---------------------------------------------------------------- tech filter
 _TECH_TITLE = re.compile(
@@ -193,7 +193,9 @@ _INTERN = re.compile(
     re.I,
 )
 _NEW_GRAD = re.compile(
-    r"new grad|graduate|entry[- ]level|fresher|university|campus|early career|associate (?:software|engineer|developer|data|sde)|\bsde[- ]?(?:i|1)\b|\b(?:engineer|developer) (?:i|1)\b|\blevel (?:i|1)\b|\bl1\b|\bjunior\b|\bjr\.?\b|20(?:2[5-9]) start",
+    r"new grad|graduate|entry[- ]level|fresher|university|campus|early career|associate (?:software|engineer|developer|data|sde)|\bsde[- ]?(?:i|1)\b|\b(?:engineer|developer) (?:i|1)\b|\blevel (?:i|1)\b|\bl1\b|\bjunior\b|\bjr\.?\b|"
+    # Cohort years in any decade: "2027 start", "2026 batch", "2027 passouts", "class of 2028".
+    r"\b20[2-9]\d\s*(?:start|intake|batch|graduates?|grads?|pass[- ]?outs?)\b|class of 20[2-9]\d",
     re.I,
 )
 _STAFF = re.compile(
@@ -210,7 +212,9 @@ _SENIOR = re.compile(
     re.I,
 )
 _MID = re.compile(
-    r"\bsde[- ]?(?:ii|2)\b|" + _LADDER + r"(?:ii|2|Ⅱ)(?![\w.-])|\bmid[- ]level\b|\bintermediate\b|\bmedior\b",
+    r"\bsde[- ]?(?:ii|2)\b|"
+    + _LADDER
+    + r"(?:ii|2|Ⅱ)(?![\w.-])|\bmid[- ]level\b|\bintermediate\b|\bmedior\b",
     re.I,
 )
 _LADDER_ONE = re.compile(_LADDER + r"(?:i|1|Ⅰ)(?![\w.-])", re.I)
@@ -251,8 +255,16 @@ _YOE_MORE = [
     ),
 ]
 # A bare range ("3 to 6 years", "8 - 12 years") counts only next to the word experience.
-_YOE_RANGE = re.compile(r"(?<![\d.])(\d{1,2}(?:\.\d)?)\s*(?:-|–|to)\s*(\d{1,2})\s*\+?\s*" + _YR, re.I)
+_YOE_RANGE = re.compile(
+    r"(?<![\d.])(\d{1,2}(?:\.\d)?)\s*(?:-|–|to)\s*(\d{1,2})\s*\+?\s*" + _YR, re.I
+)
 _EXPERIENCE_NEAR = re.compile(r"experien|\bexp\b", re.I)
+# A line that is nothing but a span of years ("5 to 8 years" under "Additional
+# Information") is how some boards print the experience field.
+_YOE_LINE = re.compile(
+    r"^\W{0,3}(\d{1,2}(?:\.\d)?)\s*(?:(?:-|–|to)\s*(\d{1,2})\s*)?\+?\s*" + _YR + r"\W{0,2}$",
+    re.I | re.M,
+)
 # Company boilerplate, not a requirement: "a 25+ year track record", "the next 2+ years
 # of growth", "founded 10+ years ago".
 _NOT_YOE_AFTER = re.compile(
@@ -269,6 +281,7 @@ def years_of_experience(text: str) -> tuple[float | None, float | None]:
     matches = list(_YOE.finditer(text)) + list(_YOE_ALT.finditer(text))
     for pat in _YOE_MORE:
         matches += pat.finditer(text)
+    matches += _YOE_LINE.finditer(text)
     matches += [
         m
         for m in _YOE_RANGE.finditer(text)
@@ -553,6 +566,18 @@ _NOT_A_JOB = re.compile(
 )
 
 
+# A hiring-thread header that names departments, not a role: "engineering, GTM, product,
+# sales", "Multiple roles". There is nothing specific to match a resume against.
+_DEPARTMENT_LIST = re.compile(
+    r"^\W*(?:(?:engineering|product|design|gtm|go-to-market|sales|marketing|ops|operations|"
+    r"finance|support|research|multiple roles|various roles|various|all roles|many roles)"
+    r"\W*(?:\band\b\W*)?)+$",
+    re.I,
+)
+# A location line in the body ("**Location**: EMEA") that narrows the board's list.
+_BODY_LOCATION = re.compile(r"^\W{0,4}location\W{0,4}:\W{0,4}([^\n]{2,80})$", re.I | re.M)
+
+
 def is_candidate_post(text: str) -> bool:
     return bool(_CANDIDATE_POST.search(text[:400]))
 
@@ -569,6 +594,8 @@ def enrich(job: RawJob) -> Enrichment:
         # A job seeker's post in the hiring thread, or a post whose header names no
         # engineering role (sales, GTM, design), is not a job we can match.
         tech = False
+    if job.source_kind == "hn" and _DEPARTMENT_LIST.match(title):
+        tech = False
     if len(text) < 100 or re.search(r"\bblah blah\b|lorem ipsum", text[:2000], re.I):
         tech = False  # placeholder or empty postings carry nothing to match on
     if _NOT_A_JOB.search(text[:1500]):
@@ -582,6 +609,15 @@ def enrich(job: RawJob) -> Enrichment:
     remote = remote_type(job.remote_hint, job.location_raw or "", title, text)
     countries = list(loc.countries)
     regions = list(loc.regions)
+    if remote == "remote" and len(regions) > 1 and not countries:
+        # The board offers "Home Based - Americas; APAC; EMEA" but the body says
+        # "Location: EMEA": the body is the narrower, later statement.
+        for m in _BODY_LOCATION.finditer(text):
+            body = parse_location(m.group(1))
+            narrowed = [r for r in body.regions if r in regions]
+            if narrowed and not body.countries and len(narrowed) < len(regions):
+                regions = narrowed
+                break
     if remote == "remote" and not countries:
         # "Remote" alone is ambiguous; postings usually say who can be hired.
         r_countries, r_regions = remote_scope(f"{title}\n{job.location_raw or ''}\n{text[:2500]}")
