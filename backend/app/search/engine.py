@@ -6,6 +6,7 @@ import hashlib
 import json
 import logging
 import math
+import re
 import threading
 import time
 import uuid
@@ -17,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.enrich.embed import embed_query, rerank
+from app.enrich.locations import parse_location
 from app.ingest.text import display_title
 from app.models import Job
 from app.search.filters import JobFilters, build_where
@@ -182,6 +184,34 @@ def _sigmoid(x: float) -> float:
     return 1 / (1 + math.exp(-x))
 
 
+_QUERY_REMOTE = re.compile(r"\bremote(?:ly)?\b|\bwfh\b|work from home", re.I)
+
+
+def query_location(query: str, filters: JobFilters) -> JobFilters | None:
+    """Places named in the query become a location filter when none is set.
+
+    "RAG intern Bengaluru" means roles in Bengaluru (or remote roles open to India),
+    not internships in Bangkok that happen to mention RAG. Returns None when the query
+    names no place or the user already chose locations.
+    """
+    if not query or not filters.is_location_free() or filters.onsite_anywhere:
+        return None
+    place = parse_location(query)
+    remote = bool(_QUERY_REMOTE.search(query))
+    if not (place.cities or place.countries or remote):
+        return None
+    update: dict = {}
+    if place.cities:
+        update["cities"] = place.cities
+        update["remote_india"] = True
+    elif place.countries:
+        update["countries"] = place.countries
+    if remote:
+        update["remote_india"] = True
+        update["remote_global"] = not place.countries or "IN" in place.countries
+    return filters.model_copy(update=update)
+
+
 def search(
     session: Session,
     query: str,
@@ -194,6 +224,44 @@ def search(
     mode: str = "hybrid",
 ) -> list[Ranked]:
     """Free-text search with optional personalisation."""
+    placed = query_location(" ".join(query.split())[:300], filters)
+    if placed is not None:
+        found = search(
+            session,
+            query,
+            placed,
+            user=user,
+            limit=limit,
+            offset=offset,
+            use_rerank=use_rerank,
+            mode=mode,
+        )
+        if found or offset:
+            return found
+        # Nothing there: fall back to the query without the place filter.
+    return _search(
+        session,
+        query,
+        filters,
+        user=user,
+        limit=limit,
+        offset=offset,
+        use_rerank=use_rerank,
+        mode=mode,
+    )
+
+
+def _search(
+    session: Session,
+    query: str,
+    filters: JobFilters,
+    *,
+    user: UserContext | None = None,
+    limit: int = 20,
+    offset: int = 0,
+    use_rerank: bool | None = None,
+    mode: str = "hybrid",
+) -> list[Ranked]:
     user = user or UserContext()
     cfg = load_config()
     query = " ".join(query.split())[:300]
