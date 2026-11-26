@@ -258,3 +258,55 @@ def test_junk_postings_are_dropped():
         "partnership or revenue share. We build an AI workspace in Python. " * 3,
     )
     assert not rules.enrich(not_a_job).is_tech
+
+
+@pytest.mark.parametrize(
+    "raw,country",
+    [
+        ("Remote US", "US"),
+        ("US - Remote", "US"),
+        ("US-TX-Remote", "US"),
+        ("US Based Candidates Only", "US"),
+        ("Remote - California", "US"),
+        ("Remote - Washington D.C.", "US"),
+        ("Ontario - Remote", "CA"),
+        ("Remote, KSA", "SA"),
+        ("Argentina", "AR"),
+        ("Remote Finland", "FI"),
+        ("NZ-New Zealand-Remote", "NZ"),
+        ("Remote - Estonia", "EE"),
+        ("Taiwan (Remote)", "TW"),
+    ],
+)
+def test_remote_locations_name_their_country(raw, country):
+    assert country in parse_location(raw).countries
+
+
+def test_us_word_is_not_a_country():
+    assert parse_location("Remote, join us").countries == []
+    assert parse_location("Remote-NAMER").regions == ["AMER"]
+
+
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        ("Requirements: Experience: 6+ years in software engineering", (6, None)),
+        ("Typical experience level: 6-8 yrs Mandatory Skills", (6, 8)),
+        ("You have 7+ years in technical support or databases", (7, None)),
+        ("4 years’ minimum Python experience in finance", (4, None)),
+        ("Experience : 18+ years Mandatory skills", (18, None)),
+        ("5+ years building and operating backend services", (5, None)),
+        ("Tech CSE with 4+ yrs. Solid understanding of design", (4, None)),
+        ("Minimum 8-year experience working as a support engineer", (8, None)),
+        ("Experience as an on call SRE (at least 8 years)", (8, None)),
+        ("Experience level: Associate. Tasks: CI/CD pipelines. 3 to 6 years", (3, 6)),
+        ("Founded 10+ years ago, we build payments", (None, None)),
+        ("Our 2-3 year roadmap is ambitious", (None, None)),
+    ],
+)
+def test_years_of_experience_phrasings(text, expected):
+    assert rules.years_of_experience(text) == expected
+
+
+def test_unpaid_posts_are_not_jobs():
+    assert rules._NOT_A_JOB.search("This is an unpaid role for now")
