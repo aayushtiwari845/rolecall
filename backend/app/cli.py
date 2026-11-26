@@ -42,6 +42,39 @@ def discover(limit: int = typer.Option(0, help="Only probe the first N candidate
 
 
 @app.command()
+def rediscover(limit: int = typer.Option(150, help="Max companies to probe")) -> None:
+    """Probe new, moved and aggregator-only companies for boards; add them to the database."""
+    from app.db import session_scope
+    from app.ingest.maintenance import rediscover as run
+
+    with session_scope() as s:
+        typer.echo(json.dumps(run(s, limit=limit)))
+
+
+@app.command()
+def prune() -> None:
+    """Delete long-closed roles nobody acted on, old logs and caches."""
+    from app.db import session_scope
+    from app.ingest.maintenance import prune as run
+
+    with session_scope() as s:
+        typer.echo(json.dumps(run(s)))
+
+
+@app.command()
+def health() -> None:
+    """Report whether crawling is working; exits 1 when it is not."""
+    from app.db import session_scope
+    from app.ingest.maintenance import health as run
+
+    with session_scope() as s:
+        report = run(s)
+    typer.echo(json.dumps(report, indent=2))
+    if not report["ok"]:
+        raise typer.Exit(1)
+
+
+@app.command()
 def seed() -> None:
     """Load seeds/companies.yaml into the database."""
     from app.db import session_scope
