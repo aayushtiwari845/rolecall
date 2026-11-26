@@ -1,53 +1,53 @@
 {
   "suite": "recommendation",
-  "run_at": "2026-11-25T17:38:53.066845+00:00",
-  "git_sha": "298e299",
+  "run_at": "2026-11-26T01:23:20.108899+00:00",
+  "git_sha": "ac56db3",
   "results": {
     "dense_only": {
-      "ndcg@10": 0.7415,
-      "p@10": 0.88,
-      "company_diversity": 0.72,
-      "coverage": 0.0094,
+      "ndcg@10": 0.6948,
+      "p@10": 0.82,
+      "company_diversity": 0.6,
+      "coverage": 0.0093,
       "personas": 5,
       "judge": "rules"
     },
     "lexical_only": {
-      "ndcg@10": 0.6616,
+      "ndcg@10": 0.6414,
       "p@10": 0.82,
-      "company_diversity": 0.78,
-      "coverage": 0.009,
+      "company_diversity": 0.76,
+      "coverage": 0.0083,
       "personas": 5,
       "judge": "rules"
     },
     "hybrid_rrf_only": {
-      "ndcg@10": 0.7553,
-      "p@10": 0.94,
-      "company_diversity": 0.66,
-      "coverage": 0.009,
+      "ndcg@10": 0.6971,
+      "p@10": 0.86,
+      "company_diversity": 0.58,
+      "coverage": 0.0084,
       "personas": 5,
       "judge": "rules"
     },
     "ranker_no_yoe_penalty": {
-      "ndcg@10": 0.8278,
-      "p@10": 0.9,
-      "company_diversity": 0.98,
-      "coverage": 0.0094,
-      "personas": 5,
-      "judge": "rules"
-    },
-    "ranker_no_diversity": {
-      "ndcg@10": 0.7956,
+      "ndcg@10": 0.8319,
       "p@10": 0.88,
-      "company_diversity": 0.9,
+      "company_diversity": 0.88,
       "coverage": 0.009,
       "personas": 5,
       "judge": "rules"
     },
+    "ranker_no_diversity": {
+      "ndcg@10": 0.8158,
+      "p@10": 0.9,
+      "company_diversity": 0.86,
+      "coverage": 0.0085,
+      "personas": 5,
+      "judge": "rules"
+    },
     "full_ranker": {
-      "ndcg@10": 0.7956,
+      "ndcg@10": 0.8119,
       "p@10": 0.88,
-      "company_diversity": 0.9,
-      "coverage": 0.0087,
+      "company_diversity": 0.88,
+      "coverage": 0.008,
       "personas": 5,
       "judge": "rules"
     }

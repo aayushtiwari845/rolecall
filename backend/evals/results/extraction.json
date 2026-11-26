@@ -1,15 +1,15 @@
 {
   "suite": "extraction",
-  "run_at": "2026-11-25T14:56:53.470993+00:00",
-  "git_sha": "6b883f1",
+  "run_at": "2026-11-26T01:22:07.703896+00:00",
+  "git_sha": "ac56db3",
   "results": {
     "rules": {
       "seniority_acc": 1.0,
       "role_family_acc": 0.9667,
       "remote_type_acc": 0.931,
       "employment_type_acc": 1.0,
-      "min_yoe_acc": 0.8667,
-      "macro_acc": 0.9529,
+      "min_yoe_acc": 1.0,
+      "macro_acc": 0.9795,
       "cases": 30
     }
   }
