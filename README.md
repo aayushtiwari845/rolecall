@@ -1,5 +1,16 @@
 # Rolecall
 
+[![CI](https://github.com/aayushtiwari845/rolecall/actions/workflows/ci.yml/badge.svg)](https://github.com/aayushtiwari845/rolecall/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)
+![Next.js](https://img.shields.io/badge/web-Next.js-black.svg)
+
+<p align="center">
+  <img src="docs/media/demo.gif" alt="Rolecall demo: landing page, a scorecard ranked against a resume with reasons, plain-language search, the application tracker and the public evals page" width="900">
+  <br>
+  <sub><a href="docs/media/demo.mp4">Full-quality MP4</a> · recorded on the live local index</sub>
+</p>
+
 **Fresh tech roles, called out for you.** Rolecall crawls thousands of job postings every
 day straight from company job boards, works out the level, role, skills, location and pay
 of each one, and ranks them against your resume, with the reason for every match. It is
@@ -86,6 +97,26 @@ flowchart LR
 8. **Learning from you.** Saves, applies, clicks and dismissals move your query vector
    toward what you like and away from what you hide, and adjust per-company affinity.
 
+### Freshness and coverage
+
+- **How often.** The worker crawls every board not crawled in the last 5 hours, every 2
+  hours, so each board is checked about four times a day (GitHub Actions does every 4
+  hours in the card-free setup). New roles are embedded within 10 minutes.
+- **What is crawled.** Every open role on ~240 company boards (Greenhouse, Lever, Ashby,
+  Workable, SmartRecruiters, Recruitee), plus the monthly HN "Who is hiring" thread,
+  Remotive, Arbeitnow and RemoteOK. ATS boards return their complete list, so a role
+  that disappears from two runs in a row is closed.
+- **How coverage grows.** A weekly discovery job probes companies that appear in the
+  hiring threads and aggregators for their own boards, re-probes companies whose boards
+  broke (they moved ATS), and picks up new names added to `seeds/candidates.txt`.
+- **What is not.** LinkedIn, Naukri and Indeed forbid crawling and are never used.
+  Workday tenants (most large enterprises) throttle automated clients, and Google,
+  Microsoft and Amazon run their own portals, so they are not covered.
+- **Staying healthy.** A board whose listing suddenly empties is flagged instead of
+  having its roles closed; old data is pruned daily; `/api/health/index` returns 503 and
+  admins get an email if crawling stalls. See
+  [docs/deploy.md](docs/deploy.md#keeping-it-running-for-years).
+
 ### The assistant
 
 An OpenAI-protocol tool-calling loop (every supported provider speaks it) with ten
@@ -115,7 +146,7 @@ The methodology (pooling, rubric, metrics, statistics, tuning and its full log) 
 
 | Suite | What it measures |
 |---|---|
-| **recsys** | The main one. 28 personas (10 dev for tuning, 6 test, 12 fresh personas written after tuning and judged blind), 902 (persona, role) pairs pooled from eight rankers plus the tuned configs and graded 0–3 against a written rubric. Graded nDCG@5/10/20, P@10, MAP, MRR, bpref, Success@5, violations of hard expectations (level, experience, location), diversity, exposure Gini, stability under profile edits, latency; 95% bootstrap CIs, paired randomisation tests, per-segment breakdowns. |
+| **recsys** | The main one. 28 personas (10 dev for tuning, 6 test, 12 fresh personas written after tuning and judged blind), 909 (persona, role) pairs pooled from eight rankers plus the tuned configs and graded 0–3 against a written rubric. Graded nDCG@5/10/20, P@10, MAP, MRR, bpref, Success@5, violations of hard expectations (level, experience, location), diversity, exposure Gini, stability under profile edits, latency; 95% bootstrap CIs, paired randomisation tests, per-segment breakdowns. |
 | **retrieval** | Known-item search: for a stratified sample of live roles, generate the query a student would type (LLM or templates), measure Recall@10/50, MRR@10, nDCG@10 and latency for lexical, dense, hybrid RRF and hybrid + reranker. |
 | **recommendation** | Persona feeds (backend new grad, ML intern, data engineer, frontend, SRE). Each variant's top-k is pooled and judged once on a 0–3 scale (LLM judge or transparent rule judge); nDCG@10, P@10, company diversity, coverage. Ablations: dense only, lexical only, RRF only, no experience penalty, no diversity, full ranker. |
 | **extraction** | Field accuracy (level, role, work mode, employment type, min years) on hand-labelled real postings: rules vs rules + LLM. |
@@ -173,8 +204,10 @@ pnpm dev                             # app on :3000, proxies /api to :8000
 Locally there's a development sign-in (no Google keys needed). Run the worker with
 `uv run python -m app.worker` to keep the index fresh on a schedule.
 
-Useful commands: `rolecall discover` (re-probe companies), `rolecall stats`,
-`rolecall enrich-llm`, `rolecall reenrich`, `rolecall eval <suite>`, `rolecall digest --email you@x.com`.
+Useful commands: `rolecall discover` (probe `candidates.txt`, rewrite the seed file),
+`rolecall rediscover` (find new and moved boards, straight into the database),
+`rolecall health`, `rolecall prune`, `rolecall stats`, `rolecall enrich-llm`,
+`rolecall reenrich`, `rolecall eval <suite>`, `rolecall digest --email you@x.com`.
 
 Tests: `uv run pytest` (unit tests plus end-to-end API tests against Postgres),
 `pnpm lint && pnpm exec tsc --noEmit` in `web/`.
