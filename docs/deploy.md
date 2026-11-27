@@ -4,42 +4,60 @@ Two options. Both cost nothing to run.
 
 ## Option A: Oracle Cloud Always Free VM + Vercel (recommended)
 
-Oracle's Always Free tier includes an Ampere A1 ARM VM with up to 4 cores and 24 GB RAM,
-enough for Postgres, the API, the worker and the embedding model. Sign-up asks for a card
-to verify identity; Always Free resources are not charged unless you upgrade the account
-to pay-as-you-go yourself.
+Oracle's Always Free tier includes Ampere A1 (ARM) capacity of **2 OCPUs and 12 GB of
+RAM in total** (Oracle cut this from 4 OCPUs / 24 GB in August 2026). That is enough for
+Postgres, the API, the worker and the embedding model.
 
-1. **Create the VM** (Ubuntu 22.04+, Ampere A1, 2–4 OCPU, 12–24 GB). In the VCN security
-   list, allow inbound TCP 80 and 443. Home region availability varies; if Mumbai is out
-   of capacity, Hyderabad or Singapore work fine.
-2. **Install Docker** on the VM:
-   ```bash
-   curl -fsSL https://get.docker.com | sh && sudo usermod -aG docker $USER
-   ```
-   Open the ports in the OS firewall too: `sudo iptables -I INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT`.
-3. **Pick a hostname** for the API. Free options: `<vm-ip>.sslip.io` (no sign-up) or a
-   DuckDNS subdomain. Caddy gets a Let's Encrypt certificate for it automatically.
-4. **Configure and start**:
-   ```bash
-   git clone <your repo> rolecall && cd rolecall
-   cp .env.example .env
-   # set: ENV=production, POSTGRES_PASSWORD, JWT_SECRET (long random), API_DOMAIN,
-   #      WEB_URL=https://<your-app>.vercel.app, GOOGLE_CLIENT_ID/SECRET, ADMIN_EMAILS,
-   #      any LLM keys, SMTP settings for digests
-   docker compose -f infra/docker-compose.prod.yml --env-file .env up -d --build
-   ```
-   The worker seeds the companies and starts crawling within a minute. The first full
-   crawl takes about half an hour; embeddings follow every 10 minutes.
-5. **Deploy the web app on Vercel**: import the repo, set the root directory to `web`, and
-   add the environment variable `API_URL=https://<API_DOMAIN>`. Vercel proxies `/api/*` to
-   the VM, so the session cookie stays first-party on the Vercel domain.
-6. **Google sign-in**: in Google Cloud Console create an OAuth client (Web application)
-   with the authorised redirect URI `https://<your-app>.vercel.app/api/auth/google/callback`.
-   Put the client id and secret in `.env` and restart the API.
+**Staying at zero cost.** Sign-up needs a card for identity checks; Oracle may place a
+small temporary authorisation hold that is released. Oracle's terms say the card is not
+charged unless you upgrade the account. So:
 
-Backups: the `backup` service writes a `pg_dump` per weekday into `infra/backups/`.
-Oracle may reclaim Always Free instances that stay idle for a week; the crawler keeps the
-VM busy enough to avoid that.
+- Never click **Upgrade to Pay As You Go** (or any paid account type).
+- Create only resources labelled **Always Free-eligible**, in your **home region**:
+  one A1 VM with at most 2 OCPU / 12 GB, a boot volume of 50 GB (200 GB is free in total).
+- The 30-day trial credits can be spent on paid shapes without charge, but anything paid
+  is deleted when the trial ends, so don't build on it.
+- After the trial, an account that has not upgraded keeps its Always Free resources and
+  cannot run paid ones.
+- Idle Always Free VMs may be *reclaimed* (stopped), which costs nothing but takes the site
+  down: Oracle treats a VM as idle when, over 7 days, CPU (95th percentile), network and
+  memory are all under 20%. Check the instance's **Metrics** page after the first week.
+
+Steps:
+
+1. **Create the VM**: Compute → Instances → Create. Image **Ubuntu 24.04** (Always Free
+   eligible), shape **VM.Standard.A1.Flex** with **2 OCPU, 12 GB**. Under networking keep
+   "assign a public IPv4 address". Upload (or let Oracle generate) an SSH key. If you get
+   "out of host capacity", try another availability domain or retry later.
+2. **Open ports 80 and 443** in the cloud firewall: Networking → Virtual cloud networks →
+   your VCN → Security Lists → Default → Add ingress rules: source `0.0.0.0/0`, TCP,
+   destination ports `80,443`.
+3. **Deploy the web app on Vercel** (free Hobby plan, no card): import the GitHub repo, set
+   the root directory to `web`, deploy, and note the URL, e.g. `https://rolecall-xyz.vercel.app`.
+4. **Set up the VM** over SSH (`ssh ubuntu@<vm-ip>`):
+   ```bash
+   git clone https://github.com/aayushtiwari845/rolecall.git && cd rolecall
+   bash infra/bootstrap.sh https://rolecall-xyz.vercel.app
+   ```
+   It installs Docker, opens the OS firewall (Oracle's Ubuntu image blocks everything but
+   SSH), adds swap, writes `.env` with generated database and session secrets and a free
+   `<ip>.sslip.io` hostname, then builds and starts the stack. The worker seeds the
+   companies and starts crawling; the first full crawl takes about half an hour.
+5. **Point Vercel at the API**: Project → Settings → Environment Variables →
+   `API_URL=https://<ip-with-dashes>.sslip.io` (the script prints it), then redeploy.
+   Vercel proxies `/api/*` to the VM, so the session cookie stays first-party.
+6. **Google sign-in**: Google Cloud Console → APIs & Services → OAuth consent screen
+   (External; publish it, since email and profile scopes need no review) → Credentials →
+   Create OAuth client ID (Web application) with the authorised redirect URI
+   `https://rolecall-xyz.vercel.app/api/auth/google/callback`. Put the client id, secret
+   and your email in `.env` on the VM (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
+   `ADMIN_EMAILS=["you@gmail.com"]`) and re-run `bash infra/bootstrap.sh <vercel url>`.
+
+The API refuses to start in production with a missing or default `JWT_SECRET` or a
+localhost `WEB_URL`. Backups: the `backup` service writes a `pg_dump` per weekday into
+`infra/backups/` (copy them off the VM; see "Keeping it running" below). If
+Let's Encrypt ever refuses a certificate for the shared sslip.io domain, use a free
+DuckDNS subdomain as `API_DOMAIN` instead.
 
 ## Option B: no card at all
 
