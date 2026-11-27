@@ -28,7 +28,16 @@ Steps:
 1. **Create the VM**: Compute → Instances → Create. Image **Ubuntu 24.04** (Always Free
    eligible), shape **VM.Standard.A1.Flex** with **2 OCPU, 12 GB**. Under networking keep
    "assign a public IPv4 address". Upload (or let Oracle generate) an SSH key. If you get
-   "out of host capacity", try another availability domain or retry later.
+   "out of host capacity", try another availability domain or retry later, or let
+   [`infra/oracle_launch.py`](../infra/oracle_launch.py) retry for you. It needs an API
+   key (Profile → My profile → API keys → Add API key; save the shown config as
+   `~/.oci/config`), refuses anything outside the free limits or your home region,
+   creates the network with ports 80/443 open if needed, and prints the IP when it gets
+   a VM:
+   ```bash
+   uv run --no-project --with oci python infra/oracle_launch.py --dry-run
+   uv run --no-project --with oci python infra/oracle_launch.py
+   ```
 2. **Open ports 80 and 443** in the cloud firewall: Networking → Virtual cloud networks →
    your VCN → Security Lists → Default → Add ingress rules: source `0.0.0.0/0`, TCP,
    destination ports `80,443`.
