@@ -5,7 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -82,6 +82,16 @@ class Settings(BaseSettings):
     @property
     def is_dev(self) -> bool:
         return self.env != "production"
+
+    @model_validator(mode="after")
+    def _production_needs_real_secrets(self) -> Settings:
+        # Sessions signed with the public default secret could be forged by anyone.
+        if self.env == "production":
+            if len(self.jwt_secret) < 32 or "change-me" in self.jwt_secret:
+                raise ValueError("JWT_SECRET must be a random string of 32+ characters")
+            if self.web_url.startswith("http://localhost"):
+                raise ValueError("WEB_URL must be the public web address in production")
+        return self
 
 
 @lru_cache

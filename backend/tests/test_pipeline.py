@@ -68,3 +68,18 @@ def test_an_emptied_board_keeps_its_roles_open(db_url):
             assert not st.suspect
         assert open_count() == 9
         s.rollback()
+
+
+def test_production_refuses_the_default_session_secret(monkeypatch):
+    import pytest as _pytest
+    from pydantic import ValidationError
+
+    from app.config import Settings
+
+    monkeypatch.setenv("ENV", "production")
+    monkeypatch.setenv("WEB_URL", "https://rolecall.example.com")
+    monkeypatch.delenv("JWT_SECRET", raising=False)
+    with _pytest.raises(ValidationError):
+        Settings(_env_file=None)
+    monkeypatch.setenv("JWT_SECRET", "x" * 48)
+    assert Settings(_env_file=None).env == "production"
