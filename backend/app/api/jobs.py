@@ -74,7 +74,7 @@ def feed(
         filters,
         limit=min(body.limit, 50),
         offset=body.offset,
-        cache_key=f"{user.id}:{body.resume_id}",
+        cache_key=f"{user.id}:{body.resume_id}:{ctx.state_key}",
     )
     out = [ranked_to_dict(r) | {"saved": r.job.id in ctx.saved_job_ids} for r in items]
     _log_impressions(db, user, out, "feed", body.offset)

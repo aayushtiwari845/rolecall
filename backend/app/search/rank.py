@@ -144,6 +144,9 @@ class UserContext:
     company_affinity: dict[str, float] = field(default_factory=dict)
     hidden_job_ids: list[uuid.UUID] = field(default_factory=list)
     saved_job_ids: set[uuid.UUID] = field(default_factory=set)
+    # Changes whenever the user's resume, feedback or tracker changes. Part of the feed
+    # cache key, so every API process sees a change without being told about it.
+    state_key: str = ""
 
 
 @dataclass

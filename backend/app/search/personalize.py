@@ -7,6 +7,7 @@ negative centroid used for an affinity feature, and (3) per-company affinity.
 
 from __future__ import annotations
 
+import hashlib
 import uuid
 from collections import Counter
 
@@ -96,6 +97,11 @@ def build_context(session: Session, user: User, resume_id: uuid.UUID | None = No
     )
     ctx.saved_job_ids = saved
     ctx.hidden_job_ids = list(hidden | applied)
+    latest = f"{rows[0][0]}:{rows[0][1]}" if rows else "-"
+    ctx.state_key = hashlib.sha1(
+        f"{resume.id if resume else '-'}|{len(rows)}|{latest}|{sorted(map(str, saved))}|"
+        f"{sorted(map(str, applied))}".encode()
+    ).hexdigest()[:16]
     if pos:
         ctx.pos_centroid = _unit(np.average(np.stack(pos), axis=0, weights=pos_w))
     if neg:
